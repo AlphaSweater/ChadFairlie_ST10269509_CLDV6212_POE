@@ -6,24 +6,33 @@
 
 <h1>Customers</h1>
 
-<table>
-	<thead>
-		<tr>
-			<th>Name</th>
-			<th>Email</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var customer in Model)
-		{
+@if (!Model.Any())
+{
+	<p>No customers available. <a href="@Url.Action("Create", "Customer")">Add a new customer</a></p>
+}
+else
+{
+	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Customer")">Add Account</a>
+
+	<table class="table">
+		<thead>
 			<tr>
-				<td>@customer.Name</td>
-				<td>@customer.Email</td>
-				<td>
-					<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })">Manage</a>
-				</td>
+				<th>Name</th>
+				<th>Email</th>
+				<th>Actions</th>
 			</tr>
-		}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			@foreach (var customer in Model)
+			{
+				<tr>
+					<td>@customer.Name</td>
+					<td>@customer.Email</td>
+					<td>
+						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })">Manage</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
