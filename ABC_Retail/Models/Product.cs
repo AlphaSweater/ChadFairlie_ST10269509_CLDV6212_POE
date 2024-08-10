@@ -3,6 +3,9 @@ using Azure.Data.Tables;
 
 namespace ABC_Retail.Models
 {
+	/// <summary>
+	/// Represents a product entity in the application
+	/// </summary>
 	public class Product : ITableEntity
 	{
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -27,9 +30,8 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		public Product()
 		{
-			// Set the partition key to "Product" and the row key to a new GUID
-			PartitionKey = "Product";
-			RowKey = Guid.NewGuid().ToString();
+			PartitionKey = "Product"; // Set the partition key to "Product"
+			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
 		}
 	}
 }

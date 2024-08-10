@@ -14,7 +14,12 @@ namespace ABC_Retail.Controllers
 			_tableStorageService = tableStorageService;
 		}
 
-		// List all customers
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Index Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Displays a list of all customers
+		//--------------------------------------------------------------------------------------------------------------------------//
 		public async Task<IActionResult> Index()
 		{
 			var customers = await _tableStorageService.GetAllCustomersAsync();
@@ -30,7 +35,12 @@ namespace ABC_Retail.Controllers
 			return View(customerViewModels);
 		}
 
-		// Manage a specific customer
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Manage Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Displays the details of a specific customer for management
+		//--------------------------------------------------------------------------------------------------------------------------//
 		public async Task<IActionResult> Manage(string id)
 		{
 			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
@@ -51,7 +61,12 @@ namespace ABC_Retail.Controllers
 			return View(customerViewModel);
 		}
 
-		// Edit customer details
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Edit Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Updates the details of a specific customer
+		//--------------------------------------------------------------------------------------------------------------------------//
 		[HttpPost]
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
@@ -70,7 +85,12 @@ namespace ABC_Retail.Controllers
 			return RedirectToAction("Index");
 		}
 
-		// Delete customer
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Delete Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Deletes a specific customer
+		//--------------------------------------------------------------------------------------------------------------------------//
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
@@ -84,16 +104,28 @@ namespace ABC_Retail.Controllers
 			return RedirectToAction("Index");
 		}
 
-		// Show the form to create a new customer
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Create Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Displays a form to create a new customer
+		//--------------------------------------------------------------------------------------------------------------------------//
 		public IActionResult Create()
 		{
 			return View();
 		}
 
-		// Handle the form submission to create a new customer
+		// Handles the creation of a new customer
+		//--------------------------------------------------------------------------------------------------------------------------//
 		[HttpPost]
 		public async Task<IActionResult> Create(CustomerViewModel model)
 		{
+			if (!ModelState.IsValid)
+			{
+				// TODO: Handle validation errors
+				return View(model);
+			}
+
 			var customer = new Customer
 			{
 				Name = model.Name,

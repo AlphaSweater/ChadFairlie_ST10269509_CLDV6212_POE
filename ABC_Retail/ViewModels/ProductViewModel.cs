@@ -1,5 +1,8 @@
 ﻿namespace ABC_Retail.ViewModels
 {
+	/// <summary>
+	/// Represents a product in the view as a view model of the product entity
+	/// </summary>
 	public class ProductViewModel
 	{
 		public string? Id { get; set; } // Unique identifier for the product
