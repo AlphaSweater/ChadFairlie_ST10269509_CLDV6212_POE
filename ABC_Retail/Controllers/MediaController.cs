@@ -39,5 +39,13 @@ namespace ABC_Retail.Controllers
 
 			return View("Error", new ErrorViewModel { RequestId = "No file selected or file is empty." });
 		}
+
+		// Delete a file
+		[HttpPost]
+		public async Task<IActionResult> Delete(string url)
+		{
+			await _blobStorageService.DeleteFileAsync(url);
+			return RedirectToAction("Index");
+		}
 	}
 }

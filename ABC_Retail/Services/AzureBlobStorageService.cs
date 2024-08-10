@@ -27,7 +27,7 @@ namespace ABC_Retail.Services
 			var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
 
 			// Create the container if it does not exist
-			await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+			await containerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
 			// Generate a unique name for the blob and get a reference to the blob client
 			var blobClient = containerClient.GetBlobClient(Guid.NewGuid().ToString() + "_" + Path.GetExtension(file.FileName));
