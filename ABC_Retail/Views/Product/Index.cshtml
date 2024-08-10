@@ -6,26 +6,35 @@
 
 <h1>Products</h1>
 
-<table>
-	<thead>
-		<tr>
-			<th>Name</th>
-			<th>Price</th>
-			<th>Description</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var product in Model)
-		{
+@if (!Model.Any())
+{
+	<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
+}
+else
+{
+	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
+
+	<table class="table">
+		<thead>
 			<tr>
-				<td>@product.Name</td>
-				<td>@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
-				<td>@product.Description</td>
-				<td>
-					<a href="@Url.Action("Manage", "Product", new { id = product.Id })">Manage</a>
-				</td>
+				<th>Name</th>
+				<th>Price</th>
+				<th>Description</th>
+				<th>Actions</th>
 			</tr>
-		}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			@foreach (var product in Model)
+			{
+				<tr>
+					<td>@product.Name</td>
+					<td>@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
+					<td>@product.Description</td>
+					<td>
+						<a href="@Url.Action("Manage", "Product", new { id = product.Id })">Manage</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}

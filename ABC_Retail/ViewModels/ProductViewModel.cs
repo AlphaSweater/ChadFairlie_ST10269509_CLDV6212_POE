@@ -2,9 +2,9 @@
 {
 	public class ProductViewModel
 	{
-		public int Id { get; set; }
-		public string Name { get; set; }
-		public decimal Price { get; set; }
-		public string Description { get; set; }
+		public string? Id { get; set; } // Unique identifier for the product
+		public string Name { get; set; } // Name of the product
+		public double Price { get; set; } // Price of the product
+		public string Description { get; set; } // Description of the product
 	}
 }

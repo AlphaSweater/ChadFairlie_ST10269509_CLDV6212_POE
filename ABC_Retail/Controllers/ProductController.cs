@@ -1,26 +1,137 @@
-﻿using ABC_Retail.ViewModels;
+﻿using ABC_Retail.Models;
+using ABC_Retail.Services;
+using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ABC_Retail.Controllers
 {
 	public class ProductController : Controller
 	{
-		public IActionResult Index()
+		private readonly AzureTableStorageService _tableStorageService;
+
+		public ProductController(AzureTableStorageService tableStorageService)
 		{
-			// Fetch product list (simplified example)
-			var products = new List<ProductViewModel>
-			{
-				new ProductViewModel { Id = 1, Name = "Product A", Price = 9.99m, Description = "Description for Product A" },
-				new ProductViewModel { Id = 2, Name = "Product B", Price = 19.99m, Description = "Description for Product B" }
-			};
-			return View(products);
+			_tableStorageService = tableStorageService;
 		}
 
-		public IActionResult Manage(int id)
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Index Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays a list of all products
+		public async Task<IActionResult> Index()
 		{
-			// Fetch product details by ID (simplified example)
-			var product = new ProductViewModel { Id = id, Name = "Product A", Price = 9.99m, Description = "Description for Product A" };
-			return View(product);
+			var products = await _tableStorageService.GetAllProductsAsync();
+			var productViewModels = products.Select(p => new ProductViewModel
+			{
+				Id = p.RowKey,
+				Name = p.Name,
+				Price = p.Price,
+				Description = p.Description
+			}).ToList();
+
+			return View(productViewModels);
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Manage Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		
+		// Displays the details of a specific product for management
+		//--------------------------------------------------------------------------------------------------------------------------//
+		public async Task<IActionResult> Manage(string id)
+		{
+			var product = await _tableStorageService.GetProductAsync("Product", id);
+			if (product == null)
+			{
+				return NotFound();
+			}
+
+			var productViewModel = new ProductViewModel
+			{
+				Id = product.RowKey,
+				Name = product.Name,
+				Price = product.Price,
+				Description = product.Description
+			};
+
+			return View(productViewModel);
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Edit Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Updates the details of a specific product
+		//--------------------------------------------------------------------------------------------------------------------------//
+		[HttpPost]
+		public async Task<IActionResult> Edit(ProductViewModel model)
+		{
+			var product = await _tableStorageService.GetProductAsync("Product", model.Id);
+			if (product == null)
+			{
+				return NotFound();
+			}
+
+			product.Name = model.Name;
+			product.Price = model.Price;
+			product.Description = model.Description;
+
+			await _tableStorageService.UpdateProductAsync(product);
+			return RedirectToAction("Index");
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Delete Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Deletes a specific product
+		//--------------------------------------------------------------------------------------------------------------------------//
+		[HttpPost]
+		public async Task<IActionResult> Delete(string id)
+		{
+			var product = await _tableStorageService.GetProductAsync("Product", id);
+			if (product == null)
+			{
+				return NotFound();
+			}
+
+			await _tableStorageService.DeleteProductAsync(product.PartitionKey, product.RowKey);
+			return RedirectToAction("Index");
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Create Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Displays the create product form
+		//--------------------------------------------------------------------------------------------------------------------------//
+		public IActionResult Create()
+		{
+			return View();
+		}
+
+		// Handles the creation of a new product
+		//--------------------------------------------------------------------------------------------------------------------------//
+		[HttpPost]
+		public async Task<IActionResult> Create(ProductViewModel model)
+		{
+			if (!ModelState.IsValid)
+			{
+				// TODO: Handle validation errors
+				return View(model);
+			}
+
+			var product = new Product
+			{
+				Name = model.Name,
+				Price = model.Price,
+				Description = model.Description
+			};
+
+			await _tableStorageService.AddProductAsync(product);
+			return RedirectToAction("Index");
 		}
 	}
 }
