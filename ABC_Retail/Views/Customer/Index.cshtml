@@ -1,0 +1,29 @@
+﻿@model IEnumerable<ABC_Retail.ViewModels.CustomerViewModel>
+
+@{
+	ViewData["Title"] = "Customers";
+}
+
+<h1>Customers</h1>
+
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Email</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var customer in Model)
+		{
+			<tr>
+				<td>@customer.Name</td>
+				<td>@customer.Email</td>
+				<td>
+					<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })">Manage</a>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
