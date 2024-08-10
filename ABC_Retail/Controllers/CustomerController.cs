@@ -17,7 +17,7 @@ namespace ABC_Retail.Controllers
 		// List all customers
 		public async Task<IActionResult> Index()
 		{
-			var customers = await _tableStorageService.GetAllCustomerProfilesAsync();
+			var customers = await _tableStorageService.GetAllCustomersAsync();
 			var customerViewModels = customers.Select(c => new CustomerViewModel
 			{
 				Id = c.RowKey,
@@ -33,7 +33,7 @@ namespace ABC_Retail.Controllers
 		// Manage a specific customer
 		public async Task<IActionResult> Manage(string id)
 		{
-			var customer = await _tableStorageService.GetCustomerProfileAsync("Customer", id);
+			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
 			if (customer == null)
 			{
 				return NotFound();
@@ -55,7 +55,7 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
-			var customer = await _tableStorageService.GetCustomerProfileAsync("Customer", model.Id);
+			var customer = await _tableStorageService.GetCustomerAsync("Customer", model.Id);
 			if (customer == null)
 			{
 				return NotFound();
@@ -66,7 +66,7 @@ namespace ABC_Retail.Controllers
 			customer.Email = model.Email;
 			customer.Phone = model.Phone;
 
-			await _tableStorageService.UpdateCustomerProfileAsync(customer);
+			await _tableStorageService.UpdateCustomerAsync(customer);
 			return RedirectToAction("Index");
 		}
 
@@ -74,13 +74,13 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
-			var customer = await _tableStorageService.GetCustomerProfileAsync("Customer", id);
+			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
 			if (customer == null)
 			{
 				return NotFound();
 			}
 
-			await _tableStorageService.DeleteCustomerProfileAsync(customer.PartitionKey, customer.RowKey);
+			await _tableStorageService.DeleteCustomerAsync(customer.PartitionKey, customer.RowKey);
 			return RedirectToAction("Index");
 		}
 
@@ -102,7 +102,7 @@ namespace ABC_Retail.Controllers
 				Phone = model.Phone
 			};
 
-			await _tableStorageService.AddCustomerProfileAsync(customer);
+			await _tableStorageService.AddCustomerAsync(customer);
 			return RedirectToAction("Index");
 		}
 	}

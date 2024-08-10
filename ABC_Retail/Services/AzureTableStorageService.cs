@@ -29,7 +29,7 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Async method to add a customer profile to the CustomerProfiles table.
-		public async Task AddCustomerProfileAsync(Customer customer)
+		public async Task AddCustomerAsync(Customer customer)
 		{
 			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
 			try
@@ -46,7 +46,7 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Async method to get a customer profile from the CustomerProfiles table.
-		public async Task<Customer> GetCustomerProfileAsync(string partitionKey, string rowKey)
+		public async Task<Customer> GetCustomerAsync(string partitionKey, string rowKey)
 		{
 			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
 			try
@@ -69,7 +69,7 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Async method to update a customer profile in the CustomerProfiles table.
-		public async Task UpdateCustomerProfileAsync(Customer customer)
+		public async Task UpdateCustomerAsync(Customer customer)
 		{
 			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
 			try
@@ -86,7 +86,7 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Async method to delete a customer profile from the CustomerProfiles table.
-		public async Task DeleteCustomerProfileAsync(string partitionKey, string rowKey)
+		public async Task DeleteCustomerAsync(string partitionKey, string rowKey)
 		{
 			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
 			try
@@ -103,7 +103,7 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Async method to get all customer profiles from the CustomerProfiles table.
-		public async Task<List<Customer>> GetAllCustomerProfilesAsync()
+		public async Task<List<Customer>> GetAllCustomersAsync()
 		{
 			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
 			var customers = new List<Customer>();
