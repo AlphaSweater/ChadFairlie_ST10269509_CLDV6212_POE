@@ -14,6 +14,7 @@ namespace ABC_Retail
 			// Add Azure Table Storage service
 			string storageConnectionString = builder.Configuration.GetConnectionString("AzureStorage");
 			builder.Services.AddSingleton(new AzureTableStorageService(storageConnectionString));
+			builder.Services.AddSingleton(new AzureBlobStorageService(storageConnectionString));
 
 			var app = builder.Build();
 
