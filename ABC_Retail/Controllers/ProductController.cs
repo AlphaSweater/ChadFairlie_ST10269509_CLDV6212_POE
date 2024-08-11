@@ -28,7 +28,8 @@ namespace ABC_Retail.Controllers
 				Id = p.RowKey,
 				Name = p.Name,
 				Price = p.Price,
-				Description = p.Description
+				Description = p.Description,
+				Quantity = p.Quantity
 			}).ToList();
 
 			return View(productViewModels);
@@ -53,7 +54,8 @@ namespace ABC_Retail.Controllers
 				Id = product.RowKey,
 				Name = product.Name,
 				Price = product.Price,
-				Description = product.Description
+				Description = product.Description,
+				Quantity = product.Quantity
 			};
 
 			return View(productViewModel);
@@ -77,6 +79,7 @@ namespace ABC_Retail.Controllers
 			product.Name = model.Name;
 			product.Price = model.Price;
 			product.Description = model.Description;
+			product.Quantity = model.Quantity;
 
 			await _tableStorageService.UpdateProductAsync(product);
 			return RedirectToAction("Index");
@@ -127,7 +130,8 @@ namespace ABC_Retail.Controllers
 			{
 				Name = model.Name,
 				Price = model.Price,
-				Description = model.Description
+				Description = model.Description,
+				Quantity = model.Quantity
 			};
 
 			await _tableStorageService.AddProductAsync(product);

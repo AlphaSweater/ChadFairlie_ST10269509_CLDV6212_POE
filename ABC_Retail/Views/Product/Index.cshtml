@@ -20,6 +20,8 @@ else
 				<th>Name</th>
 				<th>Price</th>
 				<th>Description</th>
+				<th>Quantity</th>
+				<th>Purchase</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
@@ -30,6 +32,8 @@ else
 					<td>@product.Name</td>
 					<td>@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
 					<td>@product.Description</td>
+					<td>@product.Quantity</td>
+					<td><a class="btn btn-success mb-3" href="@Url.Action("Purchase", "Product")">Purchase</a></td>
 					<td>
 						<a href="@Url.Action("Manage", "Product", new { id = product.Id })">Manage</a>
 					</td>
