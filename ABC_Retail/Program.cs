@@ -1,4 +1,5 @@
 using ABC_Retail.Services;
+using Azure.Storage.Blobs;
 
 namespace ABC_Retail
 {
@@ -9,23 +10,7 @@ namespace ABC_Retail
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
-			builder.Services.AddControllersWithViews();
-
-			// Add logging services
-			builder.Services.AddLogging(config =>
-			{
-				config.AddConsole();
-				config.AddDebug();
-			});
-
-			// Add Azure Table Storage service
-			string storageConnectionString = builder.Configuration.GetConnectionString("AzureStorage");
-			builder.Services.AddSingleton(new AzureTableStorageService(storageConnectionString));
-			builder.Services.AddSingleton<AzureBlobStorageService>(sp =>
-			{
-				var logger = sp.GetRequiredService<ILogger<AzureBlobStorageService>>();
-				return new AzureBlobStorageService(storageConnectionString, logger);
-			});
+			ConfigureServices(builder.Services, builder.Configuration);
 
 			var app = builder.Build();
 
@@ -49,6 +34,38 @@ namespace ABC_Retail
 				pattern: "{controller=Home}/{action=Index}/{id?}");
 
 			app.Run();
+		}
+
+		// Configure services
+		public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+		{
+			services.AddControllersWithViews();
+
+			// Add logging services
+			services.AddLogging(config =>
+			{
+				config.AddConsole();
+				config.AddDebug();
+			});
+
+			// Get the connection string for Azure Storage
+			string storageConnectionString = configuration.GetConnectionString("AzureStorage");
+
+			// Add Azure Table Storage service
+			services.AddSingleton(new AzureTableStorageService(storageConnectionString));
+
+			// Add BlobServiceClient
+			services.AddSingleton(new BlobServiceClient(storageConnectionString));
+
+			// Add SasTokenGenerator and AzureBlobStorageService
+			services.AddSingleton<SasTokenGenerator>();
+			services.AddSingleton<AzureBlobStorageService>(sp =>
+			{
+				var logger = sp.GetRequiredService<ILogger<AzureBlobStorageService>>();
+				var blobServiceClient = sp.GetRequiredService<BlobServiceClient>();
+				var sasTokenGenerator = sp.GetRequiredService<SasTokenGenerator>();
+				return new AzureBlobStorageService(blobServiceClient, sasTokenGenerator, logger);
+			});
 		}
 	}
 }

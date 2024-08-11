@@ -8,64 +8,20 @@ namespace ABC_Retail.Services
 	public class AzureBlobStorageService
 	{
 		private readonly BlobServiceClient _blobServiceClient;
-		private readonly string _imageContainerName = "imagefiles";
+		private readonly SasTokenGenerator _sasTokenGenerator;
 		private readonly ILogger<AzureBlobStorageService> _logger;
+		private readonly string _imageContainerName = "imagefiles";
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureBlobStorageService"/> class.
 		/// </summary>
-		public AzureBlobStorageService(string connectionString, ILogger<AzureBlobStorageService> logger)
+		public AzureBlobStorageService(BlobServiceClient blobServiceClient, SasTokenGenerator sasTokenGenerator, ILogger<AzureBlobStorageService> logger)
 		{
-			// Initialize the BlobServiceClient and BlobContainerClient using the connection string
-			_blobServiceClient = new BlobServiceClient(connectionString);
+			// Initialize the BlobServiceClient, SasTokenGenerator, and Logger
+			_blobServiceClient = blobServiceClient;
+			_sasTokenGenerator = sasTokenGenerator;
 			_logger = logger;
-		}
-
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Methods to generate SAS tokens
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		// Generate a SAS token for a container with the specified permissions and expiry time
-		public string GenerateContainerSasToken(string containerName, BlobContainerSasPermissions permissions, DateTimeOffset expiresOn)
-		{
-			// Retrieve the container client
-			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-			// Check if the account has access keys, which is required to generate a SAS token
-			if (!containerClient.CanGenerateSasUri)
-			{
-				_logger.LogError("Cannot generate SAS token. Account does not have access keys for container {ContainerName}.", containerName);
-				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
-			}
-
-			_logger.LogDebug("Generating SAS token for container {ContainerName} with permissions {Permissions} and expiry {Expiry}.", containerName, permissions, expiresOn);
-			// Generate the SAS token for the container
-			var sasToken = containerClient.GenerateSasUri(permissions, expiresOn);
-			return sasToken.Query;
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		// Generate a SAS token for a blob with the specified permissions and expiry time
-		public string GenerateBlobSasToken(string containerName, string blobName, BlobSasPermissions permissions, DateTimeOffset expiresOn)
-		{
-			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-			// Retrieve the blob client
-			var blobClient = containerClient.GetBlobClient(blobName);
-
-			// Check if the account has access keys, which is required to generate a SAS token
-			if (!blobClient.CanGenerateSasUri)
-			{
-				_logger.LogError("Cannot generate SAS token. Account does not have access keys for blob {BlobName}.", blobName);
-				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
-			}
-
-			_logger.LogDebug("Generating SAS token for blob {BlobName} with permissions {Permissions} and expiry {Expiry}.", blobName, permissions, expiresOn);
-			// Generate the SAS token for the blob
-			var sasToken = blobClient.GenerateSasUri(permissions, expiresOn);
-			return sasToken.Query;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -80,22 +36,21 @@ namespace ABC_Retail.Services
 		/// <returns>The URL of the uploaded file.</returns>
 		public async Task<string> UploadFileAsync(IFormFile file)
 		{
+			// Generate a SAS token for the container with write and create permissions
+			var containerSasToken = _sasTokenGenerator.GenerateContainerSasToken(
+				_imageContainerName,
+				BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Create);
+
+			// Create the BlobClient using the SAS token
+			var blobClient = new BlobClient(
+				new Uri($"{_blobServiceClient.GetBlobContainerClient(_imageContainerName).Uri}{containerSasToken}"));
+
+			// Generate a unique name for the blob and get a reference to the blob client
+			var blobName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+			blobClient = blobClient.GetParentBlobContainerClient().GetBlobClient(blobName);
+
 			try
 			{
-				// Generate a SAS token for the container with write and create permissions
-				var containerSasToken = GenerateContainerSasToken(
-				_imageContainerName,
-				BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Create,
-				DateTimeOffset.UtcNow.AddHours(1)); // Token valid for 1 hour
-
-				// Create the BlobClient using the SAS token
-				var blobClient = new BlobClient(
-					new Uri($"{_blobServiceClient.GetBlobContainerClient(_imageContainerName).Uri}{containerSasToken}"));
-
-				// Generate a unique name for the blob and get a reference to the blob client
-				var blobName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-				blobClient = blobClient.GetParentBlobContainerClient().GetBlobClient(blobName);
-
 				_logger.LogInformation("Uploading file {FileName} as blob {BlobName} to container {ContainerName}.", file.FileName, blobName, _imageContainerName);
 
 				// Upload the file to the blob
@@ -105,6 +60,7 @@ namespace ABC_Retail.Services
 				}
 
 				_logger.LogInformation("File {FileName} uploaded successfully to {BlobUri}.", file.FileName, blobClient.Uri);
+
 				// Return the URL of the uploaded file
 				return blobClient.Uri.ToString();
 			}
@@ -119,17 +75,16 @@ namespace ABC_Retail.Services
 		/// <summary>
 		/// Deletes a file from Azure Blob Storage.
 		/// </summary>
-		/// <param name="blobUri">The URI of the blob to delete.</param>
+		/// <param name="blobName">The name of the blob to delete.</param>
 		public async Task DeleteFileAsync(string blobName)
 		{
 			try
 			{
 				// Generate a SAS token for the blob with delete permission
-				var blobSasToken = GenerateBlobSasToken(
+				var blobSasToken = _sasTokenGenerator.GenerateBlobSasToken(
 					_imageContainerName,
 					blobName,
-					BlobSasPermissions.Delete,
-					DateTimeOffset.UtcNow.AddHours(1)); // Token valid for 1 hour
+					BlobSasPermissions.Delete);
 
 				// Build the blob URI using the container name and blob name
 				var blobUri = new UriBuilder(_blobServiceClient.Uri)
@@ -165,10 +120,9 @@ namespace ABC_Retail.Services
 			try
 			{
 				// Generate a SAS token for the container with list and read permissions
-				var containerSasToken = GenerateContainerSasToken(
-				_imageContainerName,
-				BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read,
-				DateTimeOffset.UtcNow.AddHours(1)); // Token valid for 1 hour
+				var containerSasToken = _sasTokenGenerator.GenerateContainerSasToken(
+					_imageContainerName,
+					BlobContainerSasPermissions.List | BlobContainerSasPermissions.Read);
 
 				// Create the BlobContainerClient using the SAS token
 				var containerClient = new BlobContainerClient(
@@ -196,6 +150,48 @@ namespace ABC_Retail.Services
 				_logger.LogError(ex, "An error occurred while listing blobs in container {ContainerName}.", _imageContainerName);
 				throw;
 			}
+		}
+	}
+
+	public class SasTokenGenerator
+	{
+		private readonly BlobServiceClient _blobServiceClient;
+		private readonly ILogger<SasTokenGenerator> _logger;
+		private readonly TimeSpan _defaultExpiration = TimeSpan.FromHours(1);
+
+		public SasTokenGenerator(BlobServiceClient blobServiceClient, ILogger<SasTokenGenerator> logger)
+		{
+			_blobServiceClient = blobServiceClient;
+			_logger = logger;
+		}
+
+		public string GenerateContainerSasToken(string containerName, BlobContainerSasPermissions permissions, TimeSpan? expiration = null)
+		{
+			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+			if (!containerClient.CanGenerateSasUri)
+			{
+				_logger.LogError("Cannot generate SAS token. Account does not have access keys for container {ContainerName}.", containerName);
+				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
+			}
+
+			var sasToken = containerClient.GenerateSasUri(permissions, DateTimeOffset.UtcNow.Add(expiration ?? _defaultExpiration));
+			return sasToken.Query;
+		}
+
+		public string GenerateBlobSasToken(string containerName, string blobName, BlobSasPermissions permissions, TimeSpan? expiration = null)
+		{
+			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+			var blobClient = containerClient.GetBlobClient(blobName);
+
+			if (!blobClient.CanGenerateSasUri)
+			{
+				_logger.LogError("Cannot generate SAS token. Account does not have access keys for blob {BlobName}.", blobName);
+				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
+			}
+
+			var sasToken = blobClient.GenerateSasUri(permissions, DateTimeOffset.UtcNow.Add(expiration ?? _defaultExpiration));
+			return sasToken.Query;
 		}
 	}
 }
