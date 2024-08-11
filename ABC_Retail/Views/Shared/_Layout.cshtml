@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ABC_Retail.styles.css" asp-append-version="true" />
+	<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
 </head>
 <body>
     <header>
@@ -50,6 +52,59 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
-</body>
-</html>
+	<script>
+    $(document).ready(function () {
+        $('.purchase-button').click(function () {
+            var button = $(this);
+            var productId = button.data('id');
+
+            // Show confirmation popup
+            Swal.fire({
+                title: 'Confirm Purchase',
+                text: 'Are you sure you want to purchase this product?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, purchase it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Product/Purchase',
+                        type: 'POST',
+                        data: { id: productId },
+                        success: function (data) {
+                            // Update the specific product quantity container
+                            button.closest('tr').find('#product-quantity-container').html(data);
+
+                            // Show success popup and then refresh
+                            Swal.fire({
+                                title: 'Purchase Successful',
+                                text: 'The product has been purchased.',
+                                icon: 'success',
+                                willClose: () => {
+                                    // Delay the page refresh
+                                    setTimeout(function () {
+                                        location.reload();
+                                    }, 100); // 100 milliseconds delay
+                                }
+                            });
+                        },
+                        error: function () {
+                            // Handle errors
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'An error occurred while processing the purchase.',
+                                icon: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+	</script>
+	</body>
+	</html>

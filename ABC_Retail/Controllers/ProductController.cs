@@ -146,6 +146,7 @@ namespace ABC_Retail.Controllers
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Handles product purchase and queues the operation
+		[HttpPost]
 		public async Task<IActionResult> Purchase(string id)
 		{
 			var product = await _tableStorageService.GetProductAsync("Product", id);
@@ -164,8 +165,10 @@ namespace ABC_Retail.Controllers
 
 			await _queueService.EnqueueMessageAsync(purchaseMessage);
 
-			// Redirect to the HomeController Index action
-			return RedirectToAction("Index", "Home");
+			// Reload the product after purchase to get updated quantity
+			product = await _tableStorageService.GetProductAsync("Product", id);
+
+			return RedirectToAction("Index");
 		}
 	}
 }

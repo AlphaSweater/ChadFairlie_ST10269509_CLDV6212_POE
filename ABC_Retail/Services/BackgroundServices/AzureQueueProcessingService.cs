@@ -36,7 +36,7 @@ namespace ABC_Retail.Services.BackgroundServices
 					await _queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
 				}
 
-				await Task.Delay(500, stoppingToken); // Add delay to prevent tight looping
+				await Task.Delay(100, stoppingToken); // Add delay to prevent tight looping
 			}
 		}
 
