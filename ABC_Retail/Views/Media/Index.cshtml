@@ -1,0 +1,46 @@
+﻿@model IEnumerable<ABC_Retail.ViewModels.MediaFileViewModel>
+
+@{
+	ViewData["Title"] = "Media Files";
+}
+
+<h1>Media Files</h1>
+
+<form asp-action="Upload" asp-controller="Media" method="post" enctype="multipart/form-data">
+	<input type="file" name="file" />
+	<button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
+@if (Model.Any())
+{
+	<table class="table mt-4">
+		<thead>
+			<tr>
+				<th>File Name</th>
+				<th>Preview</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var media in Model)
+			{
+				<tr>
+					<td>@media.FileName</td>
+					<td>
+						<img src="@media.Url" alt="@media.FileName" style="max-width: 200px;" />
+					</td>
+					<td>
+						<form asp-action="Delete" asp-controller="Media" method="post">
+							<input type="hidden" name="fileName" value="@media.FileName" />
+							<button type="submit" class="btn btn-danger">Delete</button>
+						</form>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+else
+{
+	<p>No media files found. Start by uploading a file.</p>
+}

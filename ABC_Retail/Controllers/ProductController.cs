@@ -38,8 +38,8 @@ namespace ABC_Retail.Controllers
 		// Manage Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Displays the details of a specific product for management
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays the details of a specific product for management
 		public async Task<IActionResult> Manage(string id)
 		{
 			var product = await _tableStorageService.GetProductAsync("Product", id);
@@ -63,8 +63,8 @@ namespace ABC_Retail.Controllers
 		// Edit Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Updates the details of a specific product
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Updates the details of a specific product
 		[HttpPost]
 		public async Task<IActionResult> Edit(ProductViewModel model)
 		{
@@ -86,8 +86,8 @@ namespace ABC_Retail.Controllers
 		// Delete Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Deletes a specific product
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Deletes a specific product
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
@@ -105,15 +105,15 @@ namespace ABC_Retail.Controllers
 		// Create Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Displays the create product form
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays the create product form
 		public IActionResult Create()
 		{
 			return View();
 		}
 
-		// Handles the creation of a new product
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Handles the creation of a new product
 		[HttpPost]
 		public async Task<IActionResult> Create(ProductViewModel model)
 		{

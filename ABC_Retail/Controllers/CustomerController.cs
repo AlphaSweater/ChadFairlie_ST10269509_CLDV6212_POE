@@ -18,8 +18,8 @@ namespace ABC_Retail.Controllers
 		// Index Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Displays a list of all customers
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays a list of all customers
 		public async Task<IActionResult> Index()
 		{
 			var customers = await _tableStorageService.GetAllCustomersAsync();
@@ -39,8 +39,8 @@ namespace ABC_Retail.Controllers
 		// Manage Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Displays the details of a specific customer for management
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays the details of a specific customer for management
 		public async Task<IActionResult> Manage(string id)
 		{
 			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
@@ -65,8 +65,8 @@ namespace ABC_Retail.Controllers
 		// Edit Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Updates the details of a specific customer
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Updates the details of a specific customer
 		[HttpPost]
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
@@ -89,8 +89,8 @@ namespace ABC_Retail.Controllers
 		// Delete Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Deletes a specific customer
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Deletes a specific customer
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
@@ -108,15 +108,15 @@ namespace ABC_Retail.Controllers
 		// Create Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Displays a form to create a new customer
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Displays a form to create a new customer
 		public IActionResult Create()
 		{
 			return View();
 		}
 
-		// Handles the creation of a new customer
 		//--------------------------------------------------------------------------------------------------------------------------//
+		// Handles the creation of a new customer
 		[HttpPost]
 		public async Task<IActionResult> Create(CustomerViewModel model)
 		{
