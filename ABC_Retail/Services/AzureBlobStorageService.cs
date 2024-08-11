@@ -36,18 +36,16 @@ namespace ABC_Retail.Services
 			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
 			// Check if the account has access keys, which is required to generate a SAS token
-			if (containerClient.CanGenerateSasUri)
-			{
-				_logger.LogDebug("Generating SAS token for container {ContainerName} with permissions {Permissions} and expiry {Expiry}.", containerName, permissions, expiresOn);
-				// Generate the SAS token for the container
-				var sasToken = containerClient.GenerateSasUri(permissions, expiresOn);
-				return sasToken.Query;
-			}
-			else
+			if (!containerClient.CanGenerateSasUri)
 			{
 				_logger.LogError("Cannot generate SAS token. Account does not have access keys for container {ContainerName}.", containerName);
 				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
 			}
+
+			_logger.LogDebug("Generating SAS token for container {ContainerName} with permissions {Permissions} and expiry {Expiry}.", containerName, permissions, expiresOn);
+			// Generate the SAS token for the container
+			var sasToken = containerClient.GenerateSasUri(permissions, expiresOn);
+			return sasToken.Query;
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
@@ -58,18 +56,16 @@ namespace ABC_Retail.Services
 			var blobClient = _containerClient.GetBlobClient(blobName);
 
 			// Check if the account has access keys, which is required to generate a SAS token
-			if (blobClient.CanGenerateSasUri)
-			{
-				_logger.LogDebug("Generating SAS token for blob {BlobName} with permissions {Permissions} and expiry {Expiry}.", blobName, permissions, expiresOn);
-				// Generate the SAS token for the blob
-				var sasToken = blobClient.GenerateSasUri(permissions, expiresOn);
-				return sasToken.Query;
-			}
-			else
+			if (!blobClient.CanGenerateSasUri)
 			{
 				_logger.LogError("Cannot generate SAS token. Account does not have access keys for blob {BlobName}.", blobName);
 				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
 			}
+
+			_logger.LogDebug("Generating SAS token for blob {BlobName} with permissions {Permissions} and expiry {Expiry}.", blobName, permissions, expiresOn);
+			// Generate the SAS token for the blob
+			var sasToken = blobClient.GenerateSasUri(permissions, expiresOn);
+			return sasToken.Query;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
