@@ -2,7 +2,7 @@
 {
 	public class MediaFileViewModel
 	{
-		public string FileName { get; set; }
-		public string Url { get; set; }
+		public string FileName { get; set; } // Name of the media file
+		public string Url { get; set; } // URL of the media file
 	}
 }

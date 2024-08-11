@@ -11,10 +11,21 @@ namespace ABC_Retail
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
+			// Add logging services
+			builder.Services.AddLogging(config =>
+			{
+				config.AddConsole();
+				config.AddDebug();
+			});
+
 			// Add Azure Table Storage service
 			string storageConnectionString = builder.Configuration.GetConnectionString("AzureStorage");
 			builder.Services.AddSingleton(new AzureTableStorageService(storageConnectionString));
-			builder.Services.AddSingleton(new AzureBlobStorageService(storageConnectionString));
+			builder.Services.AddSingleton<AzureBlobStorageService>(sp =>
+			{
+				var logger = sp.GetRequiredService<ILogger<AzureBlobStorageService>>();
+				return new AzureBlobStorageService(storageConnectionString, logger);
+			});
 
 			var app = builder.Build();
 

@@ -1,4 +1,5 @@
-﻿using ABC_Retail.Models;
+﻿using Azure.Storage.Blobs;
+using ABC_Retail.Models;
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -14,19 +15,21 @@ namespace ABC_Retail.Controllers
 			_blobStorageService = blobStorageService;
 		}
 
+		//--------------------------------------------------------------------------------------------------------------------------//
 		// List all media files
 		public async Task<IActionResult> Index()
 		{
 			var files = await _blobStorageService.ListFilesAsync();
 			var mediaFiles = files.Select(f => new MediaFileViewModel
 			{
-				FileName = Path.GetFileName(f),
-				Url = f
+				FileName = f.Name,
+				Url = f.Uri.ToString()
 			}).ToList();
 
 			return View(mediaFiles);
 		}
 
+		//--------------------------------------------------------------------------------------------------------------------------//
 		// Upload a new file
 		[HttpPost]
 		public async Task<IActionResult> Upload(IFormFile file)
@@ -40,11 +43,12 @@ namespace ABC_Retail.Controllers
 			return View("Error", new ErrorViewModel { RequestId = "No file selected or file is empty." });
 		}
 
+		//--------------------------------------------------------------------------------------------------------------------------//
 		// Delete a file
 		[HttpPost]
-		public async Task<IActionResult> Delete(string url)
+		public async Task<IActionResult> Delete(string fileName)
 		{
-			await _blobStorageService.DeleteFileAsync(url);
+			await _blobStorageService.DeleteFileAsync(fileName);
 			return RedirectToAction("Index");
 		}
 	}

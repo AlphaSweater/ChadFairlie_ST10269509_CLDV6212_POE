@@ -31,7 +31,7 @@
 					</td>
 					<td>
 						<form asp-action="Delete" asp-controller="Media" method="post">
-							<input type="hidden" name="url" value="@media.Url" />
+							<input type="hidden" name="fileName" value="@media.FileName" />
 							<button type="submit" class="btn btn-danger">Delete</button>
 						</form>
 					</td>
