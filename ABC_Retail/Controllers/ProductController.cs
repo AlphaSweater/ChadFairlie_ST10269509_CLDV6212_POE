@@ -165,10 +165,14 @@ namespace ABC_Retail.Controllers
 
 			await _queueService.EnqueueMessageAsync(purchaseMessage);
 
-			// Reload the product after purchase to get updated quantity
+			// Delay for 200 milliseconds to give the queue processing service time to process the message
+			await Task.Delay(250);
+
+			// Optionally, you can fetch the product again to get the quantity after queuing the message
 			product = await _tableStorageService.GetProductAsync("Product", id);
 
-			return RedirectToAction("Index");
+			// Return the updated quantity as JSON
+			return Json(new { quantity = product.Quantity });
 		}
 	}
 }
