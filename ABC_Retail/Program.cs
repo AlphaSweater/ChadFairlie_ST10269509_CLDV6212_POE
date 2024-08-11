@@ -1,5 +1,7 @@
 using ABC_Retail.Services;
+using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 
 namespace ABC_Retail
 {
@@ -56,6 +58,18 @@ namespace ABC_Retail
 
 			// Add BlobServiceClient
 			services.AddSingleton(new BlobServiceClient(storageConnectionString));
+
+			// Register the QueueClient as a singleton
+			services.AddSingleton(sp =>
+			{
+				var queueClient = new QueueClient(storageConnectionString, "purchase-queue");
+				queueClient.CreateIfNotExists(); // Ensure the queue exists
+				return queueClient;
+			});
+
+			// Register AzureQueueService and AzureQueueProcessingService
+			services.AddSingleton<AzureQueueService>();
+			services.AddSingleton<IHostedService, AzureQueueProcessingService>();
 
 			// Add SasTokenGenerator and AzureBlobStorageService
 			services.AddSingleton<SasTokenGenerator>();

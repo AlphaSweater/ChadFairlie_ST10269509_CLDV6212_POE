@@ -8,10 +8,12 @@ namespace ABC_Retail.Controllers
 	public class ProductController : Controller
 	{
 		private readonly AzureTableStorageService _tableStorageService;
+		private readonly AzureQueueService _queueService;
 
-		public ProductController(AzureTableStorageService tableStorageService)
+		public ProductController(AzureTableStorageService tableStorageService, AzureQueueService queueService)
 		{
 			_tableStorageService = tableStorageService;
+			_queueService = queueService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -136,6 +138,34 @@ namespace ABC_Retail.Controllers
 
 			await _tableStorageService.AddProductAsync(product);
 			return RedirectToAction("Index");
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Create Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		// Handles product purchase and queues the operation
+		public async Task<IActionResult> Purchase(string id)
+		{
+			var product = await _tableStorageService.GetProductAsync("Product", id);
+			if (product == null || product.Quantity <= 0)
+			{
+				return NotFound("Product not available or out of stock.");
+			}
+
+			// Enqueue a purchase message
+			var purchaseMessage = new
+			{
+				ProductId = product.RowKey,
+				ProductName = product.Name,
+				Quantity = 1 // Assume purchasing 1 unit for simplicity
+			};
+
+			await _queueService.EnqueueMessageAsync(purchaseMessage);
+
+			// Redirect to the HomeController Index action
+			return RedirectToAction("Index", "Home");
 		}
 	}
 }
