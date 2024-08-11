@@ -12,7 +12,9 @@ namespace ABC_Retail.Services
 		private readonly ILogger<AzureBlobStorageService> _logger;
 		private readonly string _imageContainerName = "imagefiles";
 
-		//--------------------------------------------------------------------------------------------------------------------------//
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Constructor
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureBlobStorageService"/> class.
 		/// </summary>
@@ -153,18 +155,43 @@ namespace ABC_Retail.Services
 		}
 	}
 
+	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+	/// <summary>
+	/// Generates SAS tokens for Azure Blob Storage access.
+	/// </summary>
 	public class SasTokenGenerator
 	{
 		private readonly BlobServiceClient _blobServiceClient;
 		private readonly ILogger<SasTokenGenerator> _logger;
 		private readonly TimeSpan _defaultExpiration = TimeSpan.FromHours(1);
 
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Constructor
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		/// <summary>
+		/// Initializes a new instance of the <see cref="SasTokenGenerator"/> class.
+		/// </summary>
 		public SasTokenGenerator(BlobServiceClient blobServiceClient, ILogger<SasTokenGenerator> logger)
 		{
 			_blobServiceClient = blobServiceClient;
 			_logger = logger;
 		}
 
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Methods to generate SAS tokens
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Generates a SAS token for a container.
+		/// </summary>
+		/// <param name="containerName">The name of the container.</param>
+		/// <param name="permissions">The permissions to grant.</param>
+		/// <param name="expiration">The expiration time for the SAS token.</param>
+		/// <returns>The generated SAS token.</returns>
 		public string GenerateContainerSasToken(string containerName, BlobContainerSasPermissions permissions, TimeSpan? expiration = null)
 		{
 			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
@@ -179,6 +206,15 @@ namespace ABC_Retail.Services
 			return sasToken.Query;
 		}
 
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Generates a SAS token for a blob.
+		/// </summary>
+		/// <param name="containerName">The name of the container.</param>
+		/// <param name="blobName">The name of the blob.</param>
+		/// <param name="permissions">The permissions to grant.</param>
+		/// <param name="expiration">The expiration time for the SAS token.</param>
+		/// <returns>The generated SAS token.</returns>
 		public string GenerateBlobSasToken(string containerName, string blobName, BlobSasPermissions permissions, TimeSpan? expiration = null)
 		{
 			var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
