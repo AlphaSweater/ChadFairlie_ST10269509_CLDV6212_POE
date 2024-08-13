@@ -71,6 +71,17 @@
 					cancelButtonText: 'Cancel'
 				}).then((result) => {
 					if (result.isConfirmed) {
+						// Show loading popup
+						Swal.fire({
+							title: 'Processing Purchase',
+							text: 'Please wait...',
+							icon: 'info',
+							allowOutsideClick: false,
+							didOpen: () => {
+								Swal.showLoading();
+							}
+						});
+
 						$.ajax({
 							url: '/Product/Purchase',
 							type: 'POST',
@@ -79,16 +90,18 @@
 								// Update the specific product quantity container
 								button.closest('tr').find('.product-quantity').text(data.quantity);
 
-								// Show success popup
-								Swal.fire({
-									title: 'Purchase Successful',
-									text: 'The product has been purchased.',
-									icon: 'success'
-								}).then((result) => {
-									if (result.isConfirmed) {
-										location.reload();
-									}
-								});
+								// Wait 200ms before showing the success popup
+								setTimeout(function () {
+									Swal.fire({
+										title: 'Purchase Successful',
+										text: 'The product has been purchased.',
+										icon: 'success'
+									}).then((result) => {
+										if (result.isConfirmed) {
+											location.reload();
+										}
+									});
+								}, 200);
 							},
 							error: function () {
 								// Handle errors
