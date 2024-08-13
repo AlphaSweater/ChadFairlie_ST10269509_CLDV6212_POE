@@ -5,12 +5,34 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ABC_Retail.Controllers
 {
+	/// <summary>
+	/// Controller responsible for managing product-related actions such as displaying, editing, and deleting products,
+	/// as well as handling product purchases.
+	/// </summary>
 	public class ProductController : Controller
 	{
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Dependencies
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// Service for interacting with Azure Table Storage.
 		private readonly AzureTableStorageService _tableStorageService;
+
+		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
+
+		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
 
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Constructor
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		/// <summary>
+		/// Initializes a new instance of the ProductController with the specified services.
+		/// </summary>
+		/// <param name="tableStorageService">Service for interacting with Azure Table Storage.</param>
+		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
 		public ProductController(AzureTableStorageService tableStorageService, AzureQueueService queueService)
 		{
 			_tableStorageService = tableStorageService;
@@ -22,10 +44,16 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Displays a list of all products
+		/// <summary>
+		/// Displays a list of all products on the index page.
+		/// </summary>
+		/// <returns>A view displaying a list of all products.</returns>
 		public async Task<IActionResult> Index()
 		{
+			// Retrieve all products from Azure Table Storage.
 			var products = await _tableStorageService.GetAllProductsAsync();
+
+			// Map products to the view model.
 			var productViewModels = products.Select(p => new ProductViewModel
 			{
 				Id = p.RowKey,
@@ -35,6 +63,7 @@ namespace ABC_Retail.Controllers
 				Quantity = p.Quantity
 			}).ToList();
 
+			// Return the view with the list of products.
 			return View(productViewModels);
 		}
 
@@ -43,20 +72,28 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Displays the details of a specific product for management
+		/// <summary>
+		/// Displays the details of a specific product for management.
+		/// </summary>
+		/// <param name="id">The ID of the product to manage.</param>
+		/// <returns>A view displaying the product details.</returns>
 		public async Task<IActionResult> Manage(string id)
 		{
 			if (string.IsNullOrEmpty(id))
 			{
+				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			// Retrieve the product from Azure Table Storage.
 			var product = await _tableStorageService.GetProductAsync("Product", id);
 			if (product == null)
 			{
+				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
+			// Map the product to the view model.
 			var productViewModel = new ProductViewModel
 			{
 				Id = product.RowKey,
@@ -66,6 +103,7 @@ namespace ABC_Retail.Controllers
 				Quantity = product.Quantity
 			};
 
+			// Return the view with the product details.
 			return View(productViewModel);
 		}
 
@@ -74,27 +112,38 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Updates the details of a specific product
+		/// <summary>
+		/// Updates the details of a specific product.
+		/// </summary>
+		/// <param name="model">The view model containing the updated product details.</param>
+		/// <returns>A redirect to the index action after updating the product.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Edit(ProductViewModel model)
 		{
 			if (string.IsNullOrEmpty(model.Id))
 			{
+				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			// Retrieve the product from Azure Table Storage.
 			var product = await _tableStorageService.GetProductAsync("Product", model.Id);
 			if (product == null)
 			{
+				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
+			// Update the product details with the values from the view model.
 			product.Name = model.Name;
 			product.Price = model.Price;
 			product.Description = model.Description;
 			product.Quantity = model.Quantity;
 
+			// Save the updated product back to Azure Table Storage.
 			await _tableStorageService.UpdateProductAsync(product);
+
+			// Redirect to the index action.
 			return RedirectToAction("Index");
 		}
 
@@ -103,22 +152,32 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Deletes a specific product
+		/// <summary>
+		/// Deletes a specific product.
+		/// </summary>
+		/// <param name="id">The ID of the product to delete.</param>
+		/// <returns>A redirect to the index action after deleting the product.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
 			if (string.IsNullOrEmpty(id))
 			{
+				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			// Retrieve the product from Azure Table Storage.
 			var product = await _tableStorageService.GetProductAsync("Product", id);
 			if (product == null)
 			{
+				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
+			// Delete the product from Azure Table Storage.
 			await _tableStorageService.DeleteProductAsync(product.PartitionKey, product.RowKey);
+
+			// Redirect to the index action.
 			return RedirectToAction("Index");
 		}
 
@@ -127,23 +186,33 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Displays the create product form
+		/// <summary>
+		/// Displays the create product form.
+		/// </summary>
+		/// <returns>A view displaying the create product form.</returns>
 		public IActionResult Create()
 		{
+			// Return the view for creating a new product.
 			return View();
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Handles the creation of a new product
+		/// <summary>
+		/// Handles the creation of a new product.
+		/// </summary>
+		/// <param name="model">The view model containing the new product details.</param>
+		/// <returns>A redirect to the index action after creating the product.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Create(ProductViewModel model)
 		{
 			if (!ModelState.IsValid)
 			{
-				// TODO: Handle validation errors
+				// If the model state is invalid, return the view with the current model to display validation errors.
+				// TODO: Handle validation errors (e.g., return the view with errors highlighted).
 				return View(model);
 			}
 
+			// Create a new product entity from the view model.
 			var product = new Product
 			{
 				Name = model.Name,
@@ -152,31 +221,47 @@ namespace ABC_Retail.Controllers
 				Quantity = model.Quantity
 			};
 
+			// Save the new product to Azure Table Storage.
 			await _tableStorageService.AddProductAsync(product);
+
+			// Redirect to the index action.
 			return RedirectToAction("Index");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Create Actions
+		// Purchase Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		// Handles product purchase and queues the operation
+		/// <summary>
+		/// Handles the purchase of a specific product.
+		/// </summary>
+		/// <param name="id">The ID of the product to purchase.</param>
+		/// <returns>A redirect to the index action after purchasing the product.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Purchase(string id)
 		{
 			if (string.IsNullOrEmpty(id))
 			{
+				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			// Retrieve the product from Azure Table Storage.
 			var product = await _tableStorageService.GetProductAsync("Product", id);
-			if (product == null || product.Quantity <= 0)
+			if (product == null)
 			{
-				return NotFound("Product not available or out of stock.");
+				// Return a not found response if the product does not exist.
+				return NotFound();
 			}
 
-			// Create an OrderMessage
+			if (product.Quantity <= 0)
+			{
+				// Return a bad request response if the product is out of stock.
+				return BadRequest("The product is out of stock.");
+			}
+
+			// Create an OrderMessage to enqueue for processing.
 			var orderMessage = new OrderMessage
 			{
 				OrderId = Guid.NewGuid().ToString(), // Generate a new OrderId
@@ -194,10 +279,10 @@ namespace ABC_Retail.Controllers
 				TotalAmount = product.Price // Assuming the total amount is the price of one product
 			};
 
-			// Enqueue the order message
+			// Enqueue the order message for processing.
 			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
 
-			// Optionally, you can fetch the product again to get the quantity after queuing the message
+			// Fetch the updated product from Azure Table Storage.
 			product = await _tableStorageService.GetProductAsync("Product", id);
 
 			// Return the updated quantity as JSON
