@@ -5,6 +5,9 @@ using Azure.Storage.Sas;
 
 namespace ABC_Retail.Services
 {
+	/// <summary>
+	/// Provides methods to interact with Azure Blob Storage, including uploading, deleting, and listing files.
+	/// </summary>
 	public class AzureBlobStorageService
 	{
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//

@@ -5,7 +5,7 @@ namespace ABC_Retail.Services
 {
 	/// <summary>
 	/// Provides a service for interacting with Azure Queue Storage, including
-	/// enqueueing messages into a specified queue.
+	/// enqueuing messages into a specified queue.
 	/// </summary>
 	public class AzureQueueService
 	{

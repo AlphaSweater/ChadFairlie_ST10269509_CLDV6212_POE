@@ -2,7 +2,6 @@
 
 namespace ABC_Retail.Models
 {
-	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 	/// <summary>
 	/// Base class for all message types, containing common properties and methods.
 	/// </summary>
