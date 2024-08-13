@@ -83,7 +83,11 @@
 								Swal.fire({
 									title: 'Purchase Successful',
 									text: 'The product has been purchased.',
-									icon: 'success',
+									icon: 'success'
+								}).then((result) => {
+									if (result.isConfirmed) {
+										location.reload();
+									}
 								});
 							},
 							error: function () {

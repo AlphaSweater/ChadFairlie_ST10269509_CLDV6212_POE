@@ -59,10 +59,10 @@ namespace ABC_Retail
 			// Add BlobServiceClient
 			services.AddSingleton(new BlobServiceClient(storageConnectionString));
 
-			// Register the QueueClient as a singleton
-			services.AddSingleton(sp =>
+			// Register a factory method for creating QueueClient instances
+			services.AddSingleton<Func<string, QueueClient>>(sp => queueName =>
 			{
-				var queueClient = new QueueClient(storageConnectionString, "purchase-queue");
+				var queueClient = new QueueClient(storageConnectionString, queueName);
 				queueClient.CreateIfNotExists(); // Ensure the queue exists
 				return queueClient;
 			});

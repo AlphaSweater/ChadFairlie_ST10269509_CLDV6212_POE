@@ -5,19 +5,18 @@ namespace ABC_Retail.Services
 {
 	public class AzureQueueService
 	{
-		private readonly QueueClient _queueClient;
+		private readonly Func<string, QueueClient> _queueClientFactory;
 
-		// Modify the constructor to accept QueueClient
-		public AzureQueueService(QueueClient queueClient)
+		public AzureQueueService(Func<string, QueueClient> queueClientFactory)
 		{
-			_queueClient = queueClient;
-			_queueClient.CreateIfNotExists(); // Ensure the queue exists
+			_queueClientFactory = queueClientFactory;
 		}
 
-		public async Task EnqueueMessageAsync(object message)
+		public async Task EnqueueMessageAsync<T>(string queueName, T message)
 		{
+			var queueClient = _queueClientFactory(queueName);
 			var jsonMessage = JsonSerializer.Serialize(message);
-			await _queueClient.SendMessageAsync(jsonMessage);
+			await queueClient.SendMessageAsync(jsonMessage);
 		}
 	}
 }

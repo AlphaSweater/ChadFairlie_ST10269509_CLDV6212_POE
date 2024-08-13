@@ -1,50 +1,98 @@
-﻿using Azure.Storage.Queues;
+﻿using ABC_Retail.Models;
+using Azure.Storage.Queues;
 using System.Text.Json;
 
 namespace ABC_Retail.Services.BackgroundServices
 {
 	public class AzureQueueProcessingService : BackgroundService
 	{
-		private readonly QueueClient _queueClient;
+		private readonly Func<string, QueueClient> _queueClientFactory;
 		private readonly AzureTableStorageService _tableStorageService;
+		private readonly string _purchaseQueueName = "purchase-queue";
+		private readonly string _inventoryQueueName = "inventory-queue";
 
-		// Modify the constructor to accept QueueClient
-		public AzureQueueProcessingService(QueueClient queueClient, AzureTableStorageService tableStorageService)
+		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureTableStorageService tableStorageService)
 		{
-			_queueClient = queueClient;
+			_queueClientFactory = queueClientFactory;
 			_tableStorageService = tableStorageService;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
+			var purchaseQueueClient = _queueClientFactory(_purchaseQueueName);
+
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				var message = await _queueClient.ReceiveMessageAsync();
-				if (message.Value != null)
-				{
-					var purchaseMessage = JsonSerializer.Deserialize<PurchaseMessage>(message.Value.MessageText);
-
-					// Process the purchase
-					var product = await _tableStorageService.GetProductAsync("Product", purchaseMessage.ProductId);
-					if (product != null && product.Quantity > 0)
-					{
-						product.Quantity -= purchaseMessage.Quantity;
-						await _tableStorageService.UpdateProductAsync(product);
-					}
-
-					// Delete the message after processing
-					await _queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
-				}
-
-				await Task.Delay(150, stoppingToken); // Add delay to prevent tight looping
+				await ProcessQueueMessagesAsync(purchaseQueueClient, stoppingToken);
+				await Task.Delay(150, stoppingToken);
 			}
 		}
 
-		private class PurchaseMessage
+		private async Task ProcessQueueMessagesAsync(QueueClient queueClient, CancellationToken stoppingToken)
 		{
-			public string ProductId { get; set; }
-			public string ProductName { get; set; }
-			public int Quantity { get; set; }
+			var message = await queueClient.ReceiveMessageAsync();
+			if (message.Value != null)
+			{
+				var messageType = Message.GetMessageType(message.Value.MessageText);
+
+				if (messageType == "OrderMessage")
+				{
+					await ProcessOrderMessageAsync(message.Value.MessageText);
+				}
+
+				await queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
+			}
+		}
+
+		private async Task ProcessOrderMessageAsync(string messageText)
+		{
+			var orderMessage = JsonSerializer.Deserialize<OrderMessage>(messageText);
+			bool isOrderProcessed = await ProcessOrderAndUpdateInventoryAsync(orderMessage);
+
+			if (isOrderProcessed)
+			{
+				await LogInventoryUpdateAsync(orderMessage);
+			}
+		}
+
+		private async Task<bool> ProcessOrderAndUpdateInventoryAsync(OrderMessage orderMessage)
+		{
+			foreach (var product in orderMessage.Products)
+			{
+				var dbProduct = await _tableStorageService.GetProductAsync("Product", product.ProductId);
+				if (dbProduct == null || dbProduct.Quantity < product.Quantity)
+				{
+					// Not enough stock or product not found
+					return false;
+				}
+			}
+
+			// Update inventory
+			foreach (var product in orderMessage.Products)
+			{
+				var dbProduct = await _tableStorageService.GetProductAsync("Product", product.ProductId);
+				dbProduct.Quantity -= product.Quantity;
+				await _tableStorageService.UpdateProductAsync(dbProduct);
+			}
+
+			return true;
+		}
+
+		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage)
+		{
+			foreach (var product in orderMessage.Products)
+			{
+				var inventoryUpdateMessage = new InventoryUpdateMessage
+				{
+					Name = product.ProductName,
+					Quantity = -product.Quantity,
+					Reason = "Order processed"
+				};
+
+				var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
+				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
+				await inventoryQueueClient.SendMessageAsync(messageText);
+			}
 		}
 	}
 }

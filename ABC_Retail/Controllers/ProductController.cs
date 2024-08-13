@@ -9,6 +9,7 @@ namespace ABC_Retail.Controllers
 	{
 		private readonly AzureTableStorageService _tableStorageService;
 		private readonly AzureQueueService _queueService;
+		private readonly string _purchaseQueueName = "purchase-queue";
 
 		public ProductController(AzureTableStorageService tableStorageService, AzureQueueService queueService)
 		{
@@ -45,6 +46,11 @@ namespace ABC_Retail.Controllers
 		// Displays the details of a specific product for management
 		public async Task<IActionResult> Manage(string id)
 		{
+			if (string.IsNullOrEmpty(id))
+			{
+				return BadRequest("Product ID cannot be null or empty.");
+			}
+
 			var product = await _tableStorageService.GetProductAsync("Product", id);
 			if (product == null)
 			{
@@ -72,6 +78,11 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Edit(ProductViewModel model)
 		{
+			if (string.IsNullOrEmpty(model.Id))
+			{
+				return BadRequest("Product ID cannot be null or empty.");
+			}
+
 			var product = await _tableStorageService.GetProductAsync("Product", model.Id);
 			if (product == null)
 			{
@@ -96,6 +107,11 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Delete(string id)
 		{
+			if (string.IsNullOrEmpty(id))
+			{
+				return BadRequest("Product ID cannot be null or empty.");
+			}
+
 			var product = await _tableStorageService.GetProductAsync("Product", id);
 			if (product == null)
 			{
@@ -149,24 +165,37 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Purchase(string id)
 		{
+			if (string.IsNullOrEmpty(id))
+			{
+				return BadRequest("Product ID cannot be null or empty.");
+			}
+
 			var product = await _tableStorageService.GetProductAsync("Product", id);
 			if (product == null || product.Quantity <= 0)
 			{
 				return NotFound("Product not available or out of stock.");
 			}
 
-			// Enqueue a purchase message
-			var purchaseMessage = new
+			// Create an OrderMessage
+			var orderMessage = new OrderMessage
 			{
-				ProductId = product.RowKey,
-				ProductName = product.Name,
-				Quantity = 1 // Assume purchasing 1 unit for simplicity
+				OrderId = Guid.NewGuid().ToString(), // Generate a new OrderId
+				CustomerId = "CustomerIdPlaceholder", // Replace with actual customer ID
+				Products = new List<OrderMessage.ProductOrder>
+				{
+					new OrderMessage.ProductOrder
+					{
+						ProductId = product.RowKey,
+						ProductName = product.Name,
+						Quantity = 1 // Assume purchasing 1 unit for simplicity
+					}
+				},
+				OrderDate = DateTime.UtcNow,
+				TotalAmount = product.Price // Assuming the total amount is the price of one product
 			};
 
-			await _queueService.EnqueueMessageAsync(purchaseMessage);
-
-			// Delay for 200 milliseconds to give the queue processing service time to process the message
-			await Task.Delay(250);
+			// Enqueue the order message
+			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
 
 			// Optionally, you can fetch the product again to get the quantity after queuing the message
 			product = await _tableStorageService.GetProductAsync("Product", id);
