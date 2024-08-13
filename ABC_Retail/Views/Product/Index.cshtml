@@ -1,46 +1,111 @@
 ﻿@model IEnumerable<ABC_Retail.ViewModels.ProductViewModel>
 
 @{
-	ViewData["Title"] = "Products";
+    ViewData["Title"] = "Products";
 }
 
 <h1>Products</h1>
 
 @if (!Model.Any())
 {
-	<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
+    <p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
 }
 else
 {
-	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
+    <a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
 
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Price</th>
-				<th>Description</th>
-				<th>Quantity</th>
-				<th>Purchase</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var product in Model)
-			{
-				<tr>
-					<td>@product.Name</td>
-					<td>@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
-					<td>@product.Description</td>
-					<td class="product-quantity">@product.Quantity</td>
-					<td>
-						<a class="btn btn-success mb-3 purchase-button" data-id="@product.Id">Purchase</a>
-					</td>
-					<td>
-						<a href="@Url.Action("Manage", "Product", new { id = product.Id })">Manage</a>
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Purchase</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
+                    <td>@product.Description</td>
+                    <td class="product-quantity">@product.Quantity</td>
+                    <td>
+                        <a class="btn btn-success mb-3 purchase-button" data-id="@product.Id">Purchase</a>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Manage", "Product", new { id = product.Id })">Manage</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.purchase-button').click(function () {
+                var button = $(this);
+                var productId = button.data('id');
+
+                // Show confirmation popup
+                Swal.fire({
+                    title: 'Confirm Purchase',
+                    text: 'Are you sure you want to purchase this product?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, purchase it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading popup
+                        Swal.fire({
+                            title: 'Processing Purchase',
+                            text: 'Please wait...',
+                            icon: 'info',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        $.ajax({
+                            url: '/Product/Purchase',
+                            type: 'POST',
+                            data: { id: productId },
+                            success: function (data) {
+                                // Update the specific product quantity container
+                                button.closest('tr').find('.product-quantity').text(data.quantity);
+
+                                // Wait 200ms before showing the success popup
+                                setTimeout(function () {
+                                    Swal.fire({
+                                        title: 'Purchase Successful',
+                                        text: 'The product has been purchased.',
+                                        icon: 'success'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            location.reload();
+                                        }
+                                    });
+                                }, 200);
+                            },
+                            error: function () {
+                                // Handle errors
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'An error occurred while processing the purchase.',
+                                    icon: 'error'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 }
