@@ -7,9 +7,20 @@ namespace ABC_Retail.Services
 {
 	public class AzureBlobStorageService
 	{
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Fields and Dependencies
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// The BlobServiceClient instance used to interact with Azure Blob Storage.
 		private readonly BlobServiceClient _blobServiceClient;
+
+		// The SasTokenGenerator instance used to generate SAS tokens for Azure Blob Storage access.
 		private readonly SasTokenGenerator _sasTokenGenerator;
+
+		// The logger instance used to record information and errors.
 		private readonly ILogger<AzureBlobStorageService> _logger;
+
+		// The name of the container used to store image files.
 		private readonly string _imageContainerName = "imagefiles";
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
