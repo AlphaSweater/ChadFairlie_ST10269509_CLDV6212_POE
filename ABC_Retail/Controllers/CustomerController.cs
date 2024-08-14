@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABC_Retail.Controllers
 {
 	/// <summary>
-	/// Controller responsible for handling customer-related actions such as listing, managing, 
+	/// Controller responsible for handling customer-related actions such as listing, managing,
 	/// editing, deleting, and creating customers.
 	/// </summary>
 	public class CustomerController : Controller
@@ -17,7 +17,6 @@ namespace ABC_Retail.Controllers
 
 		// Service for interacting with Azure Table Storage.
 		private readonly AzureTableStorageService _tableStorageService;
-
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor

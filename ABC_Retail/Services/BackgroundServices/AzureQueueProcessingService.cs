@@ -29,7 +29,7 @@ namespace ABC_Retail.Services.BackgroundServices
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureQueueProcessingService"/> class.
 		/// </summary>
