@@ -1,0 +1,19 @@
+﻿@model ABC_Retail.ViewModels.ContractFileViewModel
+
+<h2>Contract Details</h2>
+
+<div class="contract-viewer">
+	<object data="@Url.Action("Download", "Contract", new { fileName = Model.FileName })" type="application/pdf" width="100%" height="800px">
+		<p>Your browser does not support PDF viewing. Please <a href="@Url.Action("Download", "Contract", new { fileName = Model.FileName })">download</a> the contract to view it.</p>
+	</object>
+</div>
+
+<hr />
+
+<div class="actions">
+	<form asp-action="Delete" method="post" style="display:inline;">
+		<input type="hidden" name="fileName" value="@Model.FileName" />
+		<input type="submit" class="btn btn-danger" value="Delete Contract" />
+	</form>
+	<a href="@Url.Action("Index", "Contract")" class="btn btn-secondary">Back to List</a>
+</div>

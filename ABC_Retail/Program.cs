@@ -56,6 +56,9 @@ namespace ABC_Retail
 			// Add Azure Table Storage service
 			services.AddSingleton(new AzureTableStorageService(storageConnectionString));
 
+			// Add Azure File Storage service
+			services.AddSingleton(new AzureFileStorageService(storageConnectionString));
+
 			// Add BlobServiceClient
 			services.AddSingleton(new BlobServiceClient(storageConnectionString));
 

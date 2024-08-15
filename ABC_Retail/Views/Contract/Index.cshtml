@@ -1,0 +1,49 @@
+﻿@model IEnumerable<ABC_Retail.ViewModels.ContractFileViewModel>
+
+<h2>Contracts</h2>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>File Name</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var file in Model)
+		{
+			<tr>
+				<td>@file.FileName</td>
+				<td>
+					<a href="@Url.Action("Details", "Contract", new { fileName = file.FileName })" class="btn btn-info">View Details</a>
+					<a href="@file.Url" class="btn btn-success">Download</a>
+					<form asp-action="Delete" method="post" class="d-inline">
+						<input type="hidden" name="fileName" value="@file.FileName" />
+						<input type="submit" value="Delete" class="btn btn-danger" />
+					</form>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
+
+<hr />
+
+<h3>Upload New Contract</h3>
+
+<form asp-action="Upload" method="post" enctype="multipart/form-data">
+	<div class="form-group">
+		<label for="file">Select Contract (PDF or Word):</label>
+		<input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx" required />
+	</div>
+
+	<div class="form-group">
+		<input type="submit" value="Upload" class="btn btn-primary" />
+	</div>
+</form>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}
