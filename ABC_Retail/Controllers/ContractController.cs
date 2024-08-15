@@ -77,7 +77,6 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> InlineView(string fileName)
 		{
 			var stream = await _fileStorageService.DownloadFileAsync(fileName, _contractShareName);
-			Response.Headers.Append("Content-Disposition", $"inline; filename={fileName}");
 			return File(stream, "application/pdf");
 		}
 
@@ -86,8 +85,16 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Download(string fileName)
 		{
 			var stream = await _fileStorageService.DownloadFileAsync(fileName, _contractShareName);
-			return File(stream, "application/pdf");
+
+			if (stream == null)
+			{
+				return NotFound();
+			}
+
+			// Set the correct content type and force download
+			return File(stream, "application/octet-stream", fileName);
 		}
+
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Delete a contract file

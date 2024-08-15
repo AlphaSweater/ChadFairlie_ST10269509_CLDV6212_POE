@@ -15,8 +15,14 @@
 			<tr>
 				<td>@file.FileName</td>
 				<td>
-					<a href="@Url.Action("Details", "Contract", new { fileName = file.FileName })" class="btn btn-info">View Details</a>
-					<a href="@file.Url" class="btn btn-success">Download</a>
+					<form asp-action="Details" method="post" class="d-inline">
+						<input type="hidden" name="fileName" value="@file.FileName" />
+						<input type="submit" value="View Details" class="btn btn-info" />
+					</form>
+					<form asp-action="Download" method="post" class="d-inline">
+						<input type="hidden" name="fileName" value="@file.FileName" />
+						<input type="submit" value="Download" class="btn btn-success" />
+					</form>
 					<form asp-action="Delete" method="post" class="d-inline">
 						<input type="hidden" name="fileName" value="@file.FileName" />
 						<input type="submit" value="Delete" class="btn btn-danger" />
