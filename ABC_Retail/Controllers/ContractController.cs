@@ -65,10 +65,20 @@ namespace ABC_Retail.Controllers
 			return View(new ContractFileViewModel
 			{
 				FileName = fileName,
-				Url = Url.Action("Download", new { fileName }),
+				Url = Url.Action("Download", new { fileName }), // For download
+				InlineUrl = Url.Action("InlineView", new { fileName }), // For inline view
 				FileSize = fileDetails.ContentLength,
 				LastModified = fileDetails.LastModified
 			});
+		}
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		// Inline view of a contract file
+		public async Task<IActionResult> InlineView(string fileName)
+		{
+			var stream = await _fileStorageService.DownloadFileAsync(fileName, _contractShareName);
+			Response.Headers.Append("Content-Disposition", $"inline; filename={fileName}");
+			return File(stream, "application/pdf");
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
@@ -76,8 +86,6 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Download(string fileName)
 		{
 			var stream = await _fileStorageService.DownloadFileAsync(fileName, _contractShareName);
-
-			Response.Headers.Add("Content-Disposition", $"inline; filename={fileName}");
 			return File(stream, "application/pdf");
 		}
 
