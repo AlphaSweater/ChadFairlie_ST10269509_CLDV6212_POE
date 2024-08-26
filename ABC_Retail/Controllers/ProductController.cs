@@ -174,6 +174,15 @@ namespace ABC_Retail.Controllers
 			product.Description = model.Description;
 			product.Quantity = model.Quantity;
 
+			// Update the product image file if a new file is uploaded.
+			if (model.File != null)
+			{
+				// Delete the existing image file from Azure Blob Storage.
+				await _blobStorageService.DeleteFileAsync(product.FileID);
+				// Upload the new image file and get the file ID.
+				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
+			}
+
 			// Save the updated product back to Azure Table Storage.
 			await _tableStorageService.UpdateProductAsync(product);
 
@@ -207,6 +216,9 @@ namespace ABC_Retail.Controllers
 				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
+
+			// Delete the existing image file from Azure Blob Storage.
+			await _blobStorageService.DeleteFileAsync(product.FileID);
 
 			// Delete the product from Azure Table Storage.
 			await _tableStorageService.DeleteProductAsync(product.PartitionKey, product.RowKey);
