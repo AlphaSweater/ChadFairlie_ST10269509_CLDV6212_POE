@@ -17,8 +17,8 @@ namespace ABC_Retail.Services.BackgroundServices
 		// Factory function to create QueueClient instances for different queues.
 		private readonly Func<string, QueueClient> _queueClientFactory;
 
-		// Service for interacting with Azure Table Storage.
-		private readonly AzureTableStorageService _tableStorageService;
+		// Service for interacting with product Azure Table Storage.
+		private readonly ProductTableService _productTableService;
 
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
@@ -33,10 +33,10 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureQueueProcessingService"/> class.
 		/// </summary>
-		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureTableStorageService tableStorageService)
+		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, ProductTableService productTableService)
 		{
 			_queueClientFactory = queueClientFactory;
-			_tableStorageService = tableStorageService;
+			_productTableService = productTableService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -122,7 +122,7 @@ namespace ABC_Retail.Services.BackgroundServices
 			// Check if each product in the order is available in the required quantity.
 			foreach (var product in orderMessage.Products)
 			{
-				var dbProduct = await _tableStorageService.GetProductAsync("Product", product.ProductId);
+				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
 				if (dbProduct == null || dbProduct.Quantity < product.Quantity)
 				{
 					// Not enough stock or product not found, order cannot be processed.
@@ -133,9 +133,9 @@ namespace ABC_Retail.Services.BackgroundServices
 			// Update inventory for each product in the order.
 			foreach (var product in orderMessage.Products)
 			{
-				var dbProduct = await _tableStorageService.GetProductAsync("Product", product.ProductId);
+				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
 				dbProduct.Quantity -= product.Quantity;
-				await _tableStorageService.UpdateProductAsync(dbProduct);
+				await _productTableService.UpdateEntityAsync(dbProduct);
 			}
 
 			return true; // Order processed successfully.

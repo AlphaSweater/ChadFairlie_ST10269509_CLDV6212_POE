@@ -15,8 +15,8 @@ namespace ABC_Retail.Controllers
 		// Dependencies
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Service for interacting with Azure Table Storage.
-		private readonly AzureTableStorageService _tableStorageService;
+		// Service for interacting with product Azure Table Storage.
+		private readonly ProductTableService _productTableService;
 
 		// Service for interacting with Azure Blob Storage.
 		private readonly AzureBlobStorageService _blobStorageService;
@@ -34,12 +34,12 @@ namespace ABC_Retail.Controllers
 		/// <summary>
 		/// Initializes a new instance of the ProductController with the specified services.
 		/// </summary>
-		/// <param name="tableStorageService">Service for interacting with Azure Table Storage.</param>
+		/// <param name="productTableService">Service for interacting with product Azure Table Storage.</param>
 		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
 		/// <param name="blobStorageService"> Service for interacting with Azure Blob Storage.</param>
-		public ProductController(AzureTableStorageService tableStorageService, AzureBlobStorageService blobStorageService, AzureQueueService queueService)
+		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService)
 		{
-			_tableStorageService = tableStorageService;
+			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_queueService = queueService;
 		}
@@ -56,7 +56,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Index()
 		{
 			// Retrieve all products from Azure Table Storage.
-			var products = await _tableStorageService.GetAllProductsAsync();
+			var products = await _productTableService.GetAllEntitiesAsync();
 
 			// Map products to the view model.
 			var productViewModels = new List<ProductViewModel>();
@@ -108,7 +108,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _tableStorageService.GetProductAsync("Product", id);
+			var product = await _productTableService.GetEntityAsync("Product", id);
 			if (product == null)
 			{
 				// Return a not found response if the product does not exist.
@@ -161,7 +161,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _tableStorageService.GetProductAsync("Product", model.Id);
+			var product = await _productTableService.GetEntityAsync("Product", model.Id);
 			if (product == null)
 			{
 				// Return a not found response if the product does not exist.
@@ -184,7 +184,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Save the updated product back to Azure Table Storage.
-			await _tableStorageService.UpdateProductAsync(product);
+			await _productTableService.UpdateEntityAsync(product);
 
 			// Redirect to the index action.
 			return RedirectToAction("Index");
@@ -210,7 +210,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _tableStorageService.GetProductAsync("Product", id);
+			var product = await _productTableService.GetEntityAsync("Product", id);
 			if (product == null)
 			{
 				// Return a not found response if the product does not exist.
@@ -221,7 +221,7 @@ namespace ABC_Retail.Controllers
 			await _blobStorageService.DeleteFileAsync(product.FileID);
 
 			// Delete the product from Azure Table Storage.
-			await _tableStorageService.DeleteProductAsync(product.PartitionKey, product.RowKey);
+			await _productTableService.DeleteEntityAsync(product.PartitionKey, product.RowKey);
 
 			// Redirect to the index action.
 			return RedirectToAction("Index");
@@ -269,7 +269,7 @@ namespace ABC_Retail.Controllers
 			};
 
 			// Save the new product to Azure Table Storage.
-			await _tableStorageService.AddProductAsync(product);
+			await _productTableService.AddEntityAsync(product);
 
 			// Redirect to the index action.
 			return RedirectToAction("Index");
@@ -295,7 +295,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _tableStorageService.GetProductAsync("Product", id);
+			var product = await _productTableService.GetEntityAsync("Product", id);
 			if (product == null)
 			{
 				// Return a not found response if the product does not exist.
@@ -330,7 +330,7 @@ namespace ABC_Retail.Controllers
 			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
 
 			// Fetch the updated product from Azure Table Storage.
-			product = await _tableStorageService.GetProductAsync("Product", id);
+			product = await _productTableService.GetEntityAsync("Product", id);
 
 			// Return the updated quantity as JSON
 			return Json(new { quantity = product.Quantity });

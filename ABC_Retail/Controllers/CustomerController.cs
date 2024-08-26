@@ -15,8 +15,8 @@ namespace ABC_Retail.Controllers
 		// Dependencies
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Service for interacting with Azure Table Storage.
-		private readonly AzureTableStorageService _tableStorageService;
+		// Service for interacting with customer Azure Table Storage.
+		private readonly CustomerTableService _customerTableService;
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
@@ -25,10 +25,10 @@ namespace ABC_Retail.Controllers
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
-		/// <param name="tableStorageService">The service for Azure Table Storage operations.</param>
-		public CustomerController(AzureTableStorageService tableStorageService)
+		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
+		public CustomerController(CustomerTableService customerTableService)
 		{
-			_tableStorageService = tableStorageService;
+			_customerTableService = customerTableService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -43,7 +43,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Index()
 		{
 			// Retrieve all customers from Azure Table Storage.
-			var customers = await _tableStorageService.GetAllCustomersAsync();
+			var customers = await _customerTableService.GetAllEntitiesAsync();
 
 			// Map the customer entities to customer view models.
 			var customerViewModels = customers.Select(c => new CustomerViewModel
@@ -72,7 +72,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Manage(string id)
 		{
 			// Retrieve the customer from Azure Table Storage by PartitionKey and RowKey.
-			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
+			var customer = await _customerTableService.GetEntityAsync("Customer", id);
 			if (customer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
@@ -107,7 +107,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
 			// Retrieve the customer entity from Azure Table Storage.
-			var customer = await _tableStorageService.GetCustomerAsync("Customer", model.Id);
+			var customer = await _customerTableService.GetEntityAsync("Customer", model.Id);
 			if (customer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
@@ -121,7 +121,7 @@ namespace ABC_Retail.Controllers
 			customer.Phone = model.Phone;
 
 			// Save the updated customer entity back to Azure Table Storage.
-			await _tableStorageService.UpdateCustomerAsync(customer);
+			await _customerTableService.UpdateEntityAsync(customer);
 
 			// Redirect to the index action after successful update.
 			return RedirectToAction("Index");
@@ -141,7 +141,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Delete(string id)
 		{
 			// Retrieve the customer entity from Azure Table Storage.
-			var customer = await _tableStorageService.GetCustomerAsync("Customer", id);
+			var customer = await _customerTableService.GetEntityAsync("Customer", id);
 			if (customer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
@@ -149,7 +149,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Delete the customer entity from Azure Table Storage.
-			await _tableStorageService.DeleteCustomerAsync(customer.PartitionKey, customer.RowKey);
+			await _customerTableService.DeleteEntityAsync(customer.PartitionKey, customer.RowKey);
 
 			// Redirect to the index action after successful deletion.
 			return RedirectToAction("Index");
@@ -195,7 +195,7 @@ namespace ABC_Retail.Controllers
 			};
 
 			// Save the new customer entity to Azure Table Storage.
-			await _tableStorageService.AddCustomerAsync(customer);
+			await _customerTableService.AddEntityAsync(customer);
 
 			// Redirect to the index action after successful creation.
 			return RedirectToAction("Index");
