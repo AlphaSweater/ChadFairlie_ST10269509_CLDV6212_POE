@@ -18,6 +18,9 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with Azure Table Storage.
 		private readonly AzureTableStorageService _tableStorageService;
 
+		// Service for interacting with Azure Blob Storage.
+		private readonly AzureBlobStorageService _blobStorageService;
+
 		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
 
@@ -33,9 +36,11 @@ namespace ABC_Retail.Controllers
 		/// </summary>
 		/// <param name="tableStorageService">Service for interacting with Azure Table Storage.</param>
 		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
-		public ProductController(AzureTableStorageService tableStorageService, AzureQueueService queueService)
+		/// <param name="blobStorageService"> Service for interacting with Azure Blob Storage.</param>
+		public ProductController(AzureTableStorageService tableStorageService, AzureBlobStorageService blobStorageService, AzureQueueService queueService)
 		{
 			_tableStorageService = tableStorageService;
+			_blobStorageService = blobStorageService;
 			_queueService = queueService;
 		}
 
@@ -54,14 +59,31 @@ namespace ABC_Retail.Controllers
 			var products = await _tableStorageService.GetAllProductsAsync();
 
 			// Map products to the view model.
-			var productViewModels = products.Select(p => new ProductViewModel
+			var productViewModels = new List<ProductViewModel>();
+
+			foreach (var product in products)
 			{
-				Id = p.RowKey,
-				Name = p.Name,
-				Price = p.Price,
-				Description = p.Description,
-				Quantity = p.Quantity
-			}).ToList();
+				string fileName = null;
+				string fileUrl = null;
+
+				if (!string.IsNullOrEmpty(product.FileID))
+				{
+					var blobClient = await _blobStorageService.GetFileAsync(product.FileID);
+					fileName = blobClient.Name;
+					fileUrl = blobClient.Uri.ToString();
+				}
+
+				productViewModels.Add(new ProductViewModel
+				{
+					Id = product.RowKey,
+					Name = product.Name,
+					Price = product.Price,
+					Description = product.Description,
+					Quantity = product.Quantity,
+					FileName = fileName, // Set the file name from Blob Storage or null
+					FileUrl = fileUrl // Set the file URL from Blob Storage or null
+				});
+			}
 
 			// Return the view with the list of products.
 			return View(productViewModels);
@@ -218,7 +240,8 @@ namespace ABC_Retail.Controllers
 				Name = model.Name,
 				Price = model.Price,
 				Description = model.Description,
-				Quantity = model.Quantity
+				Quantity = model.Quantity,
+				FileID = _blobStorageService.UploadFileAsync(model.File).Result // Upload the image file and get the file ID
 			};
 
 			// Save the new product to Azure Table Storage.
