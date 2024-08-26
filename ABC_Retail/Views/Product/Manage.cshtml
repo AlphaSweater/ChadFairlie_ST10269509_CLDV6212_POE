@@ -6,12 +6,34 @@
 
 <head>
 	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			color: #333;
+			line-height: 1.6;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin-bottom: 20px;
+		}
+
+		h3 {
+			font-size: 1.75rem;
+			margin-bottom: 15px;
+		}
+
+		p {
+			font-size: 1.1rem;
+			margin-bottom: 10px;
+		}
+
 		.nav-tabs .nav-link {
-			border-radius: 0;
+			border-radius: 10px;
 			border: 1px solid #dee2e6;
 			color: #495057;
 			background-color: #f8f9fa;
 			transition: background-color 0.3s ease;
+			padding: 10px 15px;
 		}
 
 			.nav-tabs .nav-link:hover {
@@ -29,26 +51,41 @@
 			border: 1px solid #dee2e6;
 			border-top: none;
 			background-color: #fff;
+			border-radius: 5px 5px 5px 5px;
 			gap: 90px;
 		}
 
-		.btn-primary {
+		.btn-primary, .btn-danger {
 			border-radius: 20px;
+			transition: background-color 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		.btn-primary {
+			background-color: #007bff;
+			border-color: #007bff;
 		}
 
 		.btn-danger {
-			border-radius: 20px;
 			background-color: #dc3545;
-			transition: background-color 0.3s ease;
+			border-color: #dc3545;
 		}
 
-			.btn-danger:hover {
-				background-color: #c82333;
+			.btn-primary:hover, .btn-danger:hover {
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 			}
 
 		.img-thumbnail {
 			border-radius: 10px;
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		}
+
+		.details-image {
+			border-radius: 10px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			max-width: 100%;
+			max-height: 500px;
+			object-fit: cover;
+			margin-bottom: 20px;
 		}
 	</style>
 </head>
@@ -73,7 +110,7 @@
 		<h3>Details</h3>
 		<div class="row">
 			<div class="col-md-4">
-				<img src="@Model.FileUrl" class="img-fluid" alt="@Model.Name" style="border-radius: 10px;" />
+				<img src="@Model.FileUrl" class="img-fluid details-image" alt="@Model.Name" />
 			</div>
 			<div class="col-md-8">
 				<p><strong>Name:</strong> @Model.Name</p>
@@ -84,40 +121,40 @@
 		</div>
 	</div>
 
-    <!-- Edit Tab -->
-    <div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
-        <h3>Edit</h3>
-        <form method="post" enctype="multipart/form-data" action="/Product/Edit">
-            <input type="hidden" name="Id" value="@Model.Id" />
-            <div class="form-group mb-3">
-                <label for="Name">Name</label>
-                <input type="text" name="Name" class="form-control" value="@Model.Name" />
-            </div>
-            <div class="form-group mb-3">
-                <label for="Price">Price</label>
-                <input type="number" step="0.01" name="Price" class="form-control" value="@Model.Price" />
-            </div>
-            <div class="form-group mb-3">
-                <label for="Description">Description</label>
-                <textarea name="Description" class="form-control">@Model.Description</textarea>
-            </div>
-            <div class="form-group mb-3">
-                <label for="Quantity">Quantity</label>
-                <input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
-            </div>
-            <label for="File">Product Image</label>
-            <div class="form-group mb-3" style="display: flex; align-items: center; gap: 20px;">
-                @if (!string.IsNullOrEmpty(Model.FileUrl))
-                {
-                    <img src="@Model.FileUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
-                }
-                <div style="display: flex; flex-direction: column">
-                    <input type="file" name="File" class="form-control-file" />
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-    </div>
+	<!-- Edit Tab -->
+	<div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
+		<h3>Edit</h3>
+		<form method="post" enctype="multipart/form-data" action="/Product/Edit">
+			<input type="hidden" name="Id" value="@Model.Id" />
+			<div class="form-group mb-3">
+				<label for="Name">Name</label>
+				<input type="text" name="Name" class="form-control" value="@Model.Name" />
+			</div>
+			<div class="form-group mb-3">
+				<label for="Price">Price</label>
+				<input type="number" step="0.01" name="Price" class="form-control" value="@Model.Price" />
+			</div>
+			<div class="form-group mb-3">
+				<label for="Description">Description</label>
+				<textarea name="Description" class="form-control">@Model.Description</textarea>
+			</div>
+			<div class="form-group mb-3">
+				<label for="Quantity">Quantity</label>
+				<input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
+			</div>
+			<label for="File">Product Image</label>
+			<div class="form-group mb-3" style="display: flex; align-items: center; gap: 20px;">
+				@if (!string.IsNullOrEmpty(Model.FileUrl))
+				{
+					<img src="@Model.FileUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
+				}
+				<div style="display: flex; flex-direction: column">
+					<input type="file" name="File" class="form-control-file" />
+				</div>
+			</div>
+			<button type="submit" class="btn btn-primary">Save</button>
+		</form>
+	</div>
 
 	<!-- Delete Tab -->
 	<div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
