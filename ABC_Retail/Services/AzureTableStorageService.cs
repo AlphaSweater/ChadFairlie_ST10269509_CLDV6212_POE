@@ -5,10 +5,10 @@ using Azure.Data.Tables;
 namespace ABC_Retail.Services
 {
 	/// <summary>
-	/// Provides services for interacting with Azure Table Storage, including operations
-	/// for managing customer profiles and products stored in their respective tables.
+	/// Provides generic services for interacting with Azure Table Storage, including operations
+	/// for managing entities stored in their respective tables.
 	/// </summary>
-	public class AzureTableStorageService
+	public class AzureTableStorageService<T> where T : class, ITableEntity, new()
 	{
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Fields and Dependencies
@@ -17,22 +17,20 @@ namespace ABC_Retail.Services
 		// The TableServiceClient instance for interacting with Azure Table Storage.
 		private readonly TableServiceClient _tableServiceClient;
 
-		// The name of the Azure Table used to store customer profiles.
-		private readonly string _customersTableName = "Customers";
-
-		// The name of the Azure Table used to store products.
-		private readonly string _productsTableName = "Products";
+		// The name of the Azure Table used.
+		private readonly string _tableName;
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="AzureTableStorageService"/> class.
+		/// Initializes a new instance of the <see cref="AzureTableStorageService{T}"/> class.
 		/// </summary>
-		public AzureTableStorageService(string storageConnectionString)
+		public AzureTableStorageService(string storageConnectionString, string tableName)
 		{
 			_tableServiceClient = new TableServiceClient(storageConnectionString);
+			_tableName = tableName;
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
@@ -41,233 +39,145 @@ namespace ABC_Retail.Services
 		/// </summary>
 		/// <param name="tableName">The name of the table to check or create.</param>
 		/// <returns>A <see cref="TableClient"/> instance for the specified table.</returns>
-		private async Task<TableClient> GetOrCreateTableClientAsync(string tableName)
+		private async Task<TableClient> GetOrCreateTableClientAsync()
 		{
-			var tableClient = _tableServiceClient.GetTableClient(tableName);
+			var tableClient = _tableServiceClient.GetTableClient(_tableName);
 			await tableClient.CreateIfNotExistsAsync();
 			return tableClient;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Methods to interact with Customer Table
+		// Methods to interact with a Table
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously adds a new customer profile to the Customers table in Azure Table Storage.
+		/// Asynchronously adds a new entity to a table.
 		/// </summary>
 		/// <param name="customer">The <see cref="Customer"/> entity to add.</param>
-		public async Task AddCustomerAsync(Customer customer)
+		public async Task AddEntityAsync(T entity)
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
+			var tableClient = await GetOrCreateTableClientAsync();
 			try
 			{
-				await tableClient.AddEntityAsync(customer);
+				await tableClient.AddEntityAsync(entity);
 			}
 			catch (RequestFailedException ex)
 			{
-				// Handle exceptions like entity already exists or other table errors
-				Console.WriteLine($"Error adding customer profile: {ex.Message}");
+				Console.WriteLine($"Error adding entity: {ex.Message}");
 				throw;
 			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously retrieves a customer profile from the Customers table by partition key and row key.
+		/// Asynchronously retrieves an entity from a table by partition key and row key.
 		/// </summary>
-		/// <param name="partitionKey">The partition key of the customer entity.</param>
-		/// <param name="rowKey">The row key of the customer entity.</param>
+		/// <param name="partitionKey">The partition key of the entity.</param>
+		/// <param name="rowKey">The row key of the entity.</param>
 		/// <returns>The retrieved <see cref="Customer"/> entity, or null if not found.</returns>
-		public async Task<Customer> GetCustomerAsync(string partitionKey, string rowKey)
+		public async Task<T> GetEntityAsync(string partitionKey, string rowKey)
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
+			var tableClient = await GetOrCreateTableClientAsync();
 			try
 			{
-				return await tableClient.GetEntityAsync<Customer>(partitionKey, rowKey);
+				return await tableClient.GetEntityAsync<T>(partitionKey, rowKey);
 			}
 			catch (RequestFailedException ex) when (ex.Status == 404)
 			{
-				// Handle case where the entity was not found in the table.
-				Console.WriteLine($"Customer profile not found: {ex.Message}");
+				Console.WriteLine($"Entity not found: {ex.Message}");
 				return null;
 			}
 			catch (RequestFailedException ex)
 			{
-				// Handle other potential errors
-				Console.WriteLine($"Error retrieving customer profile: {ex.Message}");
+				Console.WriteLine($"Error retrieving entity: {ex.Message}");
 				throw;
 			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously updates an existing customer profile in the Customers table.
+		/// Asynchronously updates an existing entity in a table.
 		/// </summary>
-		/// <param name="customer">The <see cref="Customer"/> entity to update.</param>
-		public async Task UpdateCustomerAsync(Customer customer)
+		/// <param name="entity">The entity to update.</param>
+		public async Task UpdateEntityAsync(T entity)
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
+			var tableClient = await GetOrCreateTableClientAsync();
 			try
 			{
-				await tableClient.UpdateEntityAsync(customer, ETag.All, TableUpdateMode.Replace);
+				await tableClient.UpdateEntityAsync(entity, ETag.All, TableUpdateMode.Replace);
 			}
 			catch (RequestFailedException ex)
 			{
-				// Handle potential errors such as entity not existing.
-				Console.WriteLine($"Error updating customer profile: {ex.Message}");
+				Console.WriteLine($"Error updating entity: {ex.Message}");
 				throw;
 			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously deletes a customer profile from the Customers table.
+		/// Asynchronously deletes an existing entity from a Table
 		/// </summary>
-		/// <param name="partitionKey">The partition key of the customer entity.</param>
-		/// <param name="rowKey">The row key of the customer entity.</param>
-		public async Task DeleteCustomerAsync(string partitionKey, string rowKey)
+		/// <param name="partitionKey">The partition key of the entity.</param>
+		/// <param name="rowKey">The row key of the entity.</param>
+		public async Task DeleteEntityAsync(string partitionKey, string rowKey)
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
+			var tableClient = await GetOrCreateTableClientAsync();
 			try
 			{
 				await tableClient.DeleteEntityAsync(partitionKey, rowKey);
 			}
 			catch (RequestFailedException ex)
 			{
-				// Handle exceptions like entity not existing
-				Console.WriteLine($"Error deleting customer profile: {ex.Message}");
+				Console.WriteLine($"Error deleting entity: {ex.Message}");
 				throw;
 			}
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously retrieves all customer profiles from the Customers table.
+		/// Asynchronously retrieves all entities from a table.
 		/// </summary>
-		/// <returns>A list of all <see cref="Customer"/> entities in the Customers table.</returns>
-		public async Task<List<Customer>> GetAllCustomersAsync()
+		/// <returns>A list of all entities in a table.</returns>
+		public async Task<List<T>> GetAllEntitiesAsync()
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_customersTableName);
-			var customers = new List<Customer>();
+			var tableClient = await GetOrCreateTableClientAsync();
+			var entities = new List<T>();
 
-			await foreach (var customer in tableClient.QueryAsync<Customer>())
+			await foreach (var entity in tableClient.QueryAsync<T>())
 			{
-				customers.Add(customer);
+				entities.Add(entity);
 			}
 
-			return customers;
+			return entities;
 		}
+	}
 
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Methods to interact with Product Table
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+	// Non-generic Table Services
+	//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Asynchronously adds a new product to the Products table in Azure Table Storage.
-		/// </summary>
-		/// <param name="product">The <see cref="Product"/> entity to add.</param>
-		public async Task AddProductAsync(Product product)
+	//--------------------------------------------------------------------------------------------------------------------------//
+	/// <summary>
+	/// Custom Table Service for a Customer entity.
+	/// </summary>
+	public class CustomerTableService : AzureTableStorageService<Customer>
+	{
+		public CustomerTableService(string storageConnectionString)
+			: base(storageConnectionString, "Customers")
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_productsTableName);
-			try
-			{
-				await tableClient.AddEntityAsync(product);
-			}
-			catch (RequestFailedException ex)
-			{
-				// Handle potential errors such as entity already existing or other table-related issues.
-				Console.WriteLine($"Error adding product: {ex.Message}");
-				throw;
-			}
 		}
+	}
 
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Asynchronously retrieves a product from the Products table by partition key and row key.
-		/// </summary>
-		/// <param name="partitionKey">The partition key of the product entity.</param>
-		/// <param name="rowKey">The row key of the product entity.</param>
-		/// <returns>The retrieved <see cref="Product"/> entity, or null if not found.</returns>
-		public async Task<Product> GetProductAsync(string partitionKey, string rowKey)
+	//--------------------------------------------------------------------------------------------------------------------------//
+	/// <summary>
+	/// Product Table Service for a Product entity.
+	/// </summary>
+	public class ProductTableService : AzureTableStorageService<Product>
+	{
+		public ProductTableService(string storageConnectionString)
+			: base(storageConnectionString, "Products")
 		{
-			var tableClient = await GetOrCreateTableClientAsync(_productsTableName);
-			try
-			{
-				return await tableClient.GetEntityAsync<Product>(partitionKey, rowKey);
-			}
-			catch (RequestFailedException ex) when (ex.Status == 404)
-			{
-				// Handle case where the entity was not found in the table.
-				Console.WriteLine($"Product not found: {ex.Message}");
-				return null;
-			}
-			catch (RequestFailedException ex)
-			{
-				// Handle other potential errors
-				Console.WriteLine($"Error retrieving product: {ex.Message}");
-				throw;
-			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Asynchronously updates an existing product in the Products table.
-		/// </summary>
-		/// <param name="product">The <see cref="Product"/> entity to update.</param>
-		public async Task UpdateProductAsync(Product product)
-		{
-			var tableClient = await GetOrCreateTableClientAsync(_productsTableName);
-			try
-			{
-				await tableClient.UpdateEntityAsync(product, ETag.All, TableUpdateMode.Replace);
-			}
-			catch (RequestFailedException ex)
-			{
-				// Handle exceptions like entity not existing
-				Console.WriteLine($"Error updating product: {ex.Message}");
-				throw;
-			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Asynchronously deletes a product from the Products table.
-		/// </summary>
-		/// <param name="partitionKey">The partition key of the product entity.</param>
-		/// <param name="rowKey">The row key of the product entity.</param>
-		public async Task DeleteProductAsync(string partitionKey, string rowKey)
-		{
-			var tableClient = await GetOrCreateTableClientAsync(_productsTableName);
-			try
-			{
-				await tableClient.DeleteEntityAsync(partitionKey, rowKey);
-			}
-			catch (RequestFailedException ex)
-			{
-				// Handle exceptions like entity not existing
-				Console.WriteLine($"Error deleting product: {ex.Message}");
-				throw;
-			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Asynchronously retrieves all products from the Products table.
-		/// </summary>
-		/// <returns>A list of all <see cref="Product"/> entities in the Products table.</returns>
-		public async Task<List<Product>> GetAllProductsAsync()
-		{
-			var tableClient = await GetOrCreateTableClientAsync(_productsTableName);
-			var products = new List<Product>();
-
-			await foreach (var product in tableClient.QueryAsync<Product>())
-			{
-				products.Add(product);
-			}
-
-			return products;
 		}
 	}
 }

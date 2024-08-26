@@ -53,8 +53,14 @@ namespace ABC_Retail
 			// Get the connection string for Azure Storage
 			string storageConnectionString = configuration.GetConnectionString("AzureStorage");
 
-			// Add Azure Table Storage service
-			services.AddSingleton(new AzureTableStorageService(storageConnectionString));
+			// Add product Azure Table Storage service
+			services.AddSingleton(new ProductTableService(storageConnectionString));
+
+			// Add customer Azure Table Storage service
+			services.AddSingleton(new CustomerTableService(storageConnectionString));
+
+			// Add Azure File Storage service
+			services.AddSingleton(new AzureFileStorageService(storageConnectionString));
 
 			// Add BlobServiceClient
 			services.AddSingleton(new BlobServiceClient(storageConnectionString));
