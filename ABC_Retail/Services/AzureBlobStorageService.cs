@@ -5,11 +5,25 @@ using Azure.Storage.Sas;
 
 namespace ABC_Retail.Services
 {
+	/// <summary>
+	/// Provides methods to interact with Azure Blob Storage, including uploading, deleting, and listing files.
+	/// </summary>
 	public class AzureBlobStorageService
 	{
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Fields and Dependencies
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		// The BlobServiceClient instance used to interact with Azure Blob Storage.
 		private readonly BlobServiceClient _blobServiceClient;
+
+		// The SasTokenGenerator instance used to generate SAS tokens for Azure Blob Storage access.
 		private readonly SasTokenGenerator _sasTokenGenerator;
+
+		// The logger instance used to record information and errors.
 		private readonly ILogger<AzureBlobStorageService> _logger;
+
+		// The name of the container used to store image files.
 		private readonly string _imageContainerName = "imagefiles";
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -32,55 +46,84 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Uploads a file to Azure Blob Storage and returns the URL of the uploaded blob.
+		/// Uploads a file to Azure Blob Storage and returns the new filename of the uploaded blob.
 		/// </summary>
 		/// <param name="file">The file to upload, encapsulated in an <see cref="IFormFile"/> object.</param>
-		/// <returns>The URL of the uploaded file as a string.</returns>
+		/// <returns>The new filename of the uploaded file as a string.</returns>
 		public async Task<string> UploadFileAsync(IFormFile file)
 		{
-			// Generate a SAS (Shared Access Signature) token for the container with write and create permissions.
-			// This allows the client to upload files to the container without exposing the storage account keys.
-			var containerSasToken = _sasTokenGenerator.GenerateContainerSasToken(
-				_imageContainerName,
-				BlobContainerSasPermissions.Write | BlobContainerSasPermissions.Create);
-
-			// Create a new BlobClient instance using the SAS token.
-			// The BlobClient allows us to interact with the specified blob (file) in Azure Blob Storage.
-			var blobClient = new BlobClient(
-				new Uri($"{_blobServiceClient.GetBlobContainerClient(_imageContainerName).Uri}{containerSasToken}"));
-
 			// Generate a unique name for the blob by combining a new GUID with the file extension.
-			// This ensures that each file uploaded to the container has a unique name, preventing overwrites.
 			var blobName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
 
-			// Obtain a reference to the BlobClient associated with the generated blob name.
-			// The GetParentBlobContainerClient method is used to ensure we're working with the correct container.
-			blobClient = blobClient.GetParentBlobContainerClient().GetBlobClient(blobName);
+			// Get a reference to the container client.
+			var containerClient = _blobServiceClient.GetBlobContainerClient(_imageContainerName);
+
+			// Get a reference to the blob client.
+			var blobClient = containerClient.GetBlobClient(blobName);
 
 			try
 			{
-				// Log the intention to upload the file. This log entry includes the original file name, the generated blob name,
-				// and the container name, providing valuable information for debugging and audit purposes.
+				// Log the intention to upload the file.
 				_logger.LogInformation("Uploading file {FileName} as blob {BlobName} to container {ContainerName}.", file.FileName, blobName, _imageContainerName);
 
 				// Open a stream to read the content of the file and upload it to the blob in Azure Blob Storage.
-				// The 'true' parameter in UploadAsync ensures that any existing blob with the same name will be overwritten.
 				using (var stream = file.OpenReadStream())
 				{
 					await blobClient.UploadAsync(stream, true);
 				}
 
-				// Log the successful upload of the file. The log entry includes the original file name and the URI of the uploaded blob.
-				_logger.LogInformation("File {FileName} uploaded successfully to {BlobUri}.", file.FileName, blobClient.Uri);
+				// Log the successful upload of the file.
+				_logger.LogInformation("File {FileName} uploaded successfully as {BlobName}.", file.FileName, blobName);
 
-				// Return the URI of the uploaded blob as a string. This URI can be used to access the uploaded file.
-				return blobClient.Uri.ToString();
+				// Return the new filename of the uploaded blob.
+				return blobName;
 			}
 			catch (Exception ex)
 			{
-				// Log the error that occurred during the upload process, including the original file name.
-				// The exception is re-thrown to ensure that the calling code is aware of the failure.
+				// Log the error that occurred during the upload process.
 				_logger.LogError(ex, "An error occurred while uploading file {FileName}.", file.FileName);
+				throw;
+			}
+		}
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Retrieves a BlobClient for a specific blob in Azure Blob Storage.
+		/// </summary>
+		/// <param name="blobName">The name of the blob to retrieve.</param>
+		/// <returns>A <see cref="BlobClient"/> object representing the blob.</returns>
+		public async Task<BlobClient> GetFileAsync(string blobName)
+		{
+			try
+			{
+				// Generate a SAS (Shared Access Signature) token for the specific blob with read permissions.
+				// This allows the client to access the blob without exposing the storage account keys.
+				var blobSasToken = _sasTokenGenerator.GenerateBlobSasToken(
+					_imageContainerName,
+					blobName,
+					BlobSasPermissions.Read);
+
+				// Build the URI for the blob by combining the container name and blob name.
+				// The SAS token is appended to the URI query string, granting the necessary permissions to access the blob.
+				var blobUri = new UriBuilder(_blobServiceClient.Uri)
+				{
+					Path = $"{_imageContainerName}/{blobName}",
+					Query = blobSasToken
+				}.Uri;
+
+				// Create a new BlobClient instance using the constructed URI with the SAS token.
+				var blobClient = new BlobClient(blobUri);
+
+				// Log the successful retrieval of the blob.
+				_logger.LogInformation("Retrieved BlobClient for blob {BlobName} from {BlobUri}.", blobName, blobUri);
+
+				// Return the BlobClient instance representing the blob.
+				return blobClient;
+			}
+			catch (Exception ex)
+			{
+				// Log any error that occurs during the retrieval process, including the blob name.
+				_logger.LogError(ex, "An error occurred while retrieving blob {BlobName}.", blobName);
 				throw;
 			}
 		}

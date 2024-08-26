@@ -1,5 +1,7 @@
 using ABC_Retail.Services;
+using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 
 namespace ABC_Retail
 {
@@ -51,11 +53,29 @@ namespace ABC_Retail
 			// Get the connection string for Azure Storage
 			string storageConnectionString = configuration.GetConnectionString("AzureStorage");
 
-			// Add Azure Table Storage service
-			services.AddSingleton(new AzureTableStorageService(storageConnectionString));
+			// Add product Azure Table Storage service
+			services.AddSingleton(new ProductTableService(storageConnectionString));
+
+			// Add customer Azure Table Storage service
+			services.AddSingleton(new CustomerTableService(storageConnectionString));
+
+			// Add Azure File Storage service
+			services.AddSingleton(new AzureFileStorageService(storageConnectionString));
 
 			// Add BlobServiceClient
 			services.AddSingleton(new BlobServiceClient(storageConnectionString));
+
+			// Register a factory method for creating QueueClient instances
+			services.AddSingleton<Func<string, QueueClient>>(sp => queueName =>
+			{
+				var queueClient = new QueueClient(storageConnectionString, queueName);
+				queueClient.CreateIfNotExists(); // Ensure the queue exists
+				return queueClient;
+			});
+
+			// Register AzureQueueService and AzureQueueProcessingService
+			services.AddSingleton<AzureQueueService>();
+			services.AddSingleton<IHostedService, AzureQueueProcessingService>();
 
 			// Add SasTokenGenerator and AzureBlobStorageService
 			services.AddSingleton<SasTokenGenerator>();

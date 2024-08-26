@@ -18,7 +18,9 @@ else
 		<thead>
 			<tr>
 				<th>Name</th>
+				<th>Surname</th>
 				<th>Email</th>
+				<th>Phone Number</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
@@ -27,7 +29,9 @@ else
 			{
 				<tr>
 					<td>@customer.Name</td>
+					<td>@customer.Surname</td>
 					<td>@customer.Email</td>
+					<td>@customer.Phone</td>
 					<td>
 						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })">Manage</a>
 					</td>

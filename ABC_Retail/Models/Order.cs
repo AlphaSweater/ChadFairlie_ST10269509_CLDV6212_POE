@@ -1,12 +1,11 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using System.Runtime.Serialization;
+using System.Text.Json;
 
 namespace ABC_Retail.Models
 {
-	/// <summary>
-	/// Represents a product entity in the application
-	/// </summary>
-	public class Product : ITableEntity
+	public class Order : ITableEntity
 	{
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
@@ -21,19 +20,36 @@ namespace ABC_Retail.Models
 		// Custom properties of the Product entity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		public string Name { get; set; } // Name of the product
-		public double Price { get; set; } // Price of the product
-		public string Description { get; set; } // Description of the product
-		public int Quantity { get; set; } // Quantity of the product
-		public string FileID { get; set; } // ID of the product image file
+		// Storing the RowKey of the related Customer entity
+		public string CustomerId { get; set; }
+
+		// Storing the list of Product RowKeys as a JSON string
+		private string ProductIdsJson { get; set; }
+
+		// Not mapped to Table Storage, used for easier access in your code
+		[IgnoreDataMember]
+		public List<string> ProductIds
+		{
+			get => string.IsNullOrEmpty(ProductIdsJson)
+				? new List<string>()
+				: JsonSerializer.Deserialize<List<string>>(ProductIdsJson);
+			set => ProductIdsJson = JsonSerializer.Serialize(value);
+		}
+
+		// Other properties related to the order
+		public DateTime OrderDate { get; set; }
+
+		public decimal TotalAmount { get; set; }
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		public Product()
+		public Order()
 		{
-			PartitionKey = "Product"; // Set the partition key to "Product"
-			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			PartitionKey = "Order";
+			RowKey = Guid.NewGuid().ToString();
+			OrderDate = DateTime.UtcNow;
+			ProductIds = new List<string>();
 		}
 	}
 }
