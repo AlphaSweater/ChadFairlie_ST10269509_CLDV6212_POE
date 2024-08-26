@@ -115,6 +115,16 @@ namespace ABC_Retail.Controllers
 				return NotFound();
 			}
 
+			string fileName = null;
+			string fileUrl = null;
+
+			if (!string.IsNullOrEmpty(product.FileID))
+			{
+				var blobClient = await _blobStorageService.GetFileAsync(product.FileID);
+				fileName = blobClient.Name;
+				fileUrl = blobClient.Uri.ToString();
+			}
+
 			// Map the product to the view model.
 			var productViewModel = new ProductViewModel
 			{
@@ -122,7 +132,9 @@ namespace ABC_Retail.Controllers
 				Name = product.Name,
 				Price = product.Price,
 				Description = product.Description,
-				Quantity = product.Quantity
+				Quantity = product.Quantity,
+				FileName = fileName, // Set the file name from Blob Storage or null
+				FileUrl = fileUrl // Set the file URL from Blob Storage or null
 			};
 
 			// Return the view with the product details.
