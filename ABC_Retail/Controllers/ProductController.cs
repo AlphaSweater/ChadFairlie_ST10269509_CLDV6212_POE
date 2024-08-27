@@ -160,6 +160,12 @@ namespace ABC_Retail.Controllers
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			if (!ModelState.IsValid)
+			{
+				// If the model state is invalid, return the view with the current model to display validation errors.
+				return View(model);
+			}
+
 			// Retrieve the product from Azure Table Storage.
 			var product = await _productTableService.GetEntityAsync("Product", model.Id);
 			if (product == null)
