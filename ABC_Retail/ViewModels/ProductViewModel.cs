@@ -17,6 +17,5 @@
 		public string? FileName { get; set; } // Name of the product image file
 		public string? FileUrl { get; set; } // URL of the product image file
 		public IFormFile File { get; set; } // Image file to be uploaded
-
 	}
 }
