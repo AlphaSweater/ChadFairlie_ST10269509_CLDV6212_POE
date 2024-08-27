@@ -27,6 +27,8 @@ namespace ABC_Retail.Controllers
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
 
+		private readonly string _defaultProductImage = "default-product-image.jpg";
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -183,8 +185,12 @@ namespace ABC_Retail.Controllers
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				// Delete the existing image file from Azure Blob Storage.
-				await _blobStorageService.DeleteFileAsync(product.FileID);
+				if (!model.Id.Equals(_defaultProductImage))
+				{
+					// Delete the existing image file from Azure Blob Storage.
+					await _blobStorageService.DeleteFileAsync(product.FileID);
+				}
+
 				// Upload the new image file and get the file ID.
 				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
 			}
@@ -223,8 +229,12 @@ namespace ABC_Retail.Controllers
 				return NotFound();
 			}
 
-			// Delete the existing image file from Azure Blob Storage.
-			await _blobStorageService.DeleteFileAsync(product.FileID);
+			// Delete the product image file from Azure Blob Storage if it is not the default image.
+			if (!string.IsNullOrEmpty(product.FileID) && product.FileID != _defaultProductImage)
+			{
+				// Delete the existing image file from Azure Blob Storage.
+				await _blobStorageService.DeleteFileAsync(product.FileID);
+			}
 
 			// Delete the product from Azure Table Storage.
 			await _productTableService.DeleteEntityAsync(product.PartitionKey, product.RowKey);
@@ -271,8 +281,16 @@ namespace ABC_Retail.Controllers
 				Price = model.Price,
 				Description = model.Description,
 				Quantity = model.Quantity,
-				FileID = _blobStorageService.UploadFileAsync(model.File).Result // Upload the image file and get the file ID
 			};
+
+			if (model.File == null)
+			{
+				product.FileID = _defaultProductImage; // Set a default image file ID
+			}
+			else
+			{
+				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result; // Upload the image file and get the file ID
+			}
 
 			// Save the new product to Azure Table Storage.
 			await _productTableService.AddEntityAsync(product);
