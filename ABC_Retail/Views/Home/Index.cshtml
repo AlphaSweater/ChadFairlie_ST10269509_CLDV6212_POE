@@ -1,8 +1,21 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+	ViewData["Title"] = "Home Page";
 }
+<head>
+	<style>
+		.hero-button:hover {
+			transform: scale(1.05);
+			box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+		}
+	</style>
+</head>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hero-section d-flex align-items-center justify-content-center" style="height: 80vh; background-color: #f8f9fa; border-radius: 100px">
+	<div class="text-center">
+		<h1 class="display-3 font-weight-bold mb-4" style="color: #343a40;">Welcome to ABC Retail</h1>
+		<p class="lead mb-5" style="color: #6c757d; max-width: 600px; margin: 0 auto;">
+			Discover a curated selection of top-quality products designed to elevate your lifestyle. Shop the latest trends and timeless classics.
+		</p>
+		<a href="@Url.Action("Index", "Product")" class="hero-button btn btn-outline-dark btn-lg rounded-pill px-5 py-3">Shop Now</a>
+	</div>
 </div>
