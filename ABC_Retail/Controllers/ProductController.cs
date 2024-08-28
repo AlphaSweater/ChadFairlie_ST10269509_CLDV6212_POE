@@ -185,7 +185,7 @@ namespace ABC_Retail.Controllers
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				if (!model.Id.Equals(_defaultProductImage))
+				if (!model.FileName.Equals(_defaultProductImage))
 				{
 					// Delete the existing image file from Azure Blob Storage.
 					await _blobStorageService.DeleteFileAsync(product.FileID);
