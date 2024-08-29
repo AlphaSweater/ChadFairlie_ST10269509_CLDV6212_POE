@@ -67,7 +67,7 @@ namespace ABC_Retail.Services.BackgroundServices
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Processes messages from the specified queue, determining the message type and handling it accordingly.
+		/// Processes messages from the specified queue.
 		/// </summary>
 		/// <param name="queueClient">The client used to interact with the queue.</param>
 		/// <param name="stoppingToken">A token that can be used to signal cancellation of the operation.</param>
@@ -80,14 +80,14 @@ namespace ABC_Retail.Services.BackgroundServices
 				// Determine the message type.
 				var messageType = Message.GetMessageType(message.Value.MessageText);
 
-				// Process order messages.
-				if (messageType == "OrderMessage")
+				if (message.Value != null)
 				{
+					// Process order messages.
 					await ProcessOrderMessageAsync(message.Value.MessageText);
-				}
 
-				// Delete the processed message from the queue.
-				await queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
+					// Delete the processed message from the queue.
+					await queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
+				}
 			}
 		}
 
@@ -148,6 +148,8 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="orderMessage">The order message containing the products that were processed.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage)
 		{
+			var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
+
 			// Log inventory update for each product in the order.
 			foreach (var product in orderMessage.Products)
 			{
@@ -159,7 +161,6 @@ namespace ABC_Retail.Services.BackgroundServices
 				};
 
 				// Send the inventory update message to the inventory queue.
-				var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
 				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
 				await inventoryQueueClient.SendMessageAsync(messageText);
 			}

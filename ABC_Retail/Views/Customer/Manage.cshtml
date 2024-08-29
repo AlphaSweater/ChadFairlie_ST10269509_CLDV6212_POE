@@ -4,6 +4,78 @@
 	ViewData["Title"] = "Manage Customer";
 }
 
+<head>
+	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			color: #333;
+			line-height: 1.6;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin-bottom: 20px;
+		}
+
+		h3 {
+			font-size: 1.75rem;
+			margin-bottom: 15px;
+		}
+
+		p {
+			font-size: 1.1rem;
+			margin-bottom: 10px;
+		}
+
+		.nav-tabs .nav-link {
+			border-radius: 10px;
+			border: 1px solid #dee2e6;
+			color: #495057;
+			background-color: #f8f9fa;
+			transition: background-color 0.3s ease;
+			padding: 10px 15px;
+		}
+
+			.nav-tabs .nav-link:hover {
+				background-color: #e9ecef;
+			}
+
+			.nav-tabs .nav-link.active {
+				color: #fff;
+				background-color: #007bff;
+				border-color: #007bff;
+			}
+
+		.tab-pane {
+			padding: 20px;
+			border: 1px solid #dee2e6;
+			border-top: none;
+			background-color: #fff;
+			border-radius: 5px 5px 5px 5px;
+			gap: 90px;
+		}
+
+		.btn-primary, .btn-danger {
+			border-radius: 20px;
+			transition: background-color 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		.btn-primary {
+			background-color: #007bff;
+			border-color: #007bff;
+		}
+
+		.btn-danger {
+			background-color: #dc3545;
+			border-color: #dc3545;
+		}
+
+			.btn-primary:hover, .btn-danger:hover {
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+			}
+	</style>
+</head>
+
 <h1>Manage Customer - @Model.Name</h1>
 
 <ul class="nav nav-tabs" id="customerTab" role="tablist">
@@ -19,6 +91,8 @@
 </ul>
 
 <div class="tab-content" id="customerTabContent">
+
+	<!-- Details Tab -->
 	<div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
 		<h3>Details</h3>
 		<p><strong>Name:</strong> @Model.Name</p>
@@ -26,29 +100,33 @@
 		<p><strong>Email:</strong> @Model.Email</p>
 		<p><strong>Phone:</strong> @Model.Phone</p>
 	</div>
+
+	<!-- Edit Tab -->
 	<div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
 		<h3>Edit</h3>
 		<form method="post" action="/Customer/Edit">
 			<input type="hidden" name="Id" value="@Model.Id" />
-			<div class="form-group">
+			<div class="form-group mb-3">
 				<label for="Name">Name</label>
 				<input type="text" name="Name" class="form-control" value="@Model.Name" />
 			</div>
-			<div class="form-group">
+			<div class="form-group mb-3">
 				<label for="Surname">Surname</label>
 				<input type="text" name="Surname" class="form-control" value="@Model.Surname" />
 			</div>
-			<div class="form-group">
+			<div class="form-group mb-3">
 				<label for="Email">Email</label>
 				<input type="email" name="Email" class="form-control" value="@Model.Email" />
 			</div>
-			<div class="form-group">
+			<div class="form-group mb-3">
 				<label for="Phone">Phone</label>
 				<input type="text" name="Phone" class="form-control" value="@Model.Phone" />
 			</div>
 			<button type="submit" class="btn btn-primary">Save</button>
 		</form>
 	</div>
+
+	<!-- Delete Tab -->
 	<div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
 		<h3>Delete</h3>
 		<p>Are you sure you want to delete this customer?</p>

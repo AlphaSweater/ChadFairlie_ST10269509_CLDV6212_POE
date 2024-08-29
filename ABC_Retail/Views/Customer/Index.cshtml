@@ -3,6 +3,19 @@
 @{
 	ViewData["Title"] = "Customers";
 }
+<head>
+	<style>
+		.btn-primary, .btn-success {
+			border-radius: 10px;
+			transition: background-color 0.3s ease, transform 0.3s ease;
+		}
+
+			.btn-primary:hover, .btn-success:hover {
+				transform: translateY(-2px);
+				background-color: darken($color: #007bff, $amount: 10%);
+			}
+	</style>
+</head>
 
 <h1>Customers</h1>
 
@@ -33,7 +46,7 @@ else
 					<td>@customer.Email</td>
 					<td>@customer.Phone</td>
 					<td>
-						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })">Manage</a>
+						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })" class="btn btn-primary">Manage</a>
 					</td>
 				</tr>
 			}

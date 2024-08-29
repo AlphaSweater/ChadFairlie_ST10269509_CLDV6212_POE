@@ -52,38 +52,41 @@
 			}
 	</style>
 </head>
+<div class="d-flex align-items-center justify-content-center" style="background-color: #f8f9fa; border-radius: 100px; flex-direction: column;">
+	<h1>Products</h1>
 
-<h1>Products</h1>
+	@if (!Model.Any())
+	{
+		<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
+	}
+	else
+	{
+		<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
 
-@if (!Model.Any())
-{
-	<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
-}
-else
-{
-	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
+		<br />
 
-    <div class="d-flex flex-wrap justify-content-center">
-        @foreach (var product in Model)
-        {
-            <div class="product-card-wrapper">
-                <div class="card h-100 product-card">
-                    <img src="@product.FileUrl" class="card-img-top" alt="@product.Name">
-                    <div class="card-body">
-                        <h5 class="card-title">@product.Name</h5>
-                        <p class="card-text text-muted">@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-                        <p class="card-text">@product.Description</p>
-                        <p class="card-text">Quantity: <span class="product-quantity">@product.Quantity</span></p>
-                    </div>
-                    <div class="card-footer d-flex justify-content-between">
-                        <a class="btn btn-success purchase-button" data-id="@product.Id">Purchase</a>
-                        <a href="@Url.Action("Manage", "Product", new { id = product.Id })" class="btn btn-primary">Manage</a>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
+		<div class="d-flex flex-wrap justify-content-center">
+			@foreach (var product in Model)
+			{
+				<div class="product-card-wrapper">
+					<div class="card h-100 product-card">
+						<img src="@product.FileUrl" class="card-img-top" alt="@product.Name">
+						<div class="card-body">
+							<h5 class="card-title">@product.Name</h5>
+							<p class="card-text text-muted">@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
+							<p class="card-text">@product.Description</p>
+							<p class="card-text">Quantity: <span class="product-quantity">@product.Quantity</span></p>
+						</div>
+						<div class="card-footer d-flex justify-content-between">
+							<a class="btn btn-success purchase-button" data-id="@product.Id">Purchase</a>
+							<a href="@Url.Action("Manage", "Product", new { id = product.Id })" class="btn btn-primary">Manage</a>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
+</div>
 
 @section Scripts {
 	<script>

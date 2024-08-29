@@ -105,6 +105,7 @@
 </ul>
 
 <div class="tab-content" id="productTabContent">
+
 	<!-- Details Tab -->
 	<div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
 		<h3>Details</h3>
@@ -128,19 +129,23 @@
 			<input type="hidden" name="Id" value="@Model.Id" />
 			<div class="form-group mb-3">
 				<label for="Name">Name</label>
-				<input type="text" name="Name" class="form-control" value="@Model.Name" />
+				<input type="text" name="Name" class="form-control" asp-for="Name" />
+				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Price">Price</label>
-				<input type="number" step="0.01" name="Price" class="form-control" value="@Model.Price" />
+				<input type="number" name="Price" class="form-control" asp-for="Price" />
+				<span asp-validation-for="Price" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Description">Description</label>
 				<textarea name="Description" class="form-control">@Model.Description</textarea>
+				<span asp-validation-for="Description" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Quantity">Quantity</label>
-				<input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
+				<input type="number" name="Quantity" class="form-control" asp-for="Quantity" />
+				<span asp-validation-for="Quantity" class="text-danger"></span>
 			</div>
 			<label for="File">Product Image</label>
 			<div class="form-group mb-3" style="display: flex; align-items: center; gap: 20px;">
@@ -149,9 +154,10 @@
 					<img src="@Model.FileUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
 				}
 				<div style="display: flex; flex-direction: column">
-					<input type="file" name="File" class="form-control-file" />
+					<input type="file" name="File" class="form-control-file" asp-for="File" />
 				</div>
 			</div>
+			<input type="hidden" name="FileName" value="@Model.FileName" />
 			<button type="submit" class="btn btn-primary">Save</button>
 		</form>
 	</div>
@@ -166,3 +172,9 @@
 		</form>
 	</div>
 </div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}
