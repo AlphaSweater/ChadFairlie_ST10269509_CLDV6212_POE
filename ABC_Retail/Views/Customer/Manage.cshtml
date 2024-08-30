@@ -109,18 +109,22 @@
 			<div class="form-group mb-3">
 				<label for="Name">Name</label>
 				<input type="text" name="Name" class="form-control" value="@Model.Name" />
+				<span asp-validation-for="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Surname">Surname</label>
 				<input type="text" name="Surname" class="form-control" value="@Model.Surname" />
+				<span asp-validation-for="Surname" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Email">Email</label>
 				<input type="email" name="Email" class="form-control" value="@Model.Email" />
+				<span asp-validation-for="Email" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Phone">Phone</label>
 				<input type="text" name="Phone" class="form-control" value="@Model.Phone" />
+				<span asp-validation-for="Phone" class="text-danger"></span>
 			</div>
 			<button type="submit" class="btn btn-primary">Save</button>
 		</form>
@@ -136,3 +140,9 @@
 		</form>
 	</div>
 </div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}

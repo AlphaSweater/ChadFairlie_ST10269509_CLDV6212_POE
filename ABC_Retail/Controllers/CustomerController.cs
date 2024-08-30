@@ -167,7 +167,7 @@ namespace ABC_Retail.Controllers
 		public IActionResult Create()
 		{
 			// Return the view for creating a new customer.
-			return View();
+			return View(new CustomerViewModel());
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//

@@ -11,8 +11,9 @@ namespace ABC_Retail.ViewModels
 
 		public string? Id { get; set; } // Unique identifier for the product
 
-		[Required(ErrorMessage = "a product name is required!")]
-		public string Name { get; set; } // Name of the product
+		[Required(ErrorMessage = "A product name is required!")]
+		[StringLength(100, ErrorMessage = "The product name cannot exceed 100 characters.")]
+		public string? Name { get; set; } // Name of the product
 
 		[Required(ErrorMessage = "Price is required")]
 		[Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero")]
@@ -20,7 +21,8 @@ namespace ABC_Retail.ViewModels
 		public double Price { get; set; } // Price of the product
 
 		[Required(ErrorMessage = "Description is required")]
-		public string Description { get; set; } // Description of the product
+		[StringLength(500, ErrorMessage = "The description cannot exceed 500 characters.")]
+		public string? Description { get; set; } // Description of the product
 
 		[Required(ErrorMessage = "Quantity is required")]
 		[Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
