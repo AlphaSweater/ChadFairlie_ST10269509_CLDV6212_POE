@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "ABC_Functions": {
+    "LearningFunctions": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7007",
+      "commandLineArgs": "--port 7287",
       "launchBrowser": false
     }
   }
