@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
-namespace ST10114423.Functions
+namespace ABC_Retail_Functions.Functions
 {
 	public static class StoreTableInfo
 	{

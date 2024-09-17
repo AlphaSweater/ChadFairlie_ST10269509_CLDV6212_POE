@@ -1,34 +1,68 @@
 using Azure.Storage.Queues;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ST10114423.Functions
+namespace ABC_Retail_Functions.Functions
 {
 	public static class ProcessQueueMessage
 	{
 		[Function("ProcessQueueMessage")]
-		public static async Task<IActionResult> Run(
-			[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-			ILogger log)
+		public static async Task<HttpResponseData> Run(
+			[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req,
+			FunctionContext executionContext)
 		{
-			string queueName = req.Query["queueName"];
-			string message = req.Query["message"];
+			var log = executionContext.GetLogger("ProcessQueueMessage");
+			log.LogInformation("Processing request to send message to queue.");
 
-			if (string.IsNullOrEmpty(queueName) || string.IsNullOrEmpty(message))
+			string queueName = "inventory-queue";
+
+			try
 			{
-				return new BadRequestObjectResult("Queue name and message must be provided.");
+				// Read and parse request body (expecting JSON with a "message" property)
+				var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+				var requestData = JsonSerializer.Deserialize<RequestData>(requestBody);
+
+				if (string.IsNullOrEmpty(requestData?.Message))
+				{
+					var badResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+					await badResponse.WriteStringAsync("Please provide a valid message.");
+					return badResponse;
+				}
+
+				// Azure Storage connection string from environment variable
+				var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+				// Create QueueClient and send message
+				var queueServiceClient = new QueueServiceClient(connectionString);
+				var queueClient = queueServiceClient.GetQueueClient(queueName);
+				await queueClient.CreateIfNotExistsAsync();
+				await queueClient.SendMessageAsync(requestData.Message);
+
+				// Return success response
+				var okResponse = req.CreateResponse(HttpStatusCode.OK);
+				await okResponse.WriteStringAsync($"Message '{requestData.Message}' added to queue '{queueName}'");
+				return okResponse;
 			}
+			catch (Exception ex)
+			{
+				log.LogError($"Error processing queue message: {ex.Message}");
 
-			var connectionString = Environment.GetEnvironmentVariable("AzureStorage:ConnectionString");
-			var queueServiceClient = new QueueServiceClient(connectionString);
-			var queueClient = queueServiceClient.GetQueueClient(queueName);
-			await queueClient.CreateIfNotExistsAsync();
-			await queueClient.SendMessageAsync(message);
+				// Return error response
+				var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
+				await errorResponse.WriteStringAsync("Error processing request: " + ex.Message);
+				return errorResponse;
+			}
+		}
 
-			return new OkObjectResult("Message added to queue");
+		// Helper class to model the request data (JSON)
+		private class RequestData
+		{
+			public string Message { get; set; }
 		}
 	}
 }

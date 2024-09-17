@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace ST10114423.Functions
+namespace ABC_Retail_Functions.Functions
 {
     public class AzureFunctionRoot
     {

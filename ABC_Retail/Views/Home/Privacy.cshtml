@@ -1,6 +1,44 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+	ViewData["Title"] = "Send Message to Queue";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<h2>Send Message to Queue</h2>
+
+<!-- Button to trigger the function -->
+<button id="sendMessageButton" onclick="sendMessage()">Send Message</button>
+
+<p id="resultMessage"></p>
+
+<script>
+	// Function to send the message and update the URL
+	async function sendMessage() {
+		const functionUrl = 'https://cldv-functions.azurewebsites.net/api/ProcessQueueMessage?code=xS4TM0xuwIhn7tYg8PIRmL_asDoietCxkzCPwH-7xkhfAzFufO9JCg%3D%3D';
+
+		// Change the URL in the browser without reloading the page
+		const newUrl = window.location.origin + "/queueMessageSent";
+		window.history.pushState({ path: newUrl }, '', newUrl);
+
+		const messageData = {
+			Message: "Hello from the MVC App!"
+		};
+
+		try {
+			// Send the POST request to Azure Function
+			const response = await fetch(functionUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(messageData)
+			});
+
+			const result = await response.text();
+
+			// Display result to the user
+			document.getElementById('resultMessage').textContent = "Message sent: " + result;
+
+		} catch (error) {
+			document.getElementById('resultMessage').textContent = "Error sending message: " + error;
+		}
+	}
+</script>
