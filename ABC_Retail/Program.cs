@@ -86,6 +86,9 @@ namespace ABC_Retail
 				var sasTokenGenerator = sp.GetRequiredService<SasTokenGenerator>();
 				return new AzureBlobStorageService(blobServiceClient, sasTokenGenerator, logger);
 			});
+
+			// Add HttpClient
+			services.AddHttpClient();
 		}
 	}
 }

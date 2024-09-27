@@ -2,6 +2,9 @@
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
 
 namespace ABC_Retail.Controllers
 {
@@ -24,6 +27,9 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
 
+		// The HTTP client for making HTTP requests.
+		private readonly HttpClient _httpClient;
+
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
 
@@ -39,11 +45,13 @@ namespace ABC_Retail.Controllers
 		/// <param name="productTableService">Service for interacting with product Azure Table Storage.</param>
 		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
 		/// <param name="blobStorageService"> Service for interacting with Azure Blob Storage.</param>
-		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService)
+		/// <param name="httpClient">The HTTP client for making HTTP requests.</param>"
+		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService, HttpClient httpClient)
 		{
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_queueService = queueService;
+			_httpClient = httpClient; 
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -335,28 +343,37 @@ namespace ABC_Retail.Controllers
 			// Create an OrderMessage to enqueue for processing.
 			var orderMessage = new OrderMessage
 			{
-				OrderId = Guid.NewGuid().ToString(), // Generate a new OrderId
-				CustomerId = "CustomerIdPlaceholder", // Replace with actual customer ID
+				OrderId = Guid.NewGuid().ToString(),
+				CustomerId = "CustomerIdPlaceholder",
 				Products = new List<OrderMessage.ProductOrder>
 				{
 					new OrderMessage.ProductOrder
 					{
 						ProductId = product.RowKey,
 						ProductName = product.Name,
-						Quantity = 1 // Assume purchasing 1 unit for simplicity
+						Quantity = 1
 					}
 				},
 				OrderDate = DateTime.UtcNow,
-				TotalAmount = product.Price // Assuming the total amount is the price of one product
+				TotalAmount = product.Price
 			};
 
 			// Enqueue the order message for processing.
 			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
 
+			// Trigger the Azure Function
+			var functionUrl = "https://cldv-functions.azurewebsites.net/api/ProcessQueueMessage?code=xS4TM0xuwIhn7tYg8PIRmL_asDoietCxkzCPwH-7xkhfAzFufO9JCg%3D%3D";
+			var requestData = new { Message = JsonSerializer.Serialize(orderMessage) };
+			var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
+
+			var response = await _httpClient.PostAsync(functionUrl, content);
+			if (!response.IsSuccessStatusCode)
+			{
+				return StatusCode((int)response.StatusCode, "Failed to trigger the function.");
+			}
+
 			// Fetch the updated product from Azure Table Storage.
 			product = await _productTableService.GetEntityAsync("Product", id);
-
-			// Return the updated quantity as JSON
 			return Json(new { quantity = product.Quantity });
 		}
 	}
