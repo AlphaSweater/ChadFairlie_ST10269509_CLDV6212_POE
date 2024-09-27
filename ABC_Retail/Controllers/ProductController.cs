@@ -364,7 +364,7 @@ namespace ABC_Retail.Controllers
 			var response = await _httpClient.PostAsync(functionUrl, content);
 			if (!response.IsSuccessStatusCode)
 			{
-				return Json(new { success = false, message = "Failed to trigger the function." });
+				return Json(new { success = false, message = "Failed to trigger the order function." });
 			}
 
 			return Json(new { success = true, message = "Order successfully placed."});
