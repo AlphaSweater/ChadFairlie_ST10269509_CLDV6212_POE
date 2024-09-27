@@ -13,9 +13,8 @@ var host = new HostBuilder()
 		services.AddApplicationInsightsTelemetryWorkerService();
 		services.ConfigureFunctionsApplicationInsights();
 
-		// var connectionString = Environment.GetEnvironmentVariable("AzureStorage:ConnectionString");
-
-		var connectionString = "DefaultEndpointsProtocol=https;AccountName=st10269509storageaccount;AccountKey=vnp9O2rVT1ELAA+OJSn3CgAkPQ58+Hya2e51bFNZTCS0mkVa0PCqtsrVCZKE5NBWFF7IxdVZl27g+AStSzNFzQ==;EndpointSuffix=core.windows.net";
+		// Read the connection string from environment variables
+		var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
 
 		// Register services
 		services.AddSingleton(new AzureFileStorageService(connectionString));
