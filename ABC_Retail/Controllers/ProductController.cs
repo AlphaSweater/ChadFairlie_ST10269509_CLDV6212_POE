@@ -322,25 +322,20 @@ namespace ABC_Retail.Controllers
 		{
 			if (string.IsNullOrEmpty(id))
 			{
-				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
-			// Retrieve the product from Azure Table Storage.
 			var product = await _productTableService.GetEntityAsync("Product", id);
 			if (product == null)
 			{
-				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
 			if (product.Quantity <= 0)
 			{
-				// Return a bad request response if the product is out of stock.
-				return BadRequest("The product is out of stock.");
+				return Json(new { success = false, message = "The product is out of stock." });
 			}
 
-			// Create an OrderMessage to enqueue for processing.
 			var orderMessage = new OrderMessage
 			{
 				OrderId = Guid.NewGuid().ToString(),
@@ -358,23 +353,21 @@ namespace ABC_Retail.Controllers
 				TotalAmount = product.Price
 			};
 
-			// Enqueue the order message for processing.
-			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
-
-			// Trigger the Azure Function
 			var functionUrl = "https://cldv-functions.azurewebsites.net/api/ProcessQueueMessage?code=xS4TM0xuwIhn7tYg8PIRmL_asDoietCxkzCPwH-7xkhfAzFufO9JCg%3D%3D";
-			var requestData = new { Message = JsonSerializer.Serialize(orderMessage) };
+			var requestData = new
+			{
+				Message = JsonSerializer.Serialize(orderMessage),
+				QueueName = _purchaseQueueName
+			};
 			var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
 
 			var response = await _httpClient.PostAsync(functionUrl, content);
 			if (!response.IsSuccessStatusCode)
 			{
-				return StatusCode((int)response.StatusCode, "Failed to trigger the function.");
+				return Json(new { success = false, message = "Failed to trigger the function." });
 			}
 
-			// Fetch the updated product from Azure Table Storage.
-			product = await _productTableService.GetEntityAsync("Product", id);
-			return Json(new { quantity = product.Quantity });
+			return Json(new { success = true, message = "Order successfully placed."});
 		}
 	}
 }

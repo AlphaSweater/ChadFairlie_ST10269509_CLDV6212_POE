@@ -12,12 +12,12 @@ using System.Threading.Tasks;
 
 namespace ABC_Retail_Functions.Functions
 {
-	public class ProcessQueueMessage
+	public class SendQueueMessage
 	{
 		private readonly AzureQueueService _queueService;
-		private readonly ILogger<ProcessQueueMessage> _logger;
+		private readonly ILogger<SendQueueMessage> _logger;
 
-		public ProcessQueueMessage(AzureQueueService queueService, ILogger<ProcessQueueMessage> logger)
+		public SendQueueMessage(AzureQueueService queueService, ILogger<SendQueueMessage> logger)
 		{
 			_queueService = queueService;
 			_logger = logger;

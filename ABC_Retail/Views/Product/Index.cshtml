@@ -121,21 +121,29 @@
 							type: 'POST',
 							data: { id: productId },
 							success: function(data) {
-								// Update the specific product quantity container
-								button.closest('.card').find('.product-quantity').text(data.quantity);
-
-								// Wait 200ms before showing the success popup
+								// Wait 1500ms before showing the popup
 								setTimeout(function() {
-									Swal.fire({
-										title: 'Purchase Successful',
-										text: 'The product has been purchased.',
-										icon: 'success'
-									}).then((result) => {
-										if (result.isConfirmed) {
-											location.reload();
-										}
-									});
-								}, 200);
+
+									if (data.success) {
+										// Show success popup
+										Swal.fire({
+											title: 'Order Successful',
+											text: data.message,
+											icon: 'success'
+										}).then((result) => {
+											if (result.isConfirmed) {
+												location.reload();
+											}
+										});
+									} else {
+										// Show error popup
+										Swal.fire({
+											title: 'Error',
+											text: data.message,
+											icon: 'error'
+										});
+									}
+								}, 1500);
 							},
 							error: function() {
 								// Handle errors
