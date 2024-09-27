@@ -41,14 +41,23 @@ namespace ABC_Retail.Services
 		/// <param name="message">The message to be enqueued.</param>
 		public async Task EnqueueMessageAsync<T>(string queueName, T message)
 		{
-			// Create a QueueClient for the specified queue.
-			var queueClient = _queueClientFactory(queueName);
+			try
+			{
+				// Create a QueueClient for the specified queue.
+				var queueClient = _queueClientFactory(queueName);
 
-			// Serialize the message to JSON format.
-			var jsonMessage = JsonSerializer.Serialize(message);
+				// Serialize the message to JSON format.
+				var jsonMessage = JsonSerializer.Serialize(message);
 
-			// Send the serialized message to the queue.
-			await queueClient.SendMessageAsync(jsonMessage);
+				// Send the serialized message to the queue.
+				await queueClient.SendMessageAsync(jsonMessage);
+			}
+			catch (Exception ex)
+			{
+				// Log the exception (assuming a logger is available)
+				Console.WriteLine($"Error enqueuing message: {ex.Message}");
+				throw;
+			}
 		}
 	}
 }

@@ -19,22 +19,40 @@ namespace ABC_Retail.Models
 		/// or "Unknown" if the message type cannot be determined.</returns>
 		public static string GetMessageType(string messageText)
 		{
-			var jsonDoc = JsonDocument.Parse(messageText);
-
-			// Check for OrderMessage by looking for an "OrderId" property in the JSON.
-			if (jsonDoc.RootElement.TryGetProperty("OrderId", out _))
+			try
 			{
-				return "OrderMessage";
-			}
+				using (JsonDocument jsonDoc = JsonDocument.Parse(messageText))
+				{
+					JsonElement root = jsonDoc.RootElement;
 
-			// Check for InventoryUpdateMessage by looking for both "ProductId" and "QuantityChange" properties.
-			if (jsonDoc.RootElement.TryGetProperty("ProductId", out _) && jsonDoc.RootElement.TryGetProperty("QuantityChange", out _))
+					// Check for OrderMessage by looking for an "OrderId" property in the JSON.
+					if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("OrderId", out _))
+					{
+						return "OrderMessage";
+					}
+
+					// Check for InventoryUpdateMessage by looking for both "ProductId" and "QuantityChange" properties.
+					if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("ProductId", out _) && root.TryGetProperty("QuantityChange", out _))
+					{
+						return "InventoryUpdateMessage";
+					}
+
+					// If neither type matches, return "Unknown".
+					return "Unknown";
+				}
+			}
+			catch (JsonException ex)
 			{
-				return "InventoryUpdateMessage";
+				// Log the exception (assuming a logger is available)
+				Console.WriteLine($"JSON parsing error: {ex.Message}");
+				return "Unknown";
 			}
-
-			// If neither type matches, return "Unknown".
-			return "Unknown";
+			catch (Exception ex)
+			{
+				// Log the exception (assuming a logger is available)
+				Console.WriteLine($"Unexpected error: {ex.Message}");
+				return "Unknown";
+			}
 		}
 	}
 

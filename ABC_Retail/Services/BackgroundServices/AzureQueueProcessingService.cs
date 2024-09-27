@@ -16,6 +16,7 @@ namespace ABC_Retail.Services.BackgroundServices
 
 		// Factory function to create QueueClient instances for different queues.
 		private readonly Func<string, QueueClient> _queueClientFactory;
+		private readonly ILogger<AzureQueueProcessingService> _logger;
 
 		// Service for interacting with product Azure Table Storage.
 		private readonly ProductTableService _productTableService;
@@ -33,10 +34,11 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureQueueProcessingService"/> class.
 		/// </summary>
-		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, ProductTableService productTableService)
+		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, ProductTableService productTableService, ILogger<AzureQueueProcessingService> logger)
 		{
 			_queueClientFactory = queueClientFactory;
 			_productTableService = productTableService;
+			_logger = logger;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -73,20 +75,36 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="stoppingToken">A token that can be used to signal cancellation of the operation.</param>
 		private async Task ProcessQueueMessagesAsync(QueueClient queueClient, CancellationToken stoppingToken)
 		{
-			// Receive a message from the queue.
-			var message = await queueClient.ReceiveMessageAsync();
-			if (message.Value != null)
+			// Receive up to 10 messages from the queue.
+			var messages = await queueClient.ReceiveMessagesAsync(maxMessages: 10, visibilityTimeout: TimeSpan.FromMinutes(1), cancellationToken: stoppingToken);
+
+			foreach (var message in messages.Value)
 			{
-				// Determine the message type.
-				var messageType = Message.GetMessageType(message.Value.MessageText);
-
-				if (message.Value != null)
+				try
 				{
-					// Process order messages.
-					await ProcessOrderMessageAsync(message.Value.MessageText);
+					// Determine the message type.
+					var messageType = Message.GetMessageType(message.MessageText);
 
-					// Delete the processed message from the queue.
-					await queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
+					switch (messageType)
+					{
+						case "OrderMessage":
+							// Process order message.
+							await ProcessOrderMessageAsync(message.MessageText);
+							break;
+						case "InventoryUpdateMessage":
+							// TODO: Maybe add something
+							break;
+						default:
+							_logger.LogWarning($"Unknown message type: {messageType}");
+							break;
+					}
+
+					// Delete the message after processing
+					await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error processing message");
 				}
 			}
 		}
@@ -98,16 +116,28 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="messageText">The JSON-encoded message text to be processed.</param>
 		private async Task ProcessOrderMessageAsync(string messageText)
 		{
-			// De-serialize the message text into an OrderMessage object.
-			var orderMessage = JsonSerializer.Deserialize<OrderMessage>(messageText);
 
-			// Process the order and update inventory.
-			bool isOrderProcessed = await ProcessOrderAndUpdateInventoryAsync(orderMessage);
-
-			// If the order was successfully processed, log the inventory update.
-			if (isOrderProcessed)
+			try
 			{
+				// De-serialize the message text into an OrderMessage object.
+				var orderMessage = JsonSerializer.Deserialize<OrderMessage>(messageText);
+
+				// Process the order and update inventory.
+				bool isOrderProcessed = await ProcessOrderAndUpdateInventoryAsync(orderMessage);
+
+				if (!isOrderProcessed)
+				{
+					return;
+				}
+
+				// If the order was successfully processed, log the inventory update.
 				await LogInventoryUpdateAsync(orderMessage);
+				_logger.LogInformation($"Processed order message: {orderMessage.OrderId}");
+			}
+			catch (JsonException ex)
+			{
+				_logger.LogError(ex, "Error deserializing order message");
+				throw;
 			}
 		}
 

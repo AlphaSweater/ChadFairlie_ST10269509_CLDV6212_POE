@@ -16,10 +16,12 @@ namespace ABC_Retail_Functions.Functions
 	public class SendQueueMessage
 	{
 		private readonly AzureQueueService _queueService;
+		private readonly ILogger<SendQueueMessage> _logger;
 
-		public SendQueueMessage(AzureQueueService queueService)
+		public SendQueueMessage(AzureQueueService queueService, ILogger<SendQueueMessage> logger)
 		{
 			_queueService = queueService;
+			_logger = logger;
 		}
 
 		[Function("ProcessQueueMessage")]
