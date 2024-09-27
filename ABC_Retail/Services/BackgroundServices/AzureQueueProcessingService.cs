@@ -82,25 +82,39 @@ namespace ABC_Retail.Services.BackgroundServices
 			{
 				try
 				{
+					var messageText = message.MessageText;
+
+					// Remove the outer quotes if they exist
+					if (messageText.StartsWith("\"") && messageText.EndsWith("\""))
+					{
+						messageText = messageText.Substring(1, messageText.Length - 2);
+					}
+
+					// Unescape the JSON string
+					string unescapedMessageText = System.Text.RegularExpressions.Regex.Unescape(messageText);
+
 					// Determine the message type.
-					var messageType = Message.GetMessageType(message.MessageText);
+					var messageType = Message.GetMessageType(unescapedMessageText);
 
 					switch (messageType)
 					{
 						case "OrderMessage":
 							// Process order message.
-							await ProcessOrderMessageAsync(message.MessageText);
+							await ProcessOrderMessageAsync(unescapedMessageText);
+							// Delete the message after processing
+							await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
 							break;
 						case "InventoryUpdateMessage":
 							// TODO: Maybe add something
+							// Delete the message after processing
+							await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
 							break;
 						default:
 							_logger.LogWarning($"Unknown message type: {messageType}");
 							break;
 					}
 
-					// Delete the message after processing
-					await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+					
 				}
 				catch (Exception ex)
 				{

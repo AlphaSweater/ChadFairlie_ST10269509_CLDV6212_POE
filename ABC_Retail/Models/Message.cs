@@ -21,6 +21,7 @@ namespace ABC_Retail.Models
 		{
 			try
 			{
+				// Parse the JSON string
 				using (JsonDocument jsonDoc = JsonDocument.Parse(messageText))
 				{
 					JsonElement root = jsonDoc.RootElement;
