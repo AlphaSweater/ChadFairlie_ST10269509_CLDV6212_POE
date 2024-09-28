@@ -8,6 +8,8 @@ namespace ABC_Retail.Models
 	/// </summary>
 	public class Product : ITableEntity
 	{
+		private readonly string _defaultProductImage = "default-product-image.jpg";
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -30,10 +32,26 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		public Product(string name, double price, string description, int quantity, string fileID)
+		{
+			PartitionKey = "Product"; // Set the partition key to "Product"
+			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			Name = name;
+			Price = price;
+			Description = description;
+			Quantity = quantity;
+			FileID = fileID;
+		}
 		public Product()
 		{
 			PartitionKey = "Product"; // Set the partition key to "Product"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			Name = string.Empty;
+			Price = 0;
+			Description = string.Empty;
+			Quantity = 0;
+			FileID = _defaultProductImage;
+
 		}
 	}
 }

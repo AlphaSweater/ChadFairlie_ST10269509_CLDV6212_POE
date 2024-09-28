@@ -3,6 +3,7 @@ using Azure.Data.Tables;
 using System.Runtime.Serialization;
 using System.Text.Json;
 
+
 namespace ABC_Retail.Models
 {
 	public class Order : ITableEntity
@@ -32,7 +33,7 @@ namespace ABC_Retail.Models
 		{
 			get => string.IsNullOrEmpty(ProductIdsJson)
 				? new List<string>()
-				: JsonSerializer.Deserialize<List<string>>(ProductIdsJson);
+				: JsonSerializer.Deserialize<List<string>>(ProductIdsJson) ?? new List<string>();
 			set => ProductIdsJson = JsonSerializer.Serialize(value);
 		}
 
@@ -50,6 +51,8 @@ namespace ABC_Retail.Models
 			RowKey = Guid.NewGuid().ToString();
 			OrderDate = DateTime.UtcNow;
 			ProductIds = new List<string>();
+			CustomerId = string.Empty; // Initialize CustomerId
+			ProductIdsJson = string.Empty; // Initialize ProductIdsJson
 		}
 	}
 }

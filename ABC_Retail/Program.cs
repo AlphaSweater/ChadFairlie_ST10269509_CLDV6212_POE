@@ -51,7 +51,8 @@ namespace ABC_Retail
 			});
 
 			// Get the connection string for Azure Storage
-			string storageConnectionString = configuration.GetConnectionString("AzureStorage");
+			string storageConnectionString = configuration.GetConnectionString("StorageConnectionString")
+								 ?? throw new InvalidOperationException("AzureStorage connection string is not configured.");
 
 			// Add product Azure Table Storage service
 			services.AddSingleton(new ProductTableService(storageConnectionString));
@@ -86,6 +87,9 @@ namespace ABC_Retail
 				var sasTokenGenerator = sp.GetRequiredService<SasTokenGenerator>();
 				return new AzureBlobStorageService(blobServiceClient, sasTokenGenerator, logger);
 			});
+
+			// Add HttpClient
+			services.AddHttpClient();
 		}
 	}
 }

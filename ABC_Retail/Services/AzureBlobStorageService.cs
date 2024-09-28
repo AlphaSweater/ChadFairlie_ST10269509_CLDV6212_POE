@@ -92,7 +92,7 @@ namespace ABC_Retail.Services
 		/// </summary>
 		/// <param name="blobName">The name of the blob to retrieve.</param>
 		/// <returns>A <see cref="BlobClient"/> object representing the blob.</returns>
-		public async Task<BlobClient> GetFileAsync(string blobName)
+		public BlobClient GetFile(string blobName)
 		{
 			try
 			{

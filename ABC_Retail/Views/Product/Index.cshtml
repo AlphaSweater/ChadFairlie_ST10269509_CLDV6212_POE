@@ -48,7 +48,7 @@
 
 			.btn-primary:hover, .btn-success:hover {
 				transform: translateY(-2px);
-				background-color: darken($color: #007bff, $amount: 10%);
+				background-color: #0056b3;
 			}
 	</style>
 </head>
@@ -78,7 +78,7 @@
 							<p class="card-text">Quantity: <span class="product-quantity">@product.Quantity</span></p>
 						</div>
 						<div class="card-footer d-flex justify-content-between">
-							<a class="btn btn-success purchase-button" data-id="@product.Id">Purchase</a>
+							<a class="btn btn-success purchase-button" data-id="@product.Id" data-name="@product.Name">Purchase</a>
 							<a href="@Url.Action("Manage", "Product", new { id = product.Id })" class="btn btn-primary">Manage</a>
 						</div>
 					</div>
@@ -94,11 +94,12 @@
 			$('.purchase-button').click(function() {
 				var button = $(this);
 				var productId = button.data('id');
+				var productName = button.data('name');
 
 				// Show confirmation popup
 				Swal.fire({
 					title: 'Confirm Purchase',
-					text: 'Are you sure you want to purchase this product?',
+					text: 'Are you sure you want to purchase ' + productName + '?',
 					icon: 'question',
 					showCancelButton: true,
 					confirmButtonText: 'Yes, purchase it!',
@@ -116,26 +117,43 @@
 							}
 						});
 
+						// Append /Purchasing... to the URL
+						const originalUrl = window.location.href;
+						window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+
+						// Send AJAX request to APIController
 						$.ajax({
-							url: '/Product/Purchase',
+							url: '/Product/Purchase', // Ensure this URL is correct
 							type: 'POST',
 							data: { id: productId },
 							success: function(data) {
-								// Update the specific product quantity container
-								button.closest('.card').find('.product-quantity').text(data.quantity);
-
-								// Wait 200ms before showing the success popup
-								setTimeout(function() {
+								if (data.success) {
+									// Show success popup
 									Swal.fire({
-										title: 'Purchase Successful',
-										text: 'The product has been purchased.',
+										title: 'Order Successful',
+										text: data.message,
 										icon: 'success'
 									}).then((result) => {
 										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
 											location.reload();
 										}
 									});
-								}, 200);
+								} else {
+									// Show error popup
+									Swal.fire({
+										title: 'Error',
+										text: data.message,
+										icon: 'error'
+									}).then(result => {
+										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
+											location.reload();
+										}
+									});
+								}
 							},
 							error: function() {
 								// Handle errors
@@ -143,6 +161,12 @@
 									title: 'Error',
 									text: 'An error occurred while processing the purchase.',
 									icon: 'error'
+								}).then(result => {
+									if (result.isConfirmed) {
+										// Revert URL back to original before reloading
+										window.history.replaceState({}, '', originalUrl);
+										location.reload();
+									}
 								});
 							}
 						});

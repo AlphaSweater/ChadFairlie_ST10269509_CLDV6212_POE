@@ -33,6 +33,10 @@ namespace ABC_Retail.Models
 		{
 			PartitionKey = "Customer"; // Set the partition key to "Customer"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			Name = string.Empty;
+			Surname = string.Empty;
+			Email = string.Empty;
+			Phone = string.Empty;
 		}
 	}
 }
