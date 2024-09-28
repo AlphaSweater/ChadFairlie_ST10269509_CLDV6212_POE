@@ -319,54 +319,54 @@ namespace ABC_Retail.Controllers
 		/// </summary>
 		/// <param name="id">The ID of the product to purchase.</param>
 		/// <returns>A redirect to the index action after purchasing the product.</returns>
-		//[HttpPost]
-		//public async Task<IActionResult> Purchase(string id)
-		//{
-		//	if (string.IsNullOrEmpty(id))
-		//	{
-		//		return BadRequest("Product ID cannot be null or empty.");
-		//	}
+		[HttpPost]
+		public async Task<IActionResult> Purchase(string id)
+		{
+			if (string.IsNullOrEmpty(id))
+			{
+				return BadRequest("Product ID cannot be null or empty.");
+			}
 
-		//	var product = await _productTableService.GetEntityAsync("Product", id);
-		//	if (product == null)
-		//	{
-		//		return NotFound();
-		//	}
+			var product = await _productTableService.GetEntityAsync("Product", id);
+			if (product == null)
+			{
+				return NotFound();
+			}
 
-		//	if (product.Quantity <= 0)
-		//	{
-		//		return Json(new { success = false, message = "The product is out of stock." });
-		//	}
+			if (product.Quantity <= 0)
+			{
+				return Json(new { success = false, message = "The product is out of stock." });
+			}
 
-		//	var orderMessage = new OrderMessage(
-		//		"CustomerIdPlaceholder",
-		//		new List<OrderMessage.ProductOrder>
-		//		{
-		//			new OrderMessage.ProductOrder
-		//			(
-		//				product.RowKey,
-		//				product.Name,
-		//				1
-		//			)
-		//		},
-		//		product.Price
-		//	);
+			var orderMessage = new OrderMessage(
+				"CustomerIdPlaceholder",
+				new List<OrderMessage.ProductOrder>
+				{
+			new OrderMessage.ProductOrder
+			(
+				product.RowKey,
+				product.Name,
+				1
+			)
+				},
+				product.Price
+			);
 
-		//	var functionUrl = "https://cldv-functions.azurewebsites.net/api/SendQueueMessage?code=nBRtZ_91_iWLg2kXygRX_QN57yTjWRFfQKNnPaN8frdtAzFusEJU5A%3D%3D";
-		//	var requestData = new
-		//	{
-		//		Message = JsonSerializer.Serialize(orderMessage),
-		//		QueueName = _purchaseQueueName
-		//	};
-		//	var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
+			var functionUrl = "https://cldv-functions.azurewebsites.net/api/SendQueueMessage?code=nBRtZ_91_iWLg2kXygRX_QN57yTjWRFfQKNnPaN8frdtAzFusEJU5A%3D%3D";
+			var requestData = new
+			{
+				Message = JsonSerializer.Serialize(orderMessage),
+				QueueName = _purchaseQueueName
+			};
+			var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
 
-		//	var response = await _httpClient.PostAsync(functionUrl, content);
-		//	if (!response.IsSuccessStatusCode)
-		//	{
-		//		return Json(new { success = false, message = "Failed to trigger the order function." });
-		//	}
+			var response = await _httpClient.PostAsync(functionUrl, content);
+			if (!response.IsSuccessStatusCode)
+			{
+				return Json(new { success = false, message = "Failed to trigger the order function." });
+			}
 
-		//	return Json(new { success = true, message = "Order successfully placed." });
-		//}
+			return Json(new { success = true, message = "Order successfully placed." });
+		}
 	}
 }
