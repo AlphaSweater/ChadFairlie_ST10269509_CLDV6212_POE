@@ -1,7 +1,9 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.Runtime.Serialization;
 using System.Text.Json;
+using static Azure.Core.HttpHeader;
 
 
 namespace ABC_Retail.Models
@@ -25,7 +27,7 @@ namespace ABC_Retail.Models
 		public string CustomerId { get; set; }
 
 		// Storing the list of Product RowKeys as a JSON string
-		private string ProductIdsJson { get; set; }
+		private string? ProductIdsJson { get; set; }
 
 		// Not mapped to Table Storage, used for easier access in your code
 		[IgnoreDataMember]
@@ -39,20 +41,20 @@ namespace ABC_Retail.Models
 
 		// Other properties related to the order
 		public DateTime OrderDate { get; set; }
-
 		public decimal TotalAmount { get; set; }
+		public string Status { get; set; }  // Pending, Shipped, Completed
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		public Order()
 		{
-			PartitionKey = "Order";
-			RowKey = Guid.NewGuid().ToString();
+			RowKey = Guid.NewGuid().ToString();  // Unique identifier for the order
+			CustomerId = string.Empty;
+			PartitionKey = CustomerId;  // Default partition, can be refined based on business logic
 			OrderDate = DateTime.UtcNow;
-			ProductIds = new List<string>();
-			CustomerId = string.Empty; // Initialize CustomerId
-			ProductIdsJson = string.Empty; // Initialize ProductIdsJson
+			ProductIds = new List<string>();  // Initialize ProductIds list
+			Status = "Pending";  // Default status
 		}
 	}
 }
