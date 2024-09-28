@@ -125,8 +125,7 @@
 							type: 'POST',
 							data: { id: productId },
 							success: function(data) {
-								// Wait 1500ms before showing the popup
-								setTimeout(function() {
+
 									if (data.success) {
 										// Show success popup
 										Swal.fire({
@@ -154,7 +153,6 @@
 											}
 										});
 									}
-								}, 1500);
 							},
 							error: function() {
 								// Handle errors
