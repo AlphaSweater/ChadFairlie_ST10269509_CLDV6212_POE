@@ -51,7 +51,7 @@ namespace ABC_Retail_Functions.Functions
 				return new BadRequestObjectResult("Please provide a valid message and queue name.");
 			}
 
-			var connectionString = Environment.GetEnvironmentVariable("AzureStorage:ConnectionString");
+			var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
 			var queueServiceClient = new QueueServiceClient(connectionString);
 			var queueClient = queueServiceClient.GetQueueClient(requestData.QueueName);
 

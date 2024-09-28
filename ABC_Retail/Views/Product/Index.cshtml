@@ -117,33 +117,56 @@
 							}
 						});
 
+						// Append /Purchasing... to the URL
+						const originalUrl = window.location.href;
+						window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+
 						// Send AJAX request to APIController
 						$.ajax({
-							url: '/api/API/SendMessage',
+							url: '/Product/Purchase', // Ensure this URL is correct
 							type: 'POST',
-							contentType: 'application/json',
-							data: JSON.stringify({
-								QueueName: 'purchase-queue',
-								Message: JSON.stringify({ ProductId: productId, ProductName: productName })
-							}),
+							data: { id: productId },
 							success: function(data) {
-								// Show success popup
-								Swal.fire({
-									title: 'Order Successful',
-									text: data,
-									icon: 'success'
-								}).then((result) => {
-									if (result.isConfirmed) {
-										location.reload();
-									}
-								});
+								if (data.success) {
+									// Show success popup
+									Swal.fire({
+										title: 'Order Successful',
+										text: data.message,
+										icon: 'success'
+									}).then((result) => {
+										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
+											location.reload();
+										}
+									});
+								} else {
+									// Show error popup
+									Swal.fire({
+										title: 'Error',
+										text: data.message,
+										icon: 'error'
+									}).then(result => {
+										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
+											location.reload();
+										}
+									});
+								}
 							},
-							error: function(xhr) {
-								// Show error popup
+							error: function() {
+								// Handle errors
 								Swal.fire({
 									title: 'Error',
-									text: xhr.responseText || 'An error occurred while processing the purchase.',
+									text: 'An error occurred while processing the purchase.',
 									icon: 'error'
+								}).then(result => {
+									if (result.isConfirmed) {
+										// Revert URL back to original before reloading
+										window.history.replaceState({}, '', originalUrl);
+										location.reload();
+									}
 								});
 							}
 						});
