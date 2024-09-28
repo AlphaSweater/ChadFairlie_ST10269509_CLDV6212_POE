@@ -2,6 +2,9 @@
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 
 namespace ABC_Retail.Controllers
 {
@@ -24,6 +27,9 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
 
+		// The HTTP client for making HTTP requests.
+		private readonly HttpClient _httpClient;
+
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
 
@@ -39,11 +45,13 @@ namespace ABC_Retail.Controllers
 		/// <param name="productTableService">Service for interacting with product Azure Table Storage.</param>
 		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
 		/// <param name="blobStorageService"> Service for interacting with Azure Blob Storage.</param>
-		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService)
+		/// <param name="httpClient">The HTTP client for making HTTP requests.</param>"
+		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService, HttpClient httpClient)
 		{
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_queueService = queueService;
+			_httpClient = httpClient;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -65,12 +73,12 @@ namespace ABC_Retail.Controllers
 
 			foreach (var product in products)
 			{
-				string fileName = null;
-				string fileUrl = null;
+				string? fileName = null;
+				string? fileUrl = null;
 
 				if (!string.IsNullOrEmpty(product.FileID))
 				{
-					var blobClient = await _blobStorageService.GetFileAsync(product.FileID);
+					var blobClient = _blobStorageService.GetFile(product.FileID);
 					fileName = blobClient.Name;
 					fileUrl = blobClient.Uri.ToString();
 				}
@@ -117,12 +125,12 @@ namespace ABC_Retail.Controllers
 				return NotFound();
 			}
 
-			string fileName = null;
-			string fileUrl = null;
+			string? fileName = null;
+			string? fileUrl = null;
 
 			if (!string.IsNullOrEmpty(product.FileID))
 			{
-				var blobClient = await _blobStorageService.GetFileAsync(product.FileID);
+				var blobClient = _blobStorageService.GetFile(product.FileID);
 				fileName = blobClient.Name;
 				fileUrl = blobClient.Uri.ToString();
 			}
@@ -177,15 +185,15 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Update the product details with the values from the view model.
-			product.Name = model.Name;
+			product.Name = model.Name ?? string.Empty;
 			product.Price = model.Price;
-			product.Description = model.Description;
+			product.Description = model.Description ?? string.Empty;
 			product.Quantity = model.Quantity;
 
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				if (!model.FileName.Equals(_defaultProductImage))
+				if (product.FileID != null && model.FileName != _defaultProductImage)
 				{
 					// Delete the existing image file from Azure Blob Storage.
 					await _blobStorageService.DeleteFileAsync(product.FileID);
@@ -274,23 +282,25 @@ namespace ABC_Retail.Controllers
 				return View(model);
 			}
 
-			// Create a new product entity from the view model.
-			var product = new Product
-			{
-				Name = model.Name,
-				Price = model.Price,
-				Description = model.Description,
-				Quantity = model.Quantity,
-			};
+			string fileID = string.Empty;
 
 			if (model.File == null)
 			{
-				product.FileID = _defaultProductImage; // Set a default image file ID
+				fileID = _defaultProductImage; // Set a default image file ID
 			}
 			else
 			{
-				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result; // Upload the image file and get the file ID
+				fileID = _blobStorageService.UploadFileAsync(model.File).Result; // Upload the image file and get the file ID
 			}
+
+			// Create a new product entity from the view model.
+			var product = new Product(
+				model.Name ?? string.Empty,
+				model.Price,
+				model.Description ?? string.Empty,
+				model.Quantity,
+				fileID
+			);
 
 			// Save the new product to Azure Table Storage.
 			await _productTableService.AddEntityAsync(product);
@@ -309,55 +319,54 @@ namespace ABC_Retail.Controllers
 		/// </summary>
 		/// <param name="id">The ID of the product to purchase.</param>
 		/// <returns>A redirect to the index action after purchasing the product.</returns>
-		[HttpPost]
-		public async Task<IActionResult> Purchase(string id)
-		{
-			if (string.IsNullOrEmpty(id))
-			{
-				// Return a bad request response if the product ID is null or empty.
-				return BadRequest("Product ID cannot be null or empty.");
-			}
+		//[HttpPost]
+		//public async Task<IActionResult> Purchase(string id)
+		//{
+		//	if (string.IsNullOrEmpty(id))
+		//	{
+		//		return BadRequest("Product ID cannot be null or empty.");
+		//	}
 
-			// Retrieve the product from Azure Table Storage.
-			var product = await _productTableService.GetEntityAsync("Product", id);
-			if (product == null)
-			{
-				// Return a not found response if the product does not exist.
-				return NotFound();
-			}
+		//	var product = await _productTableService.GetEntityAsync("Product", id);
+		//	if (product == null)
+		//	{
+		//		return NotFound();
+		//	}
 
-			if (product.Quantity <= 0)
-			{
-				// Return a bad request response if the product is out of stock.
-				return BadRequest("The product is out of stock.");
-			}
+		//	if (product.Quantity <= 0)
+		//	{
+		//		return Json(new { success = false, message = "The product is out of stock." });
+		//	}
 
-			// Create an OrderMessage to enqueue for processing.
-			var orderMessage = new OrderMessage
-			{
-				OrderId = Guid.NewGuid().ToString(), // Generate a new OrderId
-				CustomerId = "CustomerIdPlaceholder", // Replace with actual customer ID
-				Products = new List<OrderMessage.ProductOrder>
-				{
-					new OrderMessage.ProductOrder
-					{
-						ProductId = product.RowKey,
-						ProductName = product.Name,
-						Quantity = 1 // Assume purchasing 1 unit for simplicity
-					}
-				},
-				OrderDate = DateTime.UtcNow,
-				TotalAmount = product.Price // Assuming the total amount is the price of one product
-			};
+		//	var orderMessage = new OrderMessage(
+		//		"CustomerIdPlaceholder",
+		//		new List<OrderMessage.ProductOrder>
+		//		{
+		//			new OrderMessage.ProductOrder
+		//			(
+		//				product.RowKey,
+		//				product.Name,
+		//				1
+		//			)
+		//		},
+		//		product.Price
+		//	);
 
-			// Enqueue the order message for processing.
-			await _queueService.EnqueueMessageAsync(_purchaseQueueName, orderMessage);
+		//	var functionUrl = "https://cldv-functions.azurewebsites.net/api/SendQueueMessage?code=nBRtZ_91_iWLg2kXygRX_QN57yTjWRFfQKNnPaN8frdtAzFusEJU5A%3D%3D";
+		//	var requestData = new
+		//	{
+		//		Message = JsonSerializer.Serialize(orderMessage),
+		//		QueueName = _purchaseQueueName
+		//	};
+		//	var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
 
-			// Fetch the updated product from Azure Table Storage.
-			product = await _productTableService.GetEntityAsync("Product", id);
+		//	var response = await _httpClient.PostAsync(functionUrl, content);
+		//	if (!response.IsSuccessStatusCode)
+		//	{
+		//		return Json(new { success = false, message = "Failed to trigger the order function." });
+		//	}
 
-			// Return the updated quantity as JSON
-			return Json(new { quantity = product.Quantity });
-		}
+		//	return Json(new { success = true, message = "Order successfully placed." });
+		//}
 	}
 }
