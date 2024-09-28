@@ -48,7 +48,7 @@
 
 			.btn-primary:hover, .btn-success:hover {
 				transform: translateY(-2px);
-				background-color: darken($color: #007bff, $amount: 10%);
+				background-color: #0056b3; /* Manually adjusted darker shade of #007bff */
 			}
 	</style>
 </head>
@@ -116,26 +116,45 @@
 							}
 						});
 
+						// Append /Purchasing... to the URL
+						const originalUrl = window.location.href;
+						window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+
 						$.ajax({
 							url: '/Product/Purchase',
 							type: 'POST',
 							data: { id: productId },
 							success: function(data) {
-								// Update the specific product quantity container
-								button.closest('.card').find('.product-quantity').text(data.quantity);
-
-								// Wait 200ms before showing the success popup
+								// Wait 1500ms before showing the popup
 								setTimeout(function() {
-									Swal.fire({
-										title: 'Purchase Successful',
-										text: 'The product has been purchased.',
-										icon: 'success'
-									}).then((result) => {
-										if (result.isConfirmed) {
-											location.reload();
-										}
-									});
-								}, 200);
+									if (data.success) {
+										// Show success popup
+										Swal.fire({
+											title: 'Order Successful',
+											text: data.message,
+											icon: 'success'
+										}).then((result) => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									} else {
+										// Show error popup
+										Swal.fire({
+											title: 'Error',
+											text: data.message,
+											icon: 'error'
+										}).then(result => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									}
+								}, 1500);
 							},
 							error: function() {
 								// Handle errors
@@ -143,6 +162,12 @@
 									title: 'Error',
 									text: 'An error occurred while processing the purchase.',
 									icon: 'error'
+								}).then(result => {
+									if (result.isConfirmed) {
+										// Revert URL back to original before reloading
+										window.history.replaceState({}, '', originalUrl);
+										location.reload();
+									}
 								});
 							}
 						});
