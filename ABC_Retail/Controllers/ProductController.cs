@@ -24,11 +24,11 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with Azure Blob Storage.
 		private readonly AzureBlobStorageService _blobStorageService;
 
-		// Service for interacting with Azure Queue Storage.
-		private readonly AzureQueueService _queueService;
-
 		// The HTTP client for making HTTP requests.
 		private readonly HttpClient _httpClient;
+
+		// The function URL for sending a queue message.
+		private readonly string _sendQueueMessageUrl;
 
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
@@ -46,12 +46,12 @@ namespace ABC_Retail.Controllers
 		/// <param name="queueService">Service for interacting with Azure Queue Storage.</param>
 		/// <param name="blobStorageService"> Service for interacting with Azure Blob Storage.</param>
 		/// <param name="httpClient">The HTTP client for making HTTP requests.</param>"
-		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, AzureQueueService queueService, HttpClient httpClient)
+		public ProductController(ProductTableService productTableService, AzureBlobStorageService blobStorageService, HttpClient httpClient, IConfiguration configuration)
 		{
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
-			_queueService = queueService;
 			_httpClient = httpClient;
+			_sendQueueMessageUrl = configuration["AzureFunctions:SendQueueMessageUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -352,7 +352,7 @@ namespace ABC_Retail.Controllers
 				product.Price
 			);
 
-			var functionUrl = "https://cldv-functions.azurewebsites.net/api/SendQueueMessage?code=nBRtZ_91_iWLg2kXygRX_QN57yTjWRFfQKNnPaN8frdtAzFusEJU5A%3D%3D";
+			var functionUrl = _sendQueueMessageUrl;
 			var requestData = new
 			{
 				Message = JsonSerializer.Serialize(orderMessage),
