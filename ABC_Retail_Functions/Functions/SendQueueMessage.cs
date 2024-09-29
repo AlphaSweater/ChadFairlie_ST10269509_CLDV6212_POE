@@ -60,6 +60,8 @@ namespace ABC_Retail_Functions.Functions
 				await queueClient.CreateIfNotExistsAsync();
 				await queueClient.SendMessageAsync(requestData.Message);
 				log.LogInformation("Message added to queue successfully.");
+				log.LogInformation($"Sending message to queue: {requestData.Message}");
+
 			}
 			catch (Exception ex)
 			{

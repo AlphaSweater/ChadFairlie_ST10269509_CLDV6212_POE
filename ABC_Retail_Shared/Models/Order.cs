@@ -1,12 +1,11 @@
 ﻿using Azure;
 using Azure.Data.Tables;
-using Microsoft.AspNetCore.Http.HttpResults;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using static Azure.Core.HttpHeader;
 
 
-namespace ABC_Retail.Models
+namespace ABC_Retail_Shared.Models
 {
 	public class Order : ITableEntity
 	{

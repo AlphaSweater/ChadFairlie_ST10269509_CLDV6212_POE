@@ -1,11 +1,8 @@
-﻿using ABC_Retail_Functions.Models;
+﻿using ABC_Retail_Shared.Models;
 using Azure;
 using Azure.Data.Tables;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace ABC_Retail_Functions.Services
+namespace ABC_Retail_Shared.Services
 {
 	/// <summary>
 	/// Provides generic services for interacting with Azure Table Storage, including operations

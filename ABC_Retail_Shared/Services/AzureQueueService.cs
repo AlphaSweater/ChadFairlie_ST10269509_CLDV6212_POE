@@ -2,7 +2,7 @@
 using System.Text.Json;
 
 
-namespace ABC_Retail.Services
+namespace ABC_Retail_Shared.Services
 {
 	/// <summary>
 	/// Provides a service for interacting with Azure Queue Storage, including

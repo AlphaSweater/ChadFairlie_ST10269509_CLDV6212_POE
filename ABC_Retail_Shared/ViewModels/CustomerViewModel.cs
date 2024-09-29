@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ABC_Retail.ViewModels
+namespace ABC_Retail_Shared.ViewModels
 {
 	/// <summary>
 	/// Represents a customer in the view as a view model of the customer entity

@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
-namespace ABC_Retail.ViewModels
+namespace ABC_Retail_Shared.ViewModels
 {
 	/// <summary>
 	/// Represents a product in the view as a view model of the product entity

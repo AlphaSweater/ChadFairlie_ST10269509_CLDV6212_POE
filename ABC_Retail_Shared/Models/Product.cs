@@ -1,14 +1,15 @@
 ﻿using Azure;
 using Azure.Data.Tables;
-using System;
 
-namespace ABC_Retail_Functions.Models
+namespace ABC_Retail_Shared.Models
 {
 	/// <summary>
-	/// Represents a customer entity in the application
+	/// Represents a product entity in the application
 	/// </summary>
-	public class Customer : ITableEntity
+	public class Product : ITableEntity
 	{
+		private readonly string _defaultProductImage = "default-product-image.jpg";
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -19,25 +20,38 @@ namespace ABC_Retail_Functions.Models
 		public ETag ETag { get; set; }
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Custom properties of the Customer entity
+		// Custom properties of the Product entity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		public string Name { get; set; } // Name of the customer
-		public string Surname { get; set; } // Surname of the customer
-		public string Email { get; set; } // Email of the customer
-		public string Phone { get; set; } // Phone number of the customer
+		public string Name { get; set; } // Name of the product
+		public double Price { get; set; } // Price of the product
+		public string Description { get; set; } // Description of the product
+		public int Quantity { get; set; } // Quantity of the product
+		public string FileID { get; set; } // ID of the product image file
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		public Customer()
+		public Product(string name, double price, string description, int quantity, string fileID)
 		{
-			PartitionKey = "Customer"; // Set the partition key to "Customer"
+			PartitionKey = "Product"; // Set the partition key to "Product"
+			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			Name = name;
+			Price = price;
+			Description = description;
+			Quantity = quantity;
+			FileID = fileID;
+		}
+		public Product()
+		{
+			PartitionKey = "Product"; // Set the partition key to "Product"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
 			Name = string.Empty;
-			Surname = string.Empty;
-			Email = string.Empty;
-			Phone = string.Empty;
+			Price = 0;
+			Description = string.Empty;
+			Quantity = 0;
+			FileID = _defaultProductImage;
+
 		}
 	}
 }

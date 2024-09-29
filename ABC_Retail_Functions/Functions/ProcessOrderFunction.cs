@@ -5,25 +5,27 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Azure.Data.Tables;
-using Azure;
-using ABC_Retail_Functions.Models;
+using ABC_Retail_Shared.Services;
+using ABC_Retail_Shared.Models;
 
 namespace ABC_Retail_Functions.Functions
 {
 	public class ProcessOrderFunction
 	{
-		private TableServiceClient _tableServiceClient;
-		private readonly string _productTableName = "Products";
-
-
+		private readonly ProductTableService _productTableService;
+		private readonly Func<string, QueueClient> _queueClientFactory;
 		private readonly string _inventoryQueueName = "inventory-queue";
 
+		public ProcessOrderFunction(ProductTableService productTableService, Func<string, QueueClient> queueClientFactory)
+		{
+			_productTableService = productTableService;
+			_queueClientFactory = queueClientFactory;
+		}
 
 		[FunctionName("ProcessOrderFunction")]
 		public async Task Run(
-		[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
-		ILogger log)
+	[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
+	ILogger log)
 		{
 			log.LogInformation($"Processing order message: {myQueueItem}");
 
@@ -42,7 +44,7 @@ namespace ABC_Retail_Functions.Functions
 				if (success)
 				{
 					log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
-					//await LogInventoryUpdateAsync(orderMessage, log);
+					await LogInventoryUpdateAsync(orderMessage, log);
 				}
 				else
 				{
@@ -60,11 +62,7 @@ namespace ABC_Retail_Functions.Functions
 			foreach (var product in orderMessage.Products)
 			{
 				log.LogInformation($"Retrieving product {product.ProductId} from table storage");
-
-				_tableServiceClient = new TableServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
-				var productTableClient = _tableServiceClient.GetTableClient(_productTableName);
-
-				Product dbProduct = await productTableClient.GetEntityAsync<Product>("Product", product.ProductId);
+				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
 				if (dbProduct == null)
 				{
 					log.LogWarning($"Product {product.ProductId} not found in table storage");
@@ -80,31 +78,31 @@ namespace ABC_Retail_Functions.Functions
 				// Deduct quantity and update the table
 				dbProduct.Quantity -= product.Quantity;
 				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
-				await productTableClient.UpdateEntityAsync(dbProduct, ETag.All, TableUpdateMode.Replace);
+				await _productTableService.UpdateEntityAsync(dbProduct);
 			}
 
 			return true; // Order processed successfully
 		}
 
-		//private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
-		//{
-		//	var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
+		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
+		{
+			var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
 
-		//	foreach (var product in orderMessage.Products)
-		//	{
-		//		var inventoryUpdateMessage = new InventoryUpdateMessage
-		//		(
-		//			product.ProductName,
-		//			-product.Quantity, // Negative quantity for stock deduction
-		//			"Order processed"
-		//		);
+			foreach (var product in orderMessage.Products)
+			{
+				var inventoryUpdateMessage = new InventoryUpdateMessage
+				(
+					product.ProductName,
+					-product.Quantity, // Negative quantity for stock deduction
+					"Order processed"
+				);
 
-		//		var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
-		//		await inventoryQueueClient.SendMessageAsync(messageText);
-		//	}
+				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
+				await inventoryQueueClient.SendMessageAsync(messageText);
+			}
 
-		//	log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
-		//}
+			log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
+		}
 
 	}
 }

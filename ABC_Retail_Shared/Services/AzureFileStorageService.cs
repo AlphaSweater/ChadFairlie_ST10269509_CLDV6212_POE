@@ -1,12 +1,11 @@
-﻿using ABC_Retail.ViewModels;
+﻿using ABC_Retail_Shared.ViewModels;
 using Azure;
 using Azure.Storage.Files.Shares;
 using Azure.Storage.Files.Shares.Models;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ABC_Retail_Functions.Services
+namespace ABC_Retail_Shared.Services
 {
 	public class AzureFileStorageService
 	{
@@ -63,6 +62,8 @@ namespace ABC_Retail_Functions.Services
 
 			return downloadResponse.Value.Content;
 		}
+
+		//TODO: Fix
 
 		// List all files in Azure Files
 		public async Task<IEnumerable<ContractFileViewModel>> ListFilesAsync(string shareName)
