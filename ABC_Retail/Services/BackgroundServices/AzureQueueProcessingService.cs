@@ -59,7 +59,7 @@ namespace ABC_Retail.Services.BackgroundServices
 			// Continuously process messages from the queue until cancellation is requested.
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				await ProcessQueueMessagesAsync(purchaseQueueClient, stoppingToken);
+				//await ProcessQueueMessagesAsync(purchaseQueueClient, stoppingToken);
 				await Task.Delay(150, stoppingToken); // Delay to prevent rapid polling of the queue.
 			}
 		}
