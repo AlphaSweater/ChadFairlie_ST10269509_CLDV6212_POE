@@ -13,13 +13,13 @@ namespace ABC_Retail_Functions.Functions
 	public class ProcessOrderFunction
 	{
 		private readonly ProductTableService _productTableService;
-		private readonly Func<string, QueueClient> _queueClientFactory;
+		private readonly AzureQueueService _queueService;
 		private readonly string _inventoryQueueName = "inventory-queue";
 
-		public ProcessOrderFunction(ProductTableService productTableService, Func<string, QueueClient> queueClientFactory)
+		public ProcessOrderFunction(ProductTableService productTableService, AzureQueueService queueService)
 		{
 			_productTableService = productTableService;
-			_queueClientFactory = queueClientFactory;
+			_queueService = queueService;
 		}
 
 		[FunctionName("ProcessOrderFunction")]
@@ -86,8 +86,6 @@ namespace ABC_Retail_Functions.Functions
 
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
 		{
-			var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
-
 			foreach (var product in orderMessage.Products)
 			{
 				var inventoryUpdateMessage = new InventoryUpdateMessage
@@ -98,7 +96,7 @@ namespace ABC_Retail_Functions.Functions
 				);
 
 				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
-				await inventoryQueueClient.SendMessageAsync(messageText);
+				await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
 			}
 
 			log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
