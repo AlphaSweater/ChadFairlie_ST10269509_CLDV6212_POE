@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
+using Microsoft.AspNetCore.Http;
 
 namespace ABC_Retail.Services
 {
@@ -20,9 +21,6 @@ namespace ABC_Retail.Services
 		// The SasTokenGenerator instance used to generate SAS tokens for Azure Blob Storage access.
 		private readonly SasTokenGenerator _sasTokenGenerator;
 
-		// The logger instance used to record information and errors.
-		private readonly ILogger<AzureBlobStorageService> _logger;
-
 		// The name of the container used to store image files.
 		private readonly string _imageContainerName = "imagefiles";
 
@@ -32,17 +30,18 @@ namespace ABC_Retail.Services
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureBlobStorageService"/> class.
 		/// </summary>
-		public AzureBlobStorageService(BlobServiceClient blobServiceClient, SasTokenGenerator sasTokenGenerator, ILogger<AzureBlobStorageService> logger)
+		public AzureBlobStorageService(BlobServiceClient blobServiceClient, SasTokenGenerator sasTokenGenerator)
 		{
 			// Initialize the BlobServiceClient, SasTokenGenerator, and Logger
 			_blobServiceClient = blobServiceClient;
 			_sasTokenGenerator = sasTokenGenerator;
-			_logger = logger;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Methods to interact with Azure Blob Storage
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//TODO: Fix
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
@@ -63,25 +62,17 @@ namespace ABC_Retail.Services
 
 			try
 			{
-				// Log the intention to upload the file.
-				_logger.LogInformation("Uploading file {FileName} as blob {BlobName} to container {ContainerName}.", file.FileName, blobName, _imageContainerName);
-
 				// Open a stream to read the content of the file and upload it to the blob in Azure Blob Storage.
 				using (var stream = file.OpenReadStream())
 				{
 					await blobClient.UploadAsync(stream, true);
 				}
 
-				// Log the successful upload of the file.
-				_logger.LogInformation("File {FileName} uploaded successfully as {BlobName}.", file.FileName, blobName);
-
 				// Return the new filename of the uploaded blob.
 				return blobName;
 			}
 			catch (Exception ex)
 			{
-				// Log the error that occurred during the upload process.
-				_logger.LogError(ex, "An error occurred while uploading file {FileName}.", file.FileName);
 				throw;
 			}
 		}
@@ -114,16 +105,11 @@ namespace ABC_Retail.Services
 				// Create a new BlobClient instance using the constructed URI with the SAS token.
 				var blobClient = new BlobClient(blobUri);
 
-				// Log the successful retrieval of the blob.
-				_logger.LogInformation("Retrieved BlobClient for blob {BlobName} from {BlobUri}.", blobName, blobUri);
-
 				// Return the BlobClient instance representing the blob.
 				return blobClient;
 			}
 			catch (Exception ex)
 			{
-				// Log any error that occurs during the retrieval process, including the blob name.
-				_logger.LogError(ex, "An error occurred while retrieving blob {BlobName}.", blobName);
 				throw;
 			}
 		}
@@ -155,23 +141,12 @@ namespace ABC_Retail.Services
 				// Create a new BlobClient instance using the constructed URI with the SAS token.
 				// The BlobClient is used to interact with the blob (file) in Azure Blob Storage.
 				var blobClient = new BlobClient(blobUri);
-
-				// Log the intention to delete the blob. This log entry includes the blob name and its URI,
-				// providing valuable information for debugging and audit purposes.
-				_logger.LogInformation("Deleting blob {BlobName} from {BlobUri}.", blobName, blobUri);
-
 				// Attempt to delete the blob from Azure Blob Storage. If the blob does not exist, the method returns false.
 				// The DeleteIfExistsAsync method ensures that no exception is thrown if the blob is not found.
 				await blobClient.DeleteIfExistsAsync();
-
-				// Log the successful deletion of the blob. The log entry includes the blob name and its URI.
-				_logger.LogInformation("Blob {BlobName} deleted successfully from {BlobUri}.", blobName, blobUri);
 			}
 			catch (Exception ex)
 			{
-				// Log any error that occurs during the deletion process, including the blob name.
-				// The exception is re-thrown to ensure that the calling code is aware of the failure.
-				_logger.LogError(ex, "An error occurred while deleting blob {BlobName}.", blobName);
 				throw;
 			}
 		}
@@ -196,10 +171,6 @@ namespace ABC_Retail.Services
 				var containerClient = new BlobContainerClient(
 					new Uri($"{_blobServiceClient.GetBlobContainerClient(_imageContainerName).Uri}{containerSasToken}"));
 
-				// Log the initiation of the blob listing process.
-				// This log entry includes the name of the container being accessed.
-				_logger.LogInformation("Listing all blobs in container {ContainerName}.", _imageContainerName);
-
 				// Initialize a list to store BlobClient instances for each blob found in the container.
 				var blobs = new List<BlobClient>();
 
@@ -211,25 +182,15 @@ namespace ABC_Retail.Services
 					// The BlobClient provides methods to perform operations on the individual blob.
 					var blobClient = containerClient.GetBlobClient(blobItem.Name);
 
-					// Log the discovery of each blob, including its name and the container name.
-					_logger.LogDebug("Found blob {BlobName} in container {ContainerName}.", blobItem.Name, _imageContainerName);
-
 					// Add the BlobClient instance to the list of blobs.
 					blobs.Add(blobClient);
 				}
-
-				// Log the total number of blobs retrieved from the container.
-				// This provides valuable feedback on the success and scope of the operation.
-				_logger.LogInformation("Retrieved {BlobCount} blobs from container {ContainerName}.", blobs.Count, _imageContainerName);
 
 				// Return the list of BlobClient instances representing each blob in the container.
 				return blobs;
 			}
 			catch (Exception ex)
 			{
-				// Log any error that occurs during the blob listing process, including the container name.
-				// The exception is re-thrown to ensure that the calling code is aware of the failure.
-				_logger.LogError(ex, "An error occurred while listing blobs in container {ContainerName}.", _imageContainerName);
 				throw;
 			}
 		}
@@ -245,7 +206,6 @@ namespace ABC_Retail.Services
 	public class SasTokenGenerator
 	{
 		private readonly BlobServiceClient _blobServiceClient;
-		private readonly ILogger<SasTokenGenerator> _logger;
 		private readonly TimeSpan _defaultExpiration = TimeSpan.FromHours(1);
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -256,10 +216,9 @@ namespace ABC_Retail.Services
 		/// </summary>
 		/// <param name="blobServiceClient">The BlobServiceClient instance used to interact with Azure Blob Storage.</param>
 		/// <param name="logger">The logger used to record information and errors.</param>
-		public SasTokenGenerator(BlobServiceClient blobServiceClient, ILogger<SasTokenGenerator> logger)
+		public SasTokenGenerator(BlobServiceClient blobServiceClient)
 		{
 			_blobServiceClient = blobServiceClient;
-			_logger = logger;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -283,7 +242,6 @@ namespace ABC_Retail.Services
 			// This requires the storage account to have access keys.
 			if (!containerClient.CanGenerateSasUri)
 			{
-				_logger.LogError("Cannot generate SAS token. Account does not have access keys for container {ContainerName}.", containerName);
 				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
 			}
 
@@ -314,7 +272,6 @@ namespace ABC_Retail.Services
 			// This requires the storage account to have access keys.
 			if (!blobClient.CanGenerateSasUri)
 			{
-				_logger.LogError("Cannot generate SAS token. Account does not have access keys for blob {BlobName}.", blobName);
 				throw new InvalidOperationException("Cannot generate SAS token. Account does not have access keys.");
 			}
 

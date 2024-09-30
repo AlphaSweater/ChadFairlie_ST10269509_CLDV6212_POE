@@ -1,4 +1,6 @@
-﻿namespace ABC_Retail.ViewModels
+﻿using Microsoft.AspNetCore.Http;
+
+namespace ABC_Retail.ViewModels
 {
 	public class ContractFileViewModel
 	{

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Text; // Add this for encoding
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -57,9 +58,16 @@ namespace ABC_Retail_Functions.Functions
 
 			try
 			{
+				// Ensure the queue exists
 				await queueClient.CreateIfNotExistsAsync();
-				await queueClient.SendMessageAsync(requestData.Message);
+
+				// Encode the message in Base64
+				string encodedMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(requestData.Message));
+
+				// Send the Base64-encoded message to the queue
+				await queueClient.SendMessageAsync(encodedMessage);
 				log.LogInformation("Message added to queue successfully.");
+				log.LogInformation($"Sending Base64-encoded message to queue: {encodedMessage}");
 			}
 			catch (Exception ex)
 			{
@@ -67,7 +75,7 @@ namespace ABC_Retail_Functions.Functions
 				return new StatusCodeResult(StatusCodes.Status500InternalServerError);
 			}
 
-			return new OkObjectResult("Message added to queue");
+			return new OkObjectResult("Message added to queue (Base64-encoded)");
 		}
 
 		private class RequestData

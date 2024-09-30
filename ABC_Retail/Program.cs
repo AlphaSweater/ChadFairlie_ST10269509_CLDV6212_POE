@@ -1,5 +1,4 @@
 using ABC_Retail.Services;
-using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 
@@ -76,7 +75,6 @@ namespace ABC_Retail
 
 			// Register AzureQueueService and AzureQueueProcessingService
 			services.AddSingleton<AzureQueueService>();
-			services.AddSingleton<IHostedService, AzureQueueProcessingService>();
 
 			// Add SasTokenGenerator and AzureBlobStorageService
 			services.AddSingleton<SasTokenGenerator>();
@@ -85,7 +83,7 @@ namespace ABC_Retail
 				var logger = sp.GetRequiredService<ILogger<AzureBlobStorageService>>();
 				var blobServiceClient = sp.GetRequiredService<BlobServiceClient>();
 				var sasTokenGenerator = sp.GetRequiredService<SasTokenGenerator>();
-				return new AzureBlobStorageService(blobServiceClient, sasTokenGenerator, logger);
+				return new AzureBlobStorageService(blobServiceClient, sasTokenGenerator);
 			});
 
 			// Add HttpClient
