@@ -8,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 
-
 [assembly: FunctionsStartup(typeof(MyFunctionApp.Startup))]
 
 namespace MyFunctionApp
