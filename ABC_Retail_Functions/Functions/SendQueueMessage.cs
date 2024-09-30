@@ -9,23 +9,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Storage.Queues;
-using ABC_Retail.Services;
 
 namespace ABC_Retail_Functions.Functions
 {
-	public class SendQueueMessage
+	public static class SendQueueMessage
 	{
-		// Service for interacting with Azure Queue Storage.
-		private readonly AzureQueueService _queueService;
-
-		// Constructor
-		public SendQueueMessage(AzureQueueService queueService)
-		{
-			_queueService = queueService;
-		}
-
 		[FunctionName("SendQueueMessage")]
-		public async Task<IActionResult> Run(
+		public static async Task<IActionResult> Run(
 			[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
 			ILogger log)
 		{
@@ -62,13 +52,20 @@ namespace ABC_Retail_Functions.Functions
 				return new BadRequestObjectResult("Please provide a valid message and queue name.");
 			}
 
+			var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+			var queueServiceClient = new QueueServiceClient(connectionString);
+			var queueClient = queueServiceClient.GetQueueClient(requestData.QueueName);
+
 			try
 			{
+				// Ensure the queue exists
+				await queueClient.CreateIfNotExistsAsync();
+
 				// Encode the message in Base64
 				string encodedMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(requestData.Message));
 
 				// Send the Base64-encoded message to the queue
-				await _queueService.EnqueueMessageAsync(requestData.QueueName, encodedMessage);
+				await queueClient.SendMessageAsync(encodedMessage);
 				log.LogInformation("Message added to queue successfully.");
 				log.LogInformation($"Sending Base64-encoded message to queue: {encodedMessage}");
 			}

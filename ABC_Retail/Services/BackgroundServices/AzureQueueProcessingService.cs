@@ -1,5 +1,7 @@
 ﻿using ABC_Retail.Models;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using System.Text;
 using System.Text.Json;
 
 namespace ABC_Retail.Services.BackgroundServices
@@ -79,41 +81,43 @@ namespace ABC_Retail.Services.BackgroundServices
 		{
 			// Receive a message from the queue.
 			var message = await queueClient.ReceiveMessageAsync();
-			if (message.Value != null)
+			if (message.Value == null)
 			{
-				// Determine the message type.
-				var messageType = Message.GetMessageType(message.Value.MessageText);
+				return;
+			}
 
-				if (message.Value != null)
+			try
+			{
+				// Decode the Base64-encoded message
+				string base64Message = message.Value.MessageText;
+				string jsonMessage = Encoding.UTF8.GetString(Convert.FromBase64String(base64Message));
+
+				// Deserialize the order message
+				var orderMessage = JsonSerializer.Deserialize<OrderMessage>(jsonMessage);
+				if (orderMessage == null)
 				{
-					// Process order messages.
-					await ProcessOrderMessageAsync(message.Value.MessageText);
+					return;
+				}
 
+				// Process the order
+				bool success = await ProcessOrderAndUpdateInventoryAsync(orderMessage);
+				if (success)
+				{
 					// Delete the processed message from the queue.
 					await queueClient.DeleteMessageAsync(message.Value.MessageId, message.Value.PopReceipt);
+
+					await LogInventoryUpdateAsync(orderMessage);
+				}
+				else
+				{
+					return;
 				}
 			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Processes an order message, updates inventory, and logs the inventory update if successful.
-		/// </summary>
-		/// <param name="messageText">The JSON-encoded message text to be processed.</param>
-		private async Task ProcessOrderMessageAsync(string messageText)
-		{
-			// De-serialize the message text into an OrderMessage object.
-			var orderMessage = JsonSerializer.Deserialize<OrderMessage>(messageText);
-
-			// Process the order and update inventory.
-			bool isOrderProcessed = await ProcessOrderAndUpdateInventoryAsync(orderMessage);
-
-			// If the order was successfully processed, log the inventory update.
-			if (isOrderProcessed)
+			catch (Exception ex)
 			{
-				await LogInventoryUpdateAsync(orderMessage);
+				throw;
 			}
-		}
+		}		
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
@@ -152,17 +156,15 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="orderMessage">The order message containing the products that were processed.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage)
 		{
-			// Log inventory update for each product in the order.
 			foreach (var product in orderMessage.Products)
 			{
 				var inventoryUpdateMessage = new InventoryUpdateMessage
 				(
 					product.ProductName,
-					-product.Quantity, // Negative quantity to indicate reduction in stock.
+					-product.Quantity, // Negative quantity for stock deduction
 					"Order processed"
 				);
 
-				// Send the inventory update message to the inventory queue.
 				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
 				await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
 			}

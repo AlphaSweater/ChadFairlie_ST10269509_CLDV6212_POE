@@ -1,4 +1,5 @@
 using ABC_Retail.Services;
+using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 
@@ -75,6 +76,7 @@ namespace ABC_Retail
 
 			// Register AzureQueueService and AzureQueueProcessingService
 			services.AddSingleton<AzureQueueService>();
+			services.AddSingleton<IHostedService, AzureQueueProcessingService>();
 
 			// Add SasTokenGenerator and AzureBlobStorageService
 			services.AddSingleton<SasTokenGenerator>();

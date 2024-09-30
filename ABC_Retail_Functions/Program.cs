@@ -37,7 +37,7 @@ namespace MyFunctionApp
 				return queueClient;
 			});
 
-			// Register your custom AzureQueueService and other background services
+			// Register your custom AzureQueueService
 			builder.Services.AddSingleton<AzureQueueService>();
 
 			// Register BlobStorage-related services

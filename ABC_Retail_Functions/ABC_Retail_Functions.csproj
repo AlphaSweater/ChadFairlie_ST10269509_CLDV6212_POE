@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
-    <ApplicationInsightsResourceId>/subscriptions/6cf64382-e8ec-41fd-b6bb-e3897a107c61/resourceGroups/CLDV-POE-Sem2/providers/microsoft.insights/components/st102test</ApplicationInsightsResourceId>
+    <ApplicationInsightsResourceId>/subscriptions/6cf64382-e8ec-41fd-b6bb-e3897a107c61/resourceGroups/CLDV-POE-Sem2/providers/microsoft.insights/components/cldv-functions</ApplicationInsightsResourceId>
     <UserSecretsId>3b882dc5-a5e5-4339-843c-a19b771eabef</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
