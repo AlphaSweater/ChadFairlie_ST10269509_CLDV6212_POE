@@ -5,8 +5,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using ABC_Retail_Shared.Services;
-using ABC_Retail_Shared.Models;
+using ABC_Retail.Services;
+using ABC_Retail.Models;
 
 namespace ABC_Retail_Functions.Functions
 {

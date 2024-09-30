@@ -1,6 +1,6 @@
-﻿using ABC_Retail_Shared.Models;
-using ABC_Retail_Shared.Services;
-using ABC_Retail_Shared.ViewModels;
+﻿using ABC_Retail.Models;
+using ABC_Retail.Services;
+using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ABC_Retail.Controllers

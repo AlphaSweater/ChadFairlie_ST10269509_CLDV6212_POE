@@ -1,11 +1,11 @@
-﻿using ABC_Retail_Shared.ViewModels;
+﻿using ABC_Retail.ViewModels;
 using Azure;
 using Azure.Storage.Files.Shares;
 using Azure.Storage.Files.Shares.Models;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ABC_Retail_Shared.Services
+namespace ABC_Retail.Services
 {
 	public class AzureFileStorageService
 	{

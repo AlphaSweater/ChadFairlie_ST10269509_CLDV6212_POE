@@ -1,8 +1,8 @@
-﻿using ABC_Retail_Shared.Models;
+﻿using ABC_Retail.Models;
 using Azure;
 using Azure.Data.Tables;
 
-namespace ABC_Retail_Shared.Services
+namespace ABC_Retail.Services
 {
 	/// <summary>
 	/// Provides generic services for interacting with Azure Table Storage, including operations

@@ -1,4 +1,4 @@
-﻿using ABC_Retail_Shared.Services;
+﻿using ABC_Retail.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
