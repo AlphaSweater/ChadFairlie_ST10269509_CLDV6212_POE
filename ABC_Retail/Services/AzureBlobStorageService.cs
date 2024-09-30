@@ -4,7 +4,7 @@ using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 
-namespace ABC_Retail_Shared.Services
+namespace ABC_Retail.Services
 {
 	/// <summary>
 	/// Provides methods to interact with Azure Blob Storage, including uploading, deleting, and listing files.

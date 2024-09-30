@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace ABC_Retail_Shared.Models
+namespace ABC_Retail.Models
 {
 	/// <summary>
 	/// Base class for all message types, containing common properties and methods.

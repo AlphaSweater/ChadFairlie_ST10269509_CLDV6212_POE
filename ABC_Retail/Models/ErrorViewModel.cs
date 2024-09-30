@@ -1,4 +1,4 @@
-﻿namespace ABC_Retail_Shared.Models
+﻿namespace ABC_Retail.Models
 {
 	public class ErrorViewModel
 	{

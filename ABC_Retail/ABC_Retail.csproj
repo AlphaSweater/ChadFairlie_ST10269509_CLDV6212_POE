@@ -21,8 +21,4 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.20.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ABC_Retail_Shared\ABC_Retail_Shared.csproj" />
-  </ItemGroup>
-
 </Project>

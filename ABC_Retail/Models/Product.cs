@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Azure.Data.Tables;
 
-namespace ABC_Retail_Shared.Models
+namespace ABC_Retail.Models
 {
 	/// <summary>
 	/// Represents a product entity in the application

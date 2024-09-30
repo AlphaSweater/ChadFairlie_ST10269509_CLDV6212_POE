@@ -5,7 +5,7 @@ using System.Text.Json;
 using static Azure.Core.HttpHeader;
 
 
-namespace ABC_Retail_Shared.Models
+namespace ABC_Retail.Models
 {
 	public class Order : ITableEntity
 	{

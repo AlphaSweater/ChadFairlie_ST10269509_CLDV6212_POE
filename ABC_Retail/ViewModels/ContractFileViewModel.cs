@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace ABC_Retail_Shared.ViewModels
+namespace ABC_Retail.ViewModels
 {
 	public class ContractFileViewModel
 	{
