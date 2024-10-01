@@ -27,7 +27,7 @@ namespace ABC_Retail_Functions.Functions
 
 		[FunctionName("UploadImageFunction")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
 			log.LogInformation("File upload request received.");
