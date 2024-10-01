@@ -285,9 +285,8 @@ namespace ABC_Retail.Controllers
 		{
 			if (!ModelState.IsValid)
 			{
-				// If the model state is invalid, return the view with the current model to display validation errors.
-				// TODO: Handle validation errors (e.g., return the view with errors highlighted).
-				return View(model);
+				// If the model state is invalid, return the partial view with the current model to display validation errors.
+				return PartialView("_CreateProductForm", model);
 			}
 
 			string fileID = string.Empty;

@@ -64,11 +64,18 @@
                                         }
                                     });
                                 } else {
-                                    // Close the loading popup
-                                    Swal.close();
-                                    // Replace the form with the returned HTML to show validation errors
-                                    $('#createCustomerFormContainer').html(data);
-                                    window.history.replaceState({}, '', originalUrl);
+									Swal.fire({
+										title: 'Error',
+										text: data.message,
+										icon: 'error'
+									}).then(result => {
+										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
+											// Replace the form with the returned HTML to show validation errors
+											$('#createCustomerFormContainer').html(data);
+										}
+									});
                                 }
                             },
                             error: function() {
