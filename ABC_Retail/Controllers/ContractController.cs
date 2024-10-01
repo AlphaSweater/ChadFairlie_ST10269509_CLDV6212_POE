@@ -5,26 +5,32 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace ABC_Retail.Controllers
 {
 	public class ContractController : Controller
 	{
 		private readonly AzureFileStorageService _fileStorageService;
+		private readonly HttpClient _httpClient;
+		private readonly string _uploadFileFunctionUrl;
 		private readonly string _contractShareName = "contracts";
 
-		public ContractController(AzureFileStorageService fileStorageService, IConfiguration configuration)
+		public ContractController(AzureFileStorageService fileStorageService, HttpClient httpClient, IConfiguration configuration)
 		{
 			_fileStorageService = fileStorageService;
+			_httpClient = httpClient;
+			_uploadFileFunctionUrl = configuration["AzureFunctions:UploadFileFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "UploadFileFunctionUrl configuration is missing.");
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// List all contracts
 		public async Task<IActionResult> Index()
 		{
-			var contractFiles = await _fileStorageService.ListFilesAsync("contracts");
+			var contractFiles = await _fileStorageService.ListFilesAsync(_contractShareName);
 			return View(contractFiles);
 		}
 
@@ -33,28 +39,36 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Upload(IFormFile file)
 		{
-			if (file != null && file.Length > 0)
+			if (file == null || file.Length == 0)
 			{
-				var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
-				var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-				if (!allowedExtensions.Contains(extension))
-				{
-					ModelState.AddModelError("File", "Invalid file type. Only PDF and Word documents are allowed.");
-					var existingContractFiles = await _fileStorageService.ListFilesAsync(_contractShareName);
-					return View("Index", existingContractFiles);
-				}
-
-				using (var stream = file.OpenReadStream())
-				{
-					await _fileStorageService.UploadFileAsync(stream, file.FileName, _contractShareName);
-				}
-				return RedirectToAction("Index");
+				return Json(new { success = false, message = "No file selected or file is empty." });
 			}
 
-			ModelState.AddModelError("File", "No file selected or file is empty.");
-			var contractFiles = await _fileStorageService.ListFilesAsync(_contractShareName);
-			return View("Index", contractFiles);
+			var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+			var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+			if (!allowedExtensions.Contains(extension))
+			{
+				return Json(new { success = false, message = "Invalid file type. Only PDF and Word documents are allowed." });
+			}
+
+			var functionUrl = _uploadFileFunctionUrl;
+
+			// Create a multipart form content to send the file
+			using var content = new MultipartFormDataContent();
+			using var fileStream = file.OpenReadStream();
+			var fileContent = new StreamContent(fileStream);
+			content.Add(fileContent, "file", file.FileName);
+
+			// Send the file to the Azure Function
+			var response = await _httpClient.PostAsync(functionUrl, content);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				return Json(new { success = false, message = "Failed to upload the file." });
+			}
+
+			return Json(new { success = true, message = "File uploaded successfully." });
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------------//
@@ -95,7 +109,6 @@ namespace ABC_Retail.Controllers
 			// Set the correct content type and force download
 			return File(stream, "application/octet-stream", fileName);
 		}
-
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Delete a contract file
