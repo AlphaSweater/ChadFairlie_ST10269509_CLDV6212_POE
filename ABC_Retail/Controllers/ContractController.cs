@@ -36,14 +36,21 @@ namespace ABC_Retail.Controllers
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		// Upload a new contract file
+		/// <summary>
+		/// Handles the upload of a new contract file.
+		/// </summary>
+		/// <param name="file">The file to be uploaded.</param>
+		/// <returns>JSON result indicating success or failure of the upload operation.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Upload(IFormFile file)
 		{
+			// Check if a file is provided and is not empty
 			if (file == null || file.Length == 0)
 			{
 				return Json(new { success = false, message = "No file selected or file is empty." });
 			}
 
+			// Validate the file extension
 			var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
 			var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
@@ -52,6 +59,7 @@ namespace ABC_Retail.Controllers
 				return Json(new { success = false, message = "Invalid file type. Only PDF and Word documents are allowed." });
 			}
 
+			// Get the URL of the Azure Function to upload the file
 			var functionUrl = _uploadFileFunctionUrl;
 
 			// Create a multipart form content to send the file
@@ -63,6 +71,7 @@ namespace ABC_Retail.Controllers
 			// Send the file to the Azure Function
 			var response = await _httpClient.PostAsync(functionUrl, content);
 
+			// Check if the upload was successful
 			if (!response.IsSuccessStatusCode)
 			{
 				return Json(new { success = false, message = "Failed to upload the file." });

@@ -283,6 +283,7 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Create(ProductViewModel model)
 		{
+			// Check if the model state is valid
 			if (!ModelState.IsValid)
 			{
 				// If the model state is invalid, return the partial view with the current model to display validation errors.
@@ -291,12 +292,14 @@ namespace ABC_Retail.Controllers
 
 			string fileID = string.Empty;
 
+			// Check if a file is provided
 			if (model.File == null)
 			{
 				fileID = _defaultProductImage; // Set a default image file ID
 			}
 			else
 			{
+				// Get the URL of the Azure Function to upload the image
 				var imageFunctionUrl = _uploadImageFunctionUrl;
 
 				// Create a multipart form content to send the file
@@ -308,6 +311,7 @@ namespace ABC_Retail.Controllers
 				// Send the file to the Azure Function
 				var blobResponse = await _httpClient.PostAsync(imageFunctionUrl, imageContent);
 
+				// Check if the file upload was successful
 				if (blobResponse.IsSuccessStatusCode)
 				{
 					fileID = await blobResponse.Content.ReadAsStringAsync(); // Get the blob name from the function response
@@ -318,7 +322,7 @@ namespace ABC_Retail.Controllers
 				}
 			}
 
-			// Create a new product entity from the view model.
+			// Create a new product entity from the view model
 			var product = new Product(
 				model.Name ?? string.Empty,
 				model.Price,
@@ -327,12 +331,17 @@ namespace ABC_Retail.Controllers
 				fileID
 			);
 
+			// Get the URL of the Azure Function to add the entity
 			var productFunctionUrl = _addEntityFunctionUrl;
 
+			// Serialize the product entity to JSON
 			var jsonContent = JsonSerializer.Serialize(product);
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
+			// Send the product data to the Azure Function
 			var response = await _httpClient.PostAsync(productFunctionUrl, content);
+
+			// Check if the function invocation was successful
 			if (!response.IsSuccessStatusCode)
 			{
 				return Json(new { success = false, message = "Failed to trigger the add entity function." });
@@ -350,41 +359,48 @@ namespace ABC_Retail.Controllers
 		/// Handles the purchase of a specific product.
 		/// </summary>
 		/// <param name="id">The ID of the product to purchase.</param>
-		/// <returns>A redirect to the index action after purchasing the product.</returns>
+		/// <returns>A JSON result indicating the success or failure of the purchase operation.</returns>
 		[HttpPost]
 		public async Task<IActionResult> Purchase(string id)
 		{
+			// Check if the product ID is provided
 			if (string.IsNullOrEmpty(id))
 			{
 				return BadRequest("Product ID cannot be null or empty.");
 			}
 
+			// Retrieve the product from Azure Table Storage
 			var product = await _productTableService.GetEntityAsync("Product", id);
 			if (product == null)
 			{
 				return NotFound();
 			}
 
+			// Check if the product is in stock
 			if (product.Quantity <= 0)
 			{
 				return Json(new { success = false, message = "The product is out of stock." });
 			}
 
+			// Create an order message
 			var orderMessage = new OrderMessage(
 				"CustomerIdPlaceholder",
 				new List<OrderMessage.ProductOrder>
 				{
-			new OrderMessage.ProductOrder
-			(
-				product.RowKey,
-				product.Name,
-				1
-			)
+					new OrderMessage.ProductOrder
+					(
+						product.RowKey,
+						product.Name,
+						1
+					)
 				},
 				product.Price
 			);
 
+			// Get the URL of the Azure Function to send the order message
 			var functionUrl = _sendToQueueFunctionUrl;
+
+			// Create the request data for the Azure Function
 			var requestData = new
 			{
 				Message = JsonSerializer.Serialize(orderMessage),
@@ -392,7 +408,10 @@ namespace ABC_Retail.Controllers
 			};
 			var content = new StringContent(JsonSerializer.Serialize(requestData), Encoding.UTF8, "application/json");
 
+			// Send the order message to the Azure Function
 			var response = await _httpClient.PostAsync(functionUrl, content);
+
+			// Check if the function invocation was successful
 			if (!response.IsSuccessStatusCode)
 			{
 				return Json(new { success = false, message = "Failed to trigger the order function." });
