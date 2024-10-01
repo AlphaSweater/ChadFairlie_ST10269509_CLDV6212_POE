@@ -28,7 +28,7 @@ namespace ABC_Retail.Controllers
 		private readonly HttpClient _httpClient;
 
 		// The function URL for sending a queue message.
-		private readonly string _sendQueueMessageUrl;
+		private readonly string _sendToQueueFunctionUrl;
 
 		// The function URL for adding an entity.
 		private readonly string _addEntityFunctionUrl;
@@ -57,7 +57,7 @@ namespace ABC_Retail.Controllers
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_httpClient = httpClient;
-			_sendQueueMessageUrl = configuration["AzureFunctions:SendQueueMessageFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_sendToQueueFunctionUrl = configuration["AzureFunctions:SendToQueueFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 			_uploadImageFunctionUrl = configuration["AzureFunctions:UploadImageFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "UploadImageFunctionUrl configuration is missing.");
 		}
@@ -385,7 +385,7 @@ namespace ABC_Retail.Controllers
 				product.Price
 			);
 
-			var functionUrl = _sendQueueMessageUrl;
+			var functionUrl = _sendToQueueFunctionUrl;
 			var requestData = new
 			{
 				Message = JsonSerializer.Serialize(orderMessage),
