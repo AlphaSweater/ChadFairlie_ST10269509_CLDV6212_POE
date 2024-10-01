@@ -4,7 +4,6 @@ using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 
 namespace ABC_Retail.Controllers
 {
