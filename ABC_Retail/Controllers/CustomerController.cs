@@ -193,13 +193,11 @@ namespace ABC_Retail.Controllers
 		{
 			if (!ModelState.IsValid)
 			{
-				// TODO: Handle validation errors (e.g., return the view with errors highlighted).
-				return View(model);
+				// Return the view with the model to display validation errors
+				return PartialView("_CreateCustomerForm", model);
 			}
 
-			// Map the customer view model to a customer entity.
 			var customer = new Customer(model.Name, model.Surname, model.Email, model.Phone);
-
 			var functionUrl = _addEntityFunctionUrl;
 
 			var jsonContent = JsonSerializer.Serialize(customer);
@@ -208,9 +206,11 @@ namespace ABC_Retail.Controllers
 			var response = await _httpClient.PostAsync(functionUrl, content);
 			if (!response.IsSuccessStatusCode)
 			{
-				return Json(new { success = false, message = "Failed to trigger the add entity function." });
+				TempData["ErrorMessage"] = "Failed to trigger the add entity function.";
+				return PartialView("_CreateCustomerForm", model);
 			}
 
+			TempData["SuccessMessage"] = "Customer added successfully.";
 			return Json(new { success = true, message = "Customer added successfully." });
 		}
 	}
