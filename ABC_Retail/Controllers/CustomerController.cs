@@ -119,21 +119,21 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
 			// Retrieve the customer entity from Azure Table Storage.
-			var customer = await _customerTableService.GetEntityAsync("Customer", model.Id);
-			if (customer == null)
+			var dbCustomer = await _customerTableService.GetEntityAsync("Customer", model.Id);
+			if (dbCustomer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
 				return NotFound();
 			}
 
 			// Update the customer entity with the details from the view model.
-			customer.Name = model.Name;
-			customer.Surname = model.Surname;
-			customer.Email = model.Email;
-			customer.Phone = model.Phone;
+			dbCustomer.Name = model.Name;
+			dbCustomer.Surname = model.Surname;
+			dbCustomer.Email = model.Email;
+			dbCustomer.Phone = model.Phone;
 
 			// Save the updated customer entity back to Azure Table Storage.
-			await _customerTableService.UpdateEntityAsync(customer);
+			await _customerTableService.UpdateEntityAsync(dbCustomer, dbCustomer.ETag);
 
 			// Redirect to the index action after successful update.
 			return RedirectToAction("Index");

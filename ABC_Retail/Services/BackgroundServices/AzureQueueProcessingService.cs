@@ -1,4 +1,5 @@
 ﻿using ABC_Retail.Models;
+using Azure;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using System.Text;
@@ -108,10 +109,6 @@ namespace ABC_Retail.Services.BackgroundServices
 
 					await LogInventoryUpdateAsync(orderMessage);
 				}
-				else
-				{
-					return;
-				}
 			}
 			catch (Exception ex)
 			{
@@ -143,7 +140,16 @@ namespace ABC_Retail.Services.BackgroundServices
 			{
 				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
 				dbProduct.Quantity -= product.Quantity;
-				await _productTableService.UpdateEntityAsync(dbProduct);
+
+				try
+				{
+					await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
+				}
+				catch (RequestFailedException ex) when (ex.Status == 412)
+				{
+					// Concurrency conflict, retry the operation
+					return await ProcessOrderAndUpdateInventoryAsync(orderMessage);
+				}
 			}
 
 			return true; // Order processed successfully.

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using ABC_Retail.Services;
 using ABC_Retail.Models;
+using Azure;
 
 namespace ABC_Retail_Functions.Functions
 {
@@ -79,7 +80,16 @@ namespace ABC_Retail_Functions.Functions
 
 				dbProduct.Quantity -= product.Quantity;
 				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
-				await _productTableService.UpdateEntityAsync(dbProduct);
+
+				try
+				{
+					await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
+				}
+				catch (RequestFailedException ex) when (ex.Status == 412)
+				{
+					log.LogWarning($"Concurrency conflict when updating product {product.ProductId}. Retrying...");
+					return await ProcessOrderAndUpdateInventoryAsync(orderMessage, log);
+				}
 			}
 
 			return true;

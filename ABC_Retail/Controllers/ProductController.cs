@@ -185,34 +185,34 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _productTableService.GetEntityAsync("Product", model.Id);
-			if (product == null)
+			var dbProduct = await _productTableService.GetEntityAsync("Product", model.Id);
+			if (dbProduct == null)
 			{
 				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
 			// Update the product details with the values from the view model.
-			product.Name = model.Name ?? string.Empty;
-			product.Price = model.Price;
-			product.Description = model.Description ?? string.Empty;
-			product.Quantity = model.Quantity;
+			dbProduct.Name = model.Name ?? string.Empty;
+			dbProduct.Price = model.Price;
+			dbProduct.Description = model.Description ?? string.Empty;
+			dbProduct.Quantity = model.Quantity;
 
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				if (product.FileID != null && model.FileName != _defaultProductImage)
+				if (dbProduct.FileID != null && model.FileName != _defaultProductImage)
 				{
 					// Delete the existing image file from Azure Blob Storage.
-					await _blobStorageService.DeleteFileAsync(product.FileID);
+					await _blobStorageService.DeleteFileAsync(dbProduct.FileID);
 				}
 
 				// Upload the new image file and get the file ID.
-				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
+				dbProduct.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
 			}
 
 			// Save the updated product back to Azure Table Storage.
-			await _productTableService.UpdateEntityAsync(product);
+			await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
 
 			// Redirect to the index action.
 			return RedirectToAction("Index");

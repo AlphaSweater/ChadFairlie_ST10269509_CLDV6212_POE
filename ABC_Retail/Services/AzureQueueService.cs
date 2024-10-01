@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Queues;
+using System.Text;
 using System.Text.Json;
 
 
@@ -37,21 +38,19 @@ namespace ABC_Retail.Services
 		/// <summary>
 		/// Enqueues a message to the specified Azure Queue.
 		/// </summary>
-		/// <typeparam name="T">The type of the message to be enqueued.</typeparam>
 		/// <param name="queueName">The name of the queue to enqueue the message into.</param>
 		/// <param name="message">The message to be enqueued.</param>
-		public async Task EnqueueMessageAsync<T>(string queueName, T message)
+		public async Task EnqueueMessageAsync(string queueName, string message)
 		{
 			try
 			{
 				// Create a QueueClient for the specified queue.
 				var queueClient = _queueClientFactory(queueName);
 
-				// Serialize the message to JSON format.
-				var jsonMessage = JsonSerializer.Serialize(message);
+				var encodedMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
 
 				// Send the serialized message to the queue.
-				await queueClient.SendMessageAsync(jsonMessage);
+				await queueClient.SendMessageAsync(encodedMessage);
 			}
 			catch (Exception ex)
 			{
