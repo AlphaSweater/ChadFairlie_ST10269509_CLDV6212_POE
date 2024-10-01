@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Text; // Add this for encoding
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -22,7 +22,7 @@ namespace ABC_Retail_Functions.Functions
 			_queueService = queueService;
 		}
 
-		[FunctionName("SendQueueMessage")]
+		[FunctionName("SendToQueueFunction")]
 		public async Task<IActionResult> Run(
 		[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
 		ILogger log)
