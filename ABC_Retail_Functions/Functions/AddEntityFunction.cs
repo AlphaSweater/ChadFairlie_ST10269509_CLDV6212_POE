@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -32,13 +31,19 @@ namespace ABC_Retail_Functions.Functions
 		{
 			log.LogInformation("Processing request to add entity.");
 
-			string requestBody = await ReadRequestBodyAsync(req, log);
-			if (requestBody == null)
-				return new BadRequestObjectResult("Error reading request body.");
-
-			JObject requestData = DeserializeRequestBody(requestBody, log);
-			if (requestData == null)
-				return new BadRequestObjectResult("Error deserializing request body.");
+			string requestBody;
+			JObject requestData;
+			try
+			{
+				using var reader = new StreamReader(req.Body);
+				requestBody = await reader.ReadToEndAsync();
+				requestData = JsonConvert.DeserializeObject<JObject>(requestBody);
+			}
+			catch
+			{
+				log.LogWarning("Error reading or deserializing request body.");
+				return new BadRequestObjectResult("Error reading or deserializing request body.");
+			}
 
 			string entityType = requestData?["EntityType"]?.ToString();
 			if (string.IsNullOrEmpty(entityType))
@@ -49,59 +54,15 @@ namespace ABC_Retail_Functions.Functions
 
 			log.LogInformation($"Entity identified as {entityType}.");
 
-			return await ProcessEntityAsync(entityType, requestBody, log);
-		}
-
-		private async Task<string> ReadRequestBodyAsync(HttpRequest req, ILogger log)
-		{
-			try
+			switch (entityType.ToLower())
 			{
-				using var reader = new StreamReader(req.Body);
-				string requestBody = await reader.ReadToEndAsync();
-				log.LogInformation("Request body read successfully.");
-				return requestBody;
-			}
-			catch (Exception ex)
-			{
-				log.LogError(ex, "Error reading request body.");
-				return null;
-			}
-		}
-
-		private JObject DeserializeRequestBody(string requestBody, ILogger log)
-		{
-			try
-			{
-				var requestData = JsonConvert.DeserializeObject<JObject>(requestBody);
-				log.LogInformation("Request body deserialized successfully.");
-				return requestData;
-			}
-			catch (Exception ex)
-			{
-				log.LogError(ex, "Error deserializing request body.");
-				return null;
-			}
-		}
-
-		private async Task<IActionResult> ProcessEntityAsync(string entityType, string requestBody, ILogger log)
-		{
-			try
-			{
-				switch (entityType.ToLower())
-				{
-					case "customer":
-						return await ProcessCustomerAsync(requestBody, log);
-					case "product":
-						return await ProcessProductAsync(requestBody, log);
-					default:
-						log.LogWarning($"Unsupported entity type: {entityType}");
-						return new BadRequestObjectResult("Unsupported entity type.");
-				}
-			}
-			catch (Exception ex)
-			{
-				log.LogError(ex, "Error adding entity.");
-				return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+				case "customer":
+					return await ProcessCustomerAsync(requestBody, log);
+				case "product":
+					return await ProcessProductAsync(requestBody, log);
+				default:
+					log.LogWarning($"Unsupported entity type: {entityType}");
+					return new BadRequestObjectResult("Unsupported entity type.");
 			}
 		}
 
@@ -114,13 +75,7 @@ namespace ABC_Retail_Functions.Functions
 				customer = JsonSerializer.Deserialize<Customer>(requestBody);
 				customer.EntityType = null;
 			}
-			catch (Exception ex)
-			{
-				log.LogError(ex, "Error deserializing to Customer entity.");
-				return new BadRequestObjectResult("Invalid customer data.");
-			}
-
-			if (customer == null)
+			catch
 			{
 				log.LogWarning("Invalid customer data.");
 				return new BadRequestObjectResult("Invalid customer data.");
@@ -141,13 +96,7 @@ namespace ABC_Retail_Functions.Functions
 				product = JsonSerializer.Deserialize<Product>(requestBody);
 				product.EntityType = null;
 			}
-			catch (Exception ex)
-			{
-				log.LogError(ex, "Error deserializing to Product entity.");
-				return new BadRequestObjectResult("Invalid product data.");
-			}
-
-			if (product == null)
+			catch
 			{
 				log.LogWarning("Invalid product data.");
 				return new BadRequestObjectResult("Invalid product data.");

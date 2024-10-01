@@ -1,8 +1,6 @@
 using System;
-using Azure.Storage.Queues;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using ABC_Retail.Services;
@@ -24,36 +22,40 @@ namespace ABC_Retail_Functions.Functions
 
 		[FunctionName("ProcessOrderFunction")]
 		public async Task Run(
-	[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
-	ILogger log)
+			[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
+			ILogger log)
 		{
 			log.LogInformation($"Processing order message: {myQueueItem}");
 
+			if (!TryDeserializeOrderMessage(myQueueItem, out var orderMessage, log))
+			{
+				log.LogWarning("Failed to deserialize order message");
+				return;
+			}
+
+			if (await ProcessOrderAndUpdateInventoryAsync(orderMessage, log))
+			{
+				log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
+				await LogInventoryUpdateAsync(orderMessage, log);
+			}
+			else
+			{
+				log.LogWarning($"Failed to process order {orderMessage.OrderId}");
+			}
+		}
+
+		private bool TryDeserializeOrderMessage(string message, out OrderMessage orderMessage, ILogger log)
+		{
 			try
 			{
-				// Deserialize the order message
-				var orderMessage = JsonSerializer.Deserialize<OrderMessage>(myQueueItem);
-				if (orderMessage == null)
-				{
-					log.LogWarning("Failed to deserialize order message");
-					return;
-				}
-
-				// Process the order
-				bool success = await ProcessOrderAndUpdateInventoryAsync(orderMessage, log);
-				if (success)
-				{
-					log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
-					await LogInventoryUpdateAsync(orderMessage, log);
-				}
-				else
-				{
-					log.LogWarning($"Failed to process order {orderMessage.OrderId}");
-				}
+				orderMessage = JsonSerializer.Deserialize<OrderMessage>(message);
+				return orderMessage != null;
 			}
 			catch (Exception ex)
 			{
-				log.LogError(ex, "Error processing order message");
+				log.LogError(ex, "Error deserializing order message");
+				orderMessage = null;
+				return false;
 			}
 		}
 
@@ -75,13 +77,12 @@ namespace ABC_Retail_Functions.Functions
 					return false;
 				}
 
-				// Deduct quantity and update the table
 				dbProduct.Quantity -= product.Quantity;
 				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
 				await _productTableService.UpdateEntityAsync(dbProduct);
 			}
 
-			return true; // Order processed successfully
+			return true;
 		}
 
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
@@ -91,7 +92,7 @@ namespace ABC_Retail_Functions.Functions
 				var inventoryUpdateMessage = new InventoryUpdateMessage
 				(
 					product.ProductName,
-					-product.Quantity, // Negative quantity for stock deduction
+					-product.Quantity,
 					"Order processed"
 				);
 
@@ -101,6 +102,5 @@ namespace ABC_Retail_Functions.Functions
 
 			log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
 		}
-
 	}
 }

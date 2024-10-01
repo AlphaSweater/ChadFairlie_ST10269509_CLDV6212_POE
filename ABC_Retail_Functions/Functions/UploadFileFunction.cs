@@ -1,16 +1,12 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using ABC_Retail.Services;
 using System.Linq;
-using Azure.Storage.Blobs.Models;
-using Azure.Storage.Blobs;
 
 namespace ABC_Retail_Functions.Functions
 {
@@ -43,14 +39,11 @@ namespace ABC_Retail_Functions.Functions
 
 			try
 			{
-				using (Stream stream = formFile.OpenReadStream())
-				{
-					log.LogInformation("Uploading file to Azure Blob Storage...");
-					await _fileStorageService.UploadFileAsync(stream, fileName, "contracts");
-				}
+				using var stream = formFile.OpenReadStream();
+				log.LogInformation("Uploading file to Azure Blob Storage...");
+				await _fileStorageService.UploadFileAsync(stream, fileName, "contracts");
 
 				log.LogInformation($"File uploaded successfully: {fileName}");
-
 				return new OkObjectResult(new { fileName });
 			}
 			catch (Exception ex)
