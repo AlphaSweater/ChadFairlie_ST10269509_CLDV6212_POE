@@ -21,8 +21,10 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with customer Azure Table Storage.
 		private readonly CustomerTableService _customerTableService;
 
+		// HTTP client for making requests to Azure Functions.
 		private readonly HttpClient _httpClient;
 
+		// The function URL for adding an entity.
 		private readonly string _addEntityFunctionUrl;
 
 
