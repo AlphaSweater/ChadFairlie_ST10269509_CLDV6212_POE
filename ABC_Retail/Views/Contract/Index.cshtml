@@ -1,16 +1,20 @@
 ﻿@model IEnumerable<ABC_Retail.ViewModels.ContractFileViewModel>
 
+@{
+    ViewData["Title"] = "Contracts";
+}
+
 <h2>Upload New Contract</h2>
 
-<form asp-action="Upload" method="post" enctype="multipart/form-data">
-	<div class="form-group">
-		<label for="file">Select Contract (PDF or Word):</label>
-		<input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx" required />
-	</div>
+<form id="uploadForm" asp-action="Upload" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Select Contract (PDF or Word):</label>
+        <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx" required />
+    </div>
 
-	<div class="form-group">
-		<input type="submit" value="Upload" class="btn btn-primary" />
-	</div>
+    <div class="form-group">
+        <input type="submit" value="Upload" class="btn btn-primary" />
+    </div>
 </form>
 
 <hr />
@@ -18,38 +22,65 @@
 <h2>Existing Contracts</h2>
 
 <table class="table">
-	<thead>
-		<tr>
-			<th>File Name</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var file in Model)
-		{
-			<tr>
-				<td>@file.FileName</td>
-				<td>
-					<form asp-action="Details" method="post" class="d-inline">
-						<input type="hidden" name="fileName" value="@file.FileName" />
-						<input type="submit" value="View Details" class="btn btn-info" />
-					</form>
-					<form asp-action="Download" method="post" class="d-inline">
-						<input type="hidden" name="fileName" value="@file.FileName" />
-						<input type="submit" value="Download" class="btn btn-success" />
-					</form>
-					<form asp-action="Delete" method="post" class="d-inline">
-						<input type="hidden" name="fileName" value="@file.FileName" />
-						<input type="submit" value="Delete" class="btn btn-danger" />
-					</form>
-				</td>
-			</tr>
-		}
-	</tbody>
+    <thead>
+        <tr>
+            <th>File Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>
+                    <form asp-action="Details" method="post" class="d-inline">
+                        <input type="hidden" name="fileName" value="@file.FileName" />
+                        <input type="submit" value="View Details" class="btn btn-info" />
+                    </form>
+                    <form asp-action="Download" method="post" class="d-inline">
+                        <input type="hidden" name="fileName" value="@file.FileName" />
+                        <input type="submit" value="Download" class="btn btn-success" />
+                    </form>
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        <input type="hidden" name="fileName" value="@file.FileName" />
+                        <input type="submit" value="Delete" class="btn btn-danger" />
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
 </table>
 
 @section Scripts {
-	@{
-		await Html.RenderPartialAsync("_ValidationScriptsPartial");
-	}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: result.message
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message
+                });
+            }
+        });
+    </script>
 }

@@ -2,6 +2,9 @@
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace ABC_Retail.Controllers
 {
@@ -18,6 +21,13 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with customer Azure Table Storage.
 		private readonly CustomerTableService _customerTableService;
 
+		// HTTP client for making requests to Azure Functions.
+		private readonly HttpClient _httpClient;
+
+		// The function URL for adding an entity.
+		private readonly string _addEntityFunctionUrl;
+
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -26,9 +36,11 @@ namespace ABC_Retail.Controllers
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
 		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
-		public CustomerController(CustomerTableService customerTableService)
+		public CustomerController(CustomerTableService customerTableService, HttpClient httpClient, IConfiguration configuration)
 		{
 			_customerTableService = customerTableService;
+			_httpClient = httpClient;
+			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -107,21 +119,21 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
 			// Retrieve the customer entity from Azure Table Storage.
-			var customer = await _customerTableService.GetEntityAsync("Customer", model.Id);
-			if (customer == null)
+			var dbCustomer = await _customerTableService.GetEntityAsync("Customer", model.Id);
+			if (dbCustomer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
 				return NotFound();
 			}
 
 			// Update the customer entity with the details from the view model.
-			customer.Name = model.Name;
-			customer.Surname = model.Surname;
-			customer.Email = model.Email;
-			customer.Phone = model.Phone;
+			dbCustomer.Name = model.Name;
+			dbCustomer.Surname = model.Surname;
+			dbCustomer.Email = model.Email;
+			dbCustomer.Phone = model.Phone;
 
 			// Save the updated customer entity back to Azure Table Storage.
-			await _customerTableService.UpdateEntityAsync(customer);
+			await _customerTableService.UpdateEntityAsync(dbCustomer, dbCustomer.ETag);
 
 			// Redirect to the index action after successful update.
 			return RedirectToAction("Index");
@@ -181,24 +193,25 @@ namespace ABC_Retail.Controllers
 		{
 			if (!ModelState.IsValid)
 			{
-				// TODO: Handle validation errors (e.g., return the view with errors highlighted).
-				return View(model);
+				// Return the view with the model to display validation errors
+				return PartialView("_CreateCustomerForm", model);
 			}
 
-			// Map the customer view model to a customer entity.
-			var customer = new Customer
+			var customer = new Customer(model.Name, model.Surname, model.Email, model.Phone);
+			var functionUrl = _addEntityFunctionUrl;
+
+			var jsonContent = JsonSerializer.Serialize(customer);
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+			var response = await _httpClient.PostAsync(functionUrl, content);
+			if (!response.IsSuccessStatusCode)
 			{
-				Name = model.Name,
-				Surname = model.Surname,
-				Email = model.Email,
-				Phone = model.Phone
-			};
+				TempData["ErrorMessage"] = "Failed to trigger the add entity function.";
+				return PartialView("_CreateCustomerForm", model);
+			}
 
-			// Save the new customer entity to Azure Table Storage.
-			await _customerTableService.AddEntityAsync(customer);
-
-			// Redirect to the index action after successful creation.
-			return RedirectToAction("Index");
+			TempData["SuccessMessage"] = "Customer added successfully.";
+			return Json(new { success = true, message = "Customer added successfully." });
 		}
 	}
 }

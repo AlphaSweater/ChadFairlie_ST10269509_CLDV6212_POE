@@ -54,7 +54,7 @@ namespace ABC_Retail.Services
 		/// <summary>
 		/// Asynchronously adds a new entity to a table.
 		/// </summary>
-		/// <param name="customer">The <see cref="Customer"/> entity to add.</param>
+		/// <param name="entity">The <see cref="T"/> entity to add.</param>
 		public async Task AddEntityAsync(T entity)
 		{
 			var tableClient = await GetOrCreateTableClientAsync();
@@ -75,7 +75,7 @@ namespace ABC_Retail.Services
 		/// </summary>
 		/// <param name="partitionKey">The partition key of the entity.</param>
 		/// <param name="rowKey">The row key of the entity.</param>
-		/// <returns>The retrieved <see cref="Customer"/> entity, or null if not found.</returns>
+		/// <returns>The retrieved <see cref="T"/> entity, or null if not found.</returns>
 		public async Task<T> GetEntityAsync(string partitionKey, string rowKey)
 		{
 			var tableClient = await GetOrCreateTableClientAsync();
@@ -97,15 +97,16 @@ namespace ABC_Retail.Services
 
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
-		/// Asynchronously updates an existing entity in a table.
+		/// Asynchronously updates an existing entity in a table with ETag for concurrency control.
 		/// </summary>
 		/// <param name="entity">The entity to update.</param>
-		public async Task UpdateEntityAsync(T entity)
+		/// <param name="etag">The ETag value for concurrency control.</param>
+		public async Task UpdateEntityAsync(T entity, ETag etag)
 		{
 			var tableClient = await GetOrCreateTableClientAsync();
 			try
 			{
-				await tableClient.UpdateEntityAsync(entity, ETag.All, TableUpdateMode.Replace);
+				await tableClient.UpdateEntityAsync(entity, etag, TableUpdateMode.Replace);
 			}
 			catch (RequestFailedException ex)
 			{

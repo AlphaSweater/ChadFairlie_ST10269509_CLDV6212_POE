@@ -29,7 +29,7 @@ namespace MyFunctionApp
 			builder.Services.AddSingleton(new AzureFileStorageService(storageConnectionString));
 			builder.Services.AddSingleton(new BlobServiceClient(storageConnectionString));
 
-			// Register factory method for QueueClient
+			// Register a factory method for creating QueueClient instances
 			builder.Services.AddSingleton<Func<string, QueueClient>>(sp => queueName =>
 			{
 				var queueClient = new QueueClient(storageConnectionString, queueName);
@@ -37,7 +37,7 @@ namespace MyFunctionApp
 				return queueClient;
 			});
 
-			// Register your custom AzureQueueService and other background services
+			// Register your custom AzureQueueService
 			builder.Services.AddSingleton<AzureQueueService>();
 
 			// Register BlobStorage-related services

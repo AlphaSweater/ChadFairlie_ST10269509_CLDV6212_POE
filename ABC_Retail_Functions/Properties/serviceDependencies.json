@@ -7,14 +7,14 @@
     "secrets1": {
       "type": "secrets"
     },
-    "appInsights2": {
-      "type": "appInsights",
-      "connectionId": "APPLICATIONINSIGHTS_CONNECTION_STRING1",
-      "dynamicId": null
-    },
     "storage2": {
       "type": "storage",
       "connectionId": "AzureWebJobsStorage1",
+      "dynamicId": null
+    },
+    "appInsights": {
+      "type": "appInsights",
+      "connectionId": "APPLICATIONINSIGHTS_CONNECTION_STRING",
       "dynamicId": null
     }
   }

@@ -28,7 +28,13 @@ namespace ABC_Retail.Controllers
 		private readonly HttpClient _httpClient;
 
 		// The function URL for sending a queue message.
-		private readonly string _sendQueueMessageUrl;
+		private readonly string _sendToQueueFunctionUrl;
+
+		// The function URL for adding an entity.
+		private readonly string _addEntityFunctionUrl;
+
+		// The function URL for uploading an image.
+		private readonly string _uploadImageFunctionUrl;
 
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
@@ -51,7 +57,9 @@ namespace ABC_Retail.Controllers
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_httpClient = httpClient;
-			_sendQueueMessageUrl = configuration["AzureFunctions:SendQueueMessageUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_sendToQueueFunctionUrl = configuration["AzureFunctions:SendToQueueFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_uploadImageFunctionUrl = configuration["AzureFunctions:UploadImageFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "UploadImageFunctionUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -177,34 +185,34 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var product = await _productTableService.GetEntityAsync("Product", model.Id);
-			if (product == null)
+			var dbProduct = await _productTableService.GetEntityAsync("Product", model.Id);
+			if (dbProduct == null)
 			{
 				// Return a not found response if the product does not exist.
 				return NotFound();
 			}
 
 			// Update the product details with the values from the view model.
-			product.Name = model.Name ?? string.Empty;
-			product.Price = model.Price;
-			product.Description = model.Description ?? string.Empty;
-			product.Quantity = model.Quantity;
+			dbProduct.Name = model.Name ?? string.Empty;
+			dbProduct.Price = model.Price;
+			dbProduct.Description = model.Description ?? string.Empty;
+			dbProduct.Quantity = model.Quantity;
 
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				if (product.FileID != null && model.FileName != _defaultProductImage)
+				if (dbProduct.FileID != null && model.FileName != _defaultProductImage)
 				{
 					// Delete the existing image file from Azure Blob Storage.
-					await _blobStorageService.DeleteFileAsync(product.FileID);
+					await _blobStorageService.DeleteFileAsync(dbProduct.FileID);
 				}
 
 				// Upload the new image file and get the file ID.
-				product.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
+				dbProduct.FileID = _blobStorageService.UploadFileAsync(model.File).Result;
 			}
 
 			// Save the updated product back to Azure Table Storage.
-			await _productTableService.UpdateEntityAsync(product);
+			await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
 
 			// Redirect to the index action.
 			return RedirectToAction("Index");
@@ -277,9 +285,8 @@ namespace ABC_Retail.Controllers
 		{
 			if (!ModelState.IsValid)
 			{
-				// If the model state is invalid, return the view with the current model to display validation errors.
-				// TODO: Handle validation errors (e.g., return the view with errors highlighted).
-				return View(model);
+				// If the model state is invalid, return the partial view with the current model to display validation errors.
+				return PartialView("_CreateProductForm", model);
 			}
 
 			string fileID = string.Empty;
@@ -290,7 +297,25 @@ namespace ABC_Retail.Controllers
 			}
 			else
 			{
-				fileID = _blobStorageService.UploadFileAsync(model.File).Result; // Upload the image file and get the file ID
+				var imageFunctionUrl = _uploadImageFunctionUrl;
+
+				// Create a multipart form content to send the file
+				using var imageContent = new MultipartFormDataContent();
+				using var fileStream = model.File.OpenReadStream();
+				var fileContent = new StreamContent(fileStream);
+				imageContent.Add(fileContent, "file", model.File.FileName);
+
+				// Send the file to the Azure Function
+				var blobResponse = await _httpClient.PostAsync(imageFunctionUrl, imageContent);
+
+				if (blobResponse.IsSuccessStatusCode)
+				{
+					fileID = await blobResponse.Content.ReadAsStringAsync(); // Get the blob name from the function response
+				}
+				else
+				{
+					fileID = _defaultProductImage; // Set a default image file ID
+				}
 			}
 
 			// Create a new product entity from the view model.
@@ -302,11 +327,18 @@ namespace ABC_Retail.Controllers
 				fileID
 			);
 
-			// Save the new product to Azure Table Storage.
-			await _productTableService.AddEntityAsync(product);
+			var productFunctionUrl = _addEntityFunctionUrl;
 
-			// Redirect to the index action.
-			return RedirectToAction("Index");
+			var jsonContent = JsonSerializer.Serialize(product);
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+			var response = await _httpClient.PostAsync(productFunctionUrl, content);
+			if (!response.IsSuccessStatusCode)
+			{
+				return Json(new { success = false, message = "Failed to trigger the add entity function." });
+			}
+
+			return Json(new { success = true, message = "Product added successfully." });
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -352,7 +384,7 @@ namespace ABC_Retail.Controllers
 				product.Price
 			);
 
-			var functionUrl = _sendQueueMessageUrl;
+			var functionUrl = _sendToQueueFunctionUrl;
 			var requestData = new
 			{
 				Message = JsonSerializer.Serialize(orderMessage),

@@ -1,59 +1,62 @@
 using System;
-using Azure.Storage.Queues;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using ABC_Retail.Services;
 using ABC_Retail.Models;
+using Azure;
 
 namespace ABC_Retail_Functions.Functions
 {
 	public class ProcessOrderFunction
 	{
 		private readonly ProductTableService _productTableService;
-		private readonly Func<string, QueueClient> _queueClientFactory;
+		private readonly AzureQueueService _queueService;
 		private readonly string _inventoryQueueName = "inventory-queue";
 
-		public ProcessOrderFunction(ProductTableService productTableService, Func<string, QueueClient> queueClientFactory)
+		public ProcessOrderFunction(ProductTableService productTableService, AzureQueueService queueService)
 		{
 			_productTableService = productTableService;
-			_queueClientFactory = queueClientFactory;
+			_queueService = queueService;
 		}
 
 		[FunctionName("ProcessOrderFunction")]
 		public async Task Run(
-	[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
-	ILogger log)
+			[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
+			ILogger log)
 		{
 			log.LogInformation($"Processing order message: {myQueueItem}");
 
+			if (!TryDeserializeOrderMessage(myQueueItem, out var orderMessage, log))
+			{
+				log.LogWarning("Failed to deserialize order message");
+				return;
+			}
+
+			if (await ProcessOrderAndUpdateInventoryAsync(orderMessage, log))
+			{
+				log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
+				await LogInventoryUpdateAsync(orderMessage, log);
+			}
+			else
+			{
+				log.LogWarning($"Failed to process order {orderMessage.OrderId}");
+			}
+		}
+
+		private bool TryDeserializeOrderMessage(string message, out OrderMessage orderMessage, ILogger log)
+		{
 			try
 			{
-				// Deserialize the order message
-				var orderMessage = JsonSerializer.Deserialize<OrderMessage>(myQueueItem);
-				if (orderMessage == null)
-				{
-					log.LogWarning("Failed to deserialize order message");
-					return;
-				}
-
-				// Process the order
-				bool success = await ProcessOrderAndUpdateInventoryAsync(orderMessage, log);
-				if (success)
-				{
-					log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
-					await LogInventoryUpdateAsync(orderMessage, log);
-				}
-				else
-				{
-					log.LogWarning($"Failed to process order {orderMessage.OrderId}");
-				}
+				orderMessage = JsonSerializer.Deserialize<OrderMessage>(message);
+				return orderMessage != null;
 			}
 			catch (Exception ex)
 			{
-				log.LogError(ex, "Error processing order message");
+				log.LogError(ex, "Error deserializing order message");
+				orderMessage = null;
+				return false;
 			}
 		}
 
@@ -75,34 +78,39 @@ namespace ABC_Retail_Functions.Functions
 					return false;
 				}
 
-				// Deduct quantity and update the table
 				dbProduct.Quantity -= product.Quantity;
 				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
-				await _productTableService.UpdateEntityAsync(dbProduct);
+
+				try
+				{
+					await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
+				}
+				catch (RequestFailedException ex) when (ex.Status == 412)
+				{
+					log.LogWarning($"Concurrency conflict when updating product {product.ProductId}. Retrying...");
+					return await ProcessOrderAndUpdateInventoryAsync(orderMessage, log);
+				}
 			}
 
-			return true; // Order processed successfully
+			return true;
 		}
 
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
 		{
-			var inventoryQueueClient = _queueClientFactory(_inventoryQueueName);
-
 			foreach (var product in orderMessage.Products)
 			{
 				var inventoryUpdateMessage = new InventoryUpdateMessage
 				(
 					product.ProductName,
-					-product.Quantity, // Negative quantity for stock deduction
+					-product.Quantity,
 					"Order processed"
 				);
 
 				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
-				await inventoryQueueClient.SendMessageAsync(messageText);
+				await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
 			}
 
 			log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
 		}
-
 	}
 }

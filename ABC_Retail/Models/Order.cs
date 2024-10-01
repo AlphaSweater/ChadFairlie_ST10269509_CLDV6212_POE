@@ -9,6 +9,9 @@ namespace ABC_Retail.Models
 {
 	public class Order : ITableEntity
 	{
+		// The type of the entity
+		public string EntityType { get; private set; }
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -48,6 +51,7 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		public Order()
 		{
+			EntityType = "Order";
 			RowKey = Guid.NewGuid().ToString();  // Unique identifier for the order
 			CustomerId = string.Empty;
 			PartitionKey = CustomerId;  // Default partition, can be refined based on business logic

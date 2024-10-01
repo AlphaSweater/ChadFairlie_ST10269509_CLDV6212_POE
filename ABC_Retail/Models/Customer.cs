@@ -8,6 +8,9 @@ namespace ABC_Retail.Models
 	/// </summary>
 	public class Customer : ITableEntity
 	{
+		// The type of the entity
+		public string EntityType { get; set; }
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -29,8 +32,20 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		public Customer(string name, string surname, string email, string phone)
+		{
+			EntityType = "Customer";
+			PartitionKey = "Customer"; // Set the partition key to "Customer"
+			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
+			Name = name;
+			Surname = surname;
+			Email = email;
+			Phone = phone;
+		}
+
 		public Customer()
 		{
+			EntityType = "Customer";
 			PartitionKey = "Customer"; // Set the partition key to "Customer"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
 			Name = string.Empty;

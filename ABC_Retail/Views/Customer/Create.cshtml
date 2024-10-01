@@ -1,37 +1,100 @@
 ﻿@model ABC_Retail.ViewModels.CustomerViewModel
 
 @{
-	ViewData["Title"] = "Create Customer";
+    ViewData["Title"] = "Create Customer";
 }
 
 <h1>Create New Customer</h1>
 
-<form asp-action="Create" method="post">
-	<div class="form-group">
-		<label for="Name">Name</label>
-		<input type="text" name="Name" class="form-control" value="@Model.Name" />
-		<span asp-validation-for="Name" class="text-danger"></span>
-	</div>
-	<div class="form-group">
-		<label for="Surname">Surname</label>
-		<input type="text" name="Surname" class="form-control" value="@Model.Surname" />
-		<span asp-validation-for="Surname" class="text-danger"></span>
-	</div>
-	<div class="form-group">
-		<label for="Email">Email</label>
-		<input type="email" name="Email" class="form-control" value="@Model.Email" />
-		<span asp-validation-for="Email" class="text-danger"></span>
-	</div>
-	<div class="form-group">
-		<label for="Phone">Phone</label>
-		<input type="text" name="Phone" class="form-control" value="@Model.Phone" />
-		<span asp-validation-for="Phone" class="text-danger"></span>
-	</div>
-	<button type="submit" class="btn btn-primary">Create</button>
-</form>
+<div id="createCustomerFormContainer">
+    @await Html.PartialAsync("_CreateCustomerForm", Model)
+</div>
 
 @section Scripts {
-	@{
-		await Html.RenderPartialAsync("_ValidationScriptsPartial");
-	}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            $('#createCustomerFormContainer').on('submit', '#createCustomerForm', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                // Show confirmation popup
+                Swal.fire({
+                    title: 'Confirm Creation',
+                    text: 'Are you sure you want to create this customer?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, create it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading popup
+                        Swal.fire({
+                            title: 'Creating Customer',
+                            text: 'Please wait...',
+                            icon: 'info',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Append /CreatingCustomer... to the URL
+                        const originalUrl = window.location.href;
+                        window.history.replaceState({}, '', window.location.pathname + '/CreatingCustomer');
+
+                        // Submit the form via AJAX
+                        $.ajax({
+                            url: '@Url.Action("Create", "Customer")',
+                            type: 'POST',
+                            data: $('#createCustomerForm').serialize(),
+                            success: function(data) {
+                                if (data.success) {
+                                    // Show success popup
+                                    Swal.fire({
+                                        title: 'Customer Created',
+                                        text: data.message,
+                                        icon: 'success'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            window.history.replaceState({}, '', originalUrl);
+                                            window.location.href = '@Url.Action("Index", "Customer")';
+                                        }
+                                    });
+                                } else {
+									Swal.fire({
+										title: 'Error',
+										text: data.message,
+										icon: 'error'
+									}).then(result => {
+										if (result.isConfirmed) {
+											// Revert URL back to original before reloading
+											window.history.replaceState({}, '', originalUrl);
+											// Replace the form with the returned HTML to show validation errors
+											$('#createCustomerFormContainer').html(data);
+										}
+									});
+                                }
+                            },
+                            error: function() {
+                                // Handle errors
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'An error occurred while creating the customer.',
+                                    icon: 'error'
+                                }).then(result => {
+                                    if (result.isConfirmed) {
+                                        // Revert URL back to original before reloading
+                                        window.history.replaceState({}, '', originalUrl);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 }
