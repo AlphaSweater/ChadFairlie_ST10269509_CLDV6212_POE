@@ -51,7 +51,7 @@ namespace ABC_Retail.Controllers
 			_productTableService = productTableService;
 			_blobStorageService = blobStorageService;
 			_httpClient = httpClient;
-			_sendQueueMessageUrl = configuration["AzureFunctions:SendQueueMessageUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_sendQueueMessageUrl = configuration["AzureFunctions:SendQueueMessageFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//

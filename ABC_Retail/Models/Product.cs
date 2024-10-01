@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using System.Runtime.Serialization;
 
 namespace ABC_Retail.Models
 {
@@ -8,7 +9,8 @@ namespace ABC_Retail.Models
 	/// </summary>
 	public class Product : ITableEntity
 	{
-		private readonly string _defaultProductImage = "default-product-image.jpg";
+		// The type of the entity
+		public string EntityType { get; set; }
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Required properties for ITableEntity
@@ -34,6 +36,7 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		public Product(string name, double price, string description, int quantity, string fileID)
 		{
+			EntityType = "Product";
 			PartitionKey = "Product"; // Set the partition key to "Product"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
 			Name = name;
@@ -44,14 +47,14 @@ namespace ABC_Retail.Models
 		}
 		public Product()
 		{
+			EntityType = "Product";
 			PartitionKey = "Product"; // Set the partition key to "Product"
 			RowKey = Guid.NewGuid().ToString(); // Set the row key to a new GUID
 			Name = string.Empty;
 			Price = 0;
 			Description = string.Empty;
 			Quantity = 0;
-			FileID = _defaultProductImage;
-
+			FileID = "default-product-image.jpg";
 		}
 	}
 }

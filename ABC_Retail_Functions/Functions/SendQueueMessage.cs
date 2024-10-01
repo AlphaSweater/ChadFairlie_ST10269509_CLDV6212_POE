@@ -9,15 +9,23 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Storage.Queues;
+using ABC_Retail.Services;
 
 namespace ABC_Retail_Functions.Functions
 {
-	public static class SendQueueMessage
+	public class SendToQueueFunction
 	{
+		private readonly AzureQueueService _queueService;
+
+		public SendToQueueFunction(AzureQueueService queueService)
+		{
+			_queueService = queueService;
+		}
+
 		[FunctionName("SendQueueMessage")]
-		public static async Task<IActionResult> Run(
-			[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-			ILogger log)
+		public async Task<IActionResult> Run(
+		[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+		ILogger log)
 		{
 			log.LogInformation("Processing request to send message to queue.");
 

@@ -2,6 +2,7 @@
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -14,7 +15,7 @@ namespace ABC_Retail.Controllers
 		private readonly AzureFileStorageService _fileStorageService;
 		private readonly string _contractShareName = "contracts";
 
-		public ContractController(AzureFileStorageService fileStorageService)
+		public ContractController(AzureFileStorageService fileStorageService, IConfiguration configuration)
 		{
 			_fileStorageService = fileStorageService;
 		}

@@ -2,6 +2,9 @@
 using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace ABC_Retail.Controllers
 {
@@ -18,6 +21,11 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with customer Azure Table Storage.
 		private readonly CustomerTableService _customerTableService;
 
+		private readonly HttpClient _httpClient;
+
+		private readonly string _addEntityFunctionUrl;
+
+
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -26,9 +34,11 @@ namespace ABC_Retail.Controllers
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
 		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
-		public CustomerController(CustomerTableService customerTableService)
+		public CustomerController(CustomerTableService customerTableService, HttpClient httpClient, IConfiguration configuration)
 		{
 			_customerTableService = customerTableService;
+			_httpClient = httpClient;
+			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -186,19 +196,20 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Map the customer view model to a customer entity.
-			var customer = new Customer
+			var customer = new Customer(model.Name, model.Surname, model.Email, model.Phone);
+
+			var functionUrl = _addEntityFunctionUrl;
+
+			var jsonContent = JsonSerializer.Serialize(customer);
+			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+			var response = await _httpClient.PostAsync(functionUrl, content);
+			if (!response.IsSuccessStatusCode)
 			{
-				Name = model.Name,
-				Surname = model.Surname,
-				Email = model.Email,
-				Phone = model.Phone
-			};
+				return Json(new { success = false, message = "Failed to trigger the add entity function." });
+			}
 
-			// Save the new customer entity to Azure Table Storage.
-			await _customerTableService.AddEntityAsync(customer);
-
-			// Redirect to the index action after successful creation.
-			return RedirectToAction("Index");
+			return Json(new { success = true, message = "Customer added successfully." });
 		}
 	}
 }
