@@ -10,15 +10,27 @@ using System.Linq;
 
 namespace ABC_Retail_Functions.Functions
 {
+	/// <summary>
+	/// Azure Function to handle image uploads to Azure Blob Storage.
+	/// </summary>
 	public class UploadImageFunction
 	{
 		private readonly AzureBlobStorageService _blobStorageService;
 
+		/// <summary>
+		/// Constructor to initialize the blob storage service.
+		/// </summary>
+		/// <param name="blobStorageService">Service for handling Azure Blob Storage operations.</param>
 		public UploadImageFunction(AzureBlobStorageService blobStorageService)
 		{
 			_blobStorageService = blobStorageService;
 		}
 
+		/// <summary>
+		/// HTTP trigger function to process the image upload request.
+		/// </summary>
+		/// <param name="req">HTTP request containing the image file to be uploaded.</param>
+		/// <returns>ActionResult indicating the result of the operation.</returns>
 		[FunctionName("UploadImageFunction")]
 		public async Task<IActionResult> Run(
 			[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
@@ -26,6 +38,7 @@ namespace ABC_Retail_Functions.Functions
 		{
 			log.LogInformation("File upload request received.");
 
+			// Check if the request contains any files
 			if (!req.Form.Files.Any())
 			{
 				log.LogWarning("No file found in the request.");
@@ -36,6 +49,7 @@ namespace ABC_Retail_Functions.Functions
 
 			try
 			{
+				// Upload the file to Azure Blob Storage
 				string blobName = await _blobStorageService.UploadFileAsync(formFile);
 				log.LogInformation($"File uploaded to blob: {blobName}");
 				return new OkObjectResult(blobName);

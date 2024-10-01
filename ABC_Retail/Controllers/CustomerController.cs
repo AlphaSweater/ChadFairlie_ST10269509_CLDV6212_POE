@@ -191,19 +191,27 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Create(CustomerViewModel model)
 		{
+			// Check if the model state is valid
 			if (!ModelState.IsValid)
 			{
 				// Return the view with the model to display validation errors
 				return PartialView("_CreateCustomerForm", model);
 			}
 
+			// Create a new customer entity from the view model
 			var customer = new Customer(model.Name, model.Surname, model.Email, model.Phone);
+
+			// Get the URL of the Azure Function to add the entity
 			var functionUrl = _addEntityFunctionUrl;
 
+			// Serialize the customer entity to JSON
 			var jsonContent = JsonSerializer.Serialize(customer);
 			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
+			// Send the customer data to the Azure Function
 			var response = await _httpClient.PostAsync(functionUrl, content);
+
+			// Check if the function invocation was successful
 			if (!response.IsSuccessStatusCode)
 			{
 				TempData["ErrorMessage"] = "Failed to trigger the add entity function.";

@@ -9,18 +9,30 @@ using Azure;
 
 namespace ABC_Retail_Functions.Functions
 {
+	/// <summary>
+	/// Azure Function to process orders from a queue and update inventory in Azure Table Storage.
+	/// </summary>
 	public class ProcessOrderFunction
 	{
 		private readonly ProductTableService _productTableService;
 		private readonly AzureQueueService _queueService;
 		private readonly string _inventoryQueueName = "inventory-queue";
 
+		/// <summary>
+		/// Constructor to initialize the table and queue services.
+		/// </summary>
+		/// <param name="productTableService">Service for handling Product entities.</param>
+		/// <param name="queueService">Service for handling Azure Queue operations.</param>
 		public ProcessOrderFunction(ProductTableService productTableService, AzureQueueService queueService)
 		{
 			_productTableService = productTableService;
 			_queueService = queueService;
 		}
 
+		/// <summary>
+		/// Queue trigger function to process order messages and update inventory.
+		/// </summary>
+		/// <param name="myQueueItem">Queue message containing the order data.</param>
 		[FunctionName("ProcessOrderFunction")]
 		public async Task Run(
 			[QueueTrigger("purchase-queue", Connection = "AzureWebJobsStorage")] string myQueueItem,
@@ -28,12 +40,14 @@ namespace ABC_Retail_Functions.Functions
 		{
 			log.LogInformation($"Processing order message: {myQueueItem}");
 
+			// Deserialize the order message
 			if (!TryDeserializeOrderMessage(myQueueItem, out var orderMessage, log))
 			{
 				log.LogWarning("Failed to deserialize order message");
 				return;
 			}
 
+			// Process the order and update inventory
 			if (await ProcessOrderAndUpdateInventoryAsync(orderMessage, log))
 			{
 				log.LogInformation($"Order {orderMessage.OrderId} processed successfully");
@@ -45,6 +59,12 @@ namespace ABC_Retail_Functions.Functions
 			}
 		}
 
+		/// <summary>
+		/// Tries to deserialize the order message from the queue.
+		/// </summary>
+		/// <param name="message">Queue message as a string.</param>
+		/// <param name="orderMessage">Deserialized order message object.</param>
+		/// <returns>True if deserialization is successful, otherwise false.</returns>
 		private bool TryDeserializeOrderMessage(string message, out OrderMessage orderMessage, ILogger log)
 		{
 			try
@@ -60,6 +80,11 @@ namespace ABC_Retail_Functions.Functions
 			}
 		}
 
+		/// <summary>
+		/// Processes the order and updates the inventory in table storage.
+		/// </summary>
+		/// <param name="orderMessage">Order message containing the order details.</param>
+		/// <returns>True if the order is processed and inventory is updated successfully, otherwise false.</returns>
 		private async Task<bool> ProcessOrderAndUpdateInventoryAsync(OrderMessage orderMessage, ILogger log)
 		{
 			foreach (var product in orderMessage.Products)
@@ -78,6 +103,7 @@ namespace ABC_Retail_Functions.Functions
 					return false;
 				}
 
+				// Update the product quantity
 				dbProduct.Quantity -= product.Quantity;
 				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
 
@@ -95,6 +121,10 @@ namespace ABC_Retail_Functions.Functions
 			return true;
 		}
 
+		/// <summary>
+		/// Logs the inventory update by enqueuing a message to the inventory queue.
+		/// </summary>
+		/// <param name="orderMessage">Order message containing the order details.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
 		{
 			foreach (var product in orderMessage.Products)
