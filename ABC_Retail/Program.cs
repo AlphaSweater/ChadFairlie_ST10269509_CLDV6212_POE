@@ -1,3 +1,4 @@
+using ABC_Retail.Models;
 using ABC_Retail.Services;
 using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
@@ -54,11 +55,15 @@ namespace ABC_Retail
 			string storageConnectionString = configuration.GetConnectionString("StorageConnectionString")
 								 ?? throw new InvalidOperationException("AzureStorage connection string is not configured.");
 
-			// Add product Azure Table Storage service
-			services.AddSingleton(new ProductTableService(storageConnectionString));
+			// Get SQL connection string
+			string sqlConnectionString = configuration.GetConnectionString("SQLConnectionString")
+								 ?? throw new InvalidOperationException("SQL connection string is not configured.");
 
-			// Add customer Azure Table Storage service
-			services.AddSingleton(new CustomerTableService(storageConnectionString));
+			// Add product SQL Table Storage service
+			services.AddSingleton(new Product(sqlConnectionString));
+
+			// Add customer SQL Table Storage service
+			services.AddSingleton(new Customer(sqlConnectionString));
 
 			// Add Azure File Storage service
 			services.AddSingleton(new AzureFileStorageService(storageConnectionString));

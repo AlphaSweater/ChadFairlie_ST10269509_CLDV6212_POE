@@ -3,23 +3,23 @@
 <form id="createProductForm" asp-action="Create" method="post" enctype="multipart/form-data">
 	<div class="form-group">
 		<label for="Name">Name</label>
-		<input type="text" name="Name" class="form-control" value="@Model.Name" />
-		<span asp-validation-for="Name" class="text-danger"></span>
+		<input type="text" name="Name" class="form-control" value="@Model.ProductName" />
+		<span asp-validation-for="ProductName" class="text-danger"></span>
 	</div>
 	<div class="form-group">
 		<label for="Price">Price</label>
-		<input type="number" name="Price" class="form-control" value="@Model.Price" />
-		<span asp-validation-for="Price" class="text-danger"></span>
+		<input type="number" name="Price" class="form-control" value="@Model.ProductPrice" />
+		<span asp-validation-for="ProductPrice" class="text-danger"></span>
 	</div>
 	<div class="form-group">
 		<label for="Description">Description</label>
-		<input type="text" name="Description" class="form-control" value="@Model.Description" />
-		<span asp-validation-for="Description" class="text-danger"></span>
+		<input type="text" name="Description" class="form-control" ProductDescriptionel.Description" />
+		<span asp-vaProductDescriptionr="Description" class="text-danger"></span>
 	</div>
 	<div class="form-group">
 		<label for="Quantity">Quantity</label>
-		<input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
-		<span asp-validation-for="Quantity" class="text-danger"></span>
+		<input type="number" name="Quantity" class="form-control" value="@Model.ProductQuantity" />
+		<span asp-validation-for="ProductQuantity" class="text-danger"></span>
 	</div>
 	<div class="form-group">
 		<label for="file">Upload Picture</label>

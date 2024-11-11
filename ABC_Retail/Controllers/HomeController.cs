@@ -1,27 +1,150 @@
 using ABC_Retail.Models;
+using ABC_Retail.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 
 namespace ABC_Retail.Controllers
 {
 	public class HomeController : Controller
 	{
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Dependencies
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		private readonly IHttpContextAccessor _httpContextAccessor;
+		private readonly Customer _customerService;
 		private readonly ILogger<HomeController> _logger;
 
-		public HomeController(ILogger<HomeController> logger)
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Constructor
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HomeController"/> class.
+		/// </summary>
+		/// <param name="httpContextAccessor">Provides access to the current HTTP context.</param>
+		/// <param name="userTableService">Service for interacting with the user table.</param>
+		/// <param name="configuration">Application configuration settings.</param>
+		/// <param name="logger">Logger for logging information and errors.</param>
+
+		public HomeController(IHttpContextAccessor httpContextAccessor, Customer customerService, ILogger<HomeController> logger)
 		{
+			_httpContextAccessor = httpContextAccessor;
+			_customerService = customerService;
 			_logger = logger;
 		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Index Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		public IActionResult Index()
 		{
 			return View();
 		}
 
-		public IActionResult Privacy()
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Login Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Displays the login page.
+		/// </summary>
+		/// <returns>A view for the login page.</returns>
+		[HttpGet]
+		public IActionResult Login()
 		{
 			return View();
 		}
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Handles the login process for a user.
+		/// </summary>
+		/// <param name="model">The login user view model containing email and password.</param>
+		/// <returns>A redirect to the appropriate page based on user role, or the login view with errors.</returns>
+		[HttpPost]
+		public async Task<IActionResult> Login(LoginViewModel model)
+		{
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			try
+			{
+				Customer userToLogin = new Customer(model);
+
+				var customerId = await _customerService.ValidateUserAsync(userToLogin);
+
+				if (customerId == null)
+				{
+					ModelState.AddModelError(string.Empty, "Incorrect email or password.");
+					return View(model);
+				}
+
+				_httpContextAccessor.HttpContext?.Session.SetInt32("CustomerId", customerId.Value);
+
+				string redirectUrl = Url.Action("Index", "Product");
+				return Redirect(redirectUrl);
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "Failed to login user.");
+				ModelState.AddModelError(string.Empty, "Failed to login user.");
+				return View(model);
+			}
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Sign-Up Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+
+		[HttpPost]
+		public async Task<IActionResult> SignUp(SignUpViewModel model)
+		{
+			if (ModelState.IsValid)
+			{
+				Customer newCustomer = new Customer(model);
+
+				var customerId = await _customerService.InsertUserAsync(newCustomer);
+
+				if (customerId.HasValue)
+				{
+					// Set the user's ID in the session
+					_httpContextAccessor.HttpContext.Session.SetInt32("CustomerId", customerId.Value);
+					return Json(new { success = true });
+				}
+				else
+				{
+					return Json(new { success = false, message = "Failed to create user." });
+				}
+			}
+			return Json(new { success = false, message = "Invalid data." });
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Sign-Out Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Handles the sign-out process for a user.
+		/// </summary>
+		/// <returns>A redirect to the login page.</returns>
+		[HttpPost]
+		public IActionResult SignOut()
+		{
+			HttpContext.Session.Clear();
+			return RedirectToAction("Login");
+		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 		public IActionResult Error()

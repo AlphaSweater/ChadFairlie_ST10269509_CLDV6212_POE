@@ -70,16 +70,16 @@
 			{
 				<div class="product-card-wrapper">
 					<div class="card h-100 product-card">
-						<img src="@product.FileUrl" class="card-img-top" alt="@product.Name">
+						<img src="@product.ImageUrl" class="card-img-top" alt="@product.ProductName">
 						<div class="card-body">
-							<h5 class="card-title">@product.Name</h5>
-							<p class="card-text text-muted">@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-							<p class="card-text">@product.Description</p>
-							<p class="card-text">Quantity: <span class="product-quantity">@product.Quantity</span></p>
+							<h5 class="card-title">@product.ProductName</h5>
+							<p class="card-text text-muted">@product.ProductPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
+							<p class="card-text">@pProductDescriptionription</p>
+							<p class="card-text">Quantity: <span class="product-quantity">@product.ProductQuantity</span></p>
 						</div>
 						<div class="card-footer d-flex justify-content-between">
-							<a class="btn btn-success purchase-button" data-id="@product.Id" data-name="@product.Name">Purchase</a>
-							<a href="@Url.Action("Manage", "Product", new { id = product.Id })" class="btn btn-primary">Manage</a>
+							<a class="btn btn-success purchase-button" data-id="@product.ProductID" data-name="@pProductNamect.Name">Purchase</a>
+							<a href="@Url.Action("Manage", "Product", new { id = product.ProductID })" class="btn btn-primary">Manage</a>
 						</div>
 					</div>
 				</div>

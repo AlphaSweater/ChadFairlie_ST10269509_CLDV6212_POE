@@ -17,13 +17,17 @@ namespace ABC_Retail.ViewModels
 		[StringLength(50, ErrorMessage = "The surname cannot exceed 50 characters.")]
 		public string? Surname { get; set; } // Surname of the customer
 
-		[Required(ErrorMessage = "An email address is required!")]
-		[EmailAddress(ErrorMessage = "Invalid email address format.")]
-		public string? Email { get; set; } // Email of the customer
-
 		[Required(ErrorMessage = "A phone number is required!")]
 		[Phone(ErrorMessage = "Invalid phone number format.")]
 		[StringLength(15, ErrorMessage = "The phone number cannot exceed 15 characters.")]
 		public string? Phone { get; set; } // Phone number of the customer
+
+		[Required(ErrorMessage = "An email address is required!")]
+		[EmailAddress(ErrorMessage = "Invalid email address format.")]
+		public string? Email { get; set; } // Email of the customer
+
+		[Required(ErrorMessage = "A password is required!")]
+		[StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 6 characters long.")]
+		public string? Password { get; set; } // Password of the customer
 	}
 }

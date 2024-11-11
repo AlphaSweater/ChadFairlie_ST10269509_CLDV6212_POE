@@ -90,7 +90,7 @@
 	</style>
 </head>
 
-<h1>Manage Product - @Model.Name</h1>
+<h1>Manage Product - @Model.ProductName</h1>
 
 <ul class="nav nav-tabs" id="productTab" role="tablist">
 	<li class="nav-item">
@@ -111,13 +111,13 @@
 		<h3>Details</h3>
 		<div class="row">
 			<div class="col-md-4">
-				<img src="@Model.FileUrl" class="img-fluid details-image" alt="@Model.Name" />
+				<img src="@Model.ImageUrl" class="img-fluid details-image" alt="@Model.ProductName" />
 			</div>
 			<div class="col-md-8">
-				<p><strong>Name:</strong> @Model.Name</p>
-				<p><strong>Price:</strong> @Model.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-				<p><strong>Description:</strong> @Model.Description</p>
-				<p><strong>Quantity:</strong> @Model.Quantity</p>
+				<p><strong>Name:</strong> @Model.ProductName</p>
+				<p><strong>Price:</strong> @Model.ProductPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
+				<p><strong>Description:</strong> ProductDescriptionription</p>
+				<p><strong>Quantity:</strong> @Model.ProductQuantity</p>
 			</div>
 		</div>
 	</div>
@@ -126,38 +126,38 @@
 	<div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
 		<h3>Edit</h3>
 		<form asp-action="Edit" asp-controller="Product" form method="post" enctype="multipart/form-data">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="Id" value="@Model.ProductID" />
 			<div class="form-group mb-3">
 				<label for="Name">Name</label>
-				<input type="text" name="Name" class="form-control" value="@Model.Name" />
-				<span asp-validation-for="Name" class="text-danger"></span>
+				<input type="text" name="Name" class="form-control" value="ProductNameel.Name" />
+				<span asp-validatioProductNamer="Name" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Price">Price</label>
-				<input type="number" name="Price" class="form-control" value="@Model.Price" />
-				<span asp-validation-for="Price" class="text-danger"></span>
+				<input type="number" name="Price" class="form-control" value="@Model.ProductPrice" />
+				<span asp-validation-for="ProductPrice" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Description">Description</label>
-				<textarea name="Description" class="form-control">@Model.Description</textarea>
-				<span asp-validation-for="Description" class="text-danger"></span>
+				<textarea name="Description" class="ProductDescriptionl">@Model.Description</textarea>
+				<spanProductDescriptiontion-for="Description" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Quantity">Quantity</label>
-				<input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
-				<span asp-validation-for="Quantity" class="text-danger"></span>
+				<input type="number" name="Quantity" class="form-control" value="@Model.ProductQuantity" />
+				<span asp-validation-for="ProductQuantity" class="text-danger"></span>
 			</div>
 			<label for="File">Product Image</label>
 			<div class="form-group mb-3" style="display: flex; align-items: center; gap: 20px;">
-				@if (!string.IsNullOrEmpty(Model.FileUrl))
+				@if (!string.IsNullOrEmpty(Model.ImageUrl))
 				{
-					<img src="@Model.FileUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
+					<img src="@Model.ImageUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
 				}
 				<div style="display: flex; flex-direction: column">
 					<input type="file" name="File" class="form-control-file" />
 				</div>
 			</div>
-			<input type="hidden" name="FileName" value="@Model.FileName" />
+			<input type="hidden" name="FileName" value="@Model.ProductImageName" />
 			<button type="submit" class="btn btn-primary">Save</button>
 		</form>
 	</div>
@@ -167,7 +167,7 @@
 		<h3>Delete</h3>
 		<p>Are you sure you want to delete this product?</p>
 		<form method="post" action="/Product/Delete">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="Id" value="@Model.ProductID" />
 			<button type="submit" class="btn btn-danger">Delete</button>
 		</form>
 	</div>

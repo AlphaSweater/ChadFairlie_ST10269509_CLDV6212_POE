@@ -93,13 +93,13 @@ namespace ABC_Retail.Controllers
 
 				productViewModels.Add(new ProductViewModel
 				{
-					Id = product.RowKey,
-					Name = product.Name,
-					Price = product.Price,
-					Description = product.Description,
-					Quantity = product.Quantity,
-					FileName = fileName, // Set the file name from Blob Storage or null
-					FileUrl = fileUrl // Set the file URL from Blob Storage or null
+					ProductID = product.RowKey,
+					ProductName = product.Name,
+					ProductPrice = product.Price,
+					ProductDescription = product.Description,
+					ProductQuantity = product.Quantity,
+					ProductImageName = fileName, // Set the file name from Blob Storage or null
+					ImageUrl = fileUrl // Set the file URL from Blob Storage or null
 				});
 			}
 
@@ -146,13 +146,13 @@ namespace ABC_Retail.Controllers
 			// Map the product to the view model.
 			var productViewModel = new ProductViewModel
 			{
-				Id = product.RowKey,
-				Name = product.Name,
-				Price = product.Price,
-				Description = product.Description,
-				Quantity = product.Quantity,
-				FileName = fileName, // Set the file name from Blob Storage or null
-				FileUrl = fileUrl // Set the file URL from Blob Storage or null
+				ProductID = product.RowKey,
+				ProductName = product.Name,
+				ProductPrice = product.Price,
+				ProductDescription = product.Description,
+				ProductQuantity = product.Quantity,
+				ProductImageName = fileName, // Set the file name from Blob Storage or null
+				ImageUrl = fileUrl // Set the file URL from Blob Storage or null
 			};
 
 			// Return the view with the product details.
@@ -172,7 +172,7 @@ namespace ABC_Retail.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Edit(ProductViewModel model)
 		{
-			if (string.IsNullOrEmpty(model.Id))
+			if (string.IsNullOrEmpty(model.ProductID))
 			{
 				// Return a bad request response if the product ID is null or empty.
 				return BadRequest("Product ID cannot be null or empty.");
@@ -185,7 +185,7 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Retrieve the product from Azure Table Storage.
-			var dbProduct = await _productTableService.GetEntityAsync("Product", model.Id);
+			var dbProduct = await _productTableService.GetEntityAsync("Product", model.ProductID);
 			if (dbProduct == null)
 			{
 				// Return a not found response if the product does not exist.
@@ -193,15 +193,15 @@ namespace ABC_Retail.Controllers
 			}
 
 			// Update the product details with the values from the view model.
-			dbProduct.Name = model.Name ?? string.Empty;
-			dbProduct.Price = model.Price;
-			dbProduct.Description = model.Description ?? string.Empty;
-			dbProduct.Quantity = model.Quantity;
+			dbProduct.Name = model.ProductName ?? string.Empty;
+			dbProduct.Price = model.ProductPrice;
+			dbProduct.Description = model.ProductDescription ?? string.Empty;
+			dbProduct.Quantity = model.ProductQuantity;
 
 			// Update the product image file if a new file is uploaded.
 			if (model.File != null)
 			{
-				if (dbProduct.FileID != null && model.FileName != _defaultProductImage)
+				if (dbProduct.FileID != null && model.ProductImageName != _defaultProductImage)
 				{
 					// Delete the existing image file from Azure Blob Storage.
 					await _blobStorageService.DeleteFileAsync(dbProduct.FileID);
@@ -324,10 +324,10 @@ namespace ABC_Retail.Controllers
 
 			// Create a new product entity from the view model
 			var product = new Product(
-				model.Name ?? string.Empty,
-				model.Price,
-				model.Description ?? string.Empty,
-				model.Quantity,
+				model.ProductName ?? string.Empty,
+				model.ProductPrice,
+				model.ProductDescription ?? string.Empty,
+				model.ProductQuantity,
 				fileID
 			);
 
