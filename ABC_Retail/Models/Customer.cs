@@ -35,7 +35,7 @@ namespace ABC_Retail.Models
 			_SQLConnectionString = sqlConnectionString;
 		}
 
-		// Default constructor
+		// Constructor for LoginViewModel
 		public Customer(LoginViewModel model) 
 		{
 			Email = model.Email;
@@ -50,6 +50,11 @@ namespace ABC_Retail.Models
 			Phone = model.Phone;
 			Email = model.Email;
 			Password = model.Password;
+		}
+
+		// Default constructor
+		public Customer()
+		{
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//

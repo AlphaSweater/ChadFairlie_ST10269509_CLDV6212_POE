@@ -37,6 +37,20 @@ namespace ABC_Retail.Models
 			_SQLConnectionString = sqlConnectionString;
 		}
 
+		// Constructor for ProductViewModel
+		public Product(ProductViewModel model)
+		{
+			Name = model.ProductName;
+			Description = model.ProductDescription;
+			Price = model.ProductPrice;
+			Quantity = model.ProductQuantity;
+			Availability = model.ProductAvailability;
+		}
+
+		// Default constructor
+		public Product() 
+		{
+		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// SQL Methods
