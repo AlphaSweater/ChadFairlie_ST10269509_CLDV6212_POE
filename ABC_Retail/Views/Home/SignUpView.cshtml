@@ -1,4 +1,4 @@
-﻿@model ABC_Retail.ViewModels.ViewModels.SignUpViewModel
+﻿@model ABC_Retail.ViewModels.SignUpViewModel
 
 @{
 	ViewData["Title"] = "Welcome";
@@ -216,33 +216,6 @@
 				<input asp-for="ConfirmPassword" type="password" placeholder="Confirm Password" class="inputbox" required>
 				<span asp-validation-for="ConfirmPassword" class="text-danger"></span>
 			</div>
-
-			<!-- Admin Checkbox (full width) -->
-			<div class="full-width">
-				<label class="custom-checkbox">
-					<input asp-for="IsAdmin" type="checkbox" id="isAdmin" value="true">
-					<span class="checkmark"></span>
-					Are you an admin?
-				</label>
-				<span asp-validation-for="IsAdmin" class="text-danger"></span>
-			</div>
-
-			<!-- Role Dropdown (hidden by default) -->
-			<div id="roleContainer" class="full-width" style="display: none;">
-				<label asp-for="Role" class="label">Select your role:</label>
-				<select asp-for="Role" class="inputbox">
-					<option value="Programme-Coordinator">Programme Coordinator</option>
-					<option value="Academic-Manager">Academic Manager</option>
-				</select>
-				<span asp-validation-for="Role" class="text-danger"></span>
-			</div>
-
-			<!-- Hourly Rate Input -->
-			<div id="hourlyRateContainer" class="full-width">
-				<label asp-for="HourlyRate" class="label">Preferred Hourly Rate</label>
-				<input asp-for="HourlyRate" type="number" placeholder="150" class="inputbox">
-				<span asp-validation-for="HourlyRate" class="text-danger"></span>
-			</div>
 		</div>
 
 		<br />
@@ -257,29 +230,6 @@
 	@await Html.PartialAsync("_ValidationScriptsPartial")
 
 	<script>
-		document.addEventListener("DOMContentLoaded", function () {
-			var isAdminCheckbox = document.getElementById("isAdmin");
-			var roleContainer = document.getElementById("roleContainer");
-			var hourlyRateContainer = document.getElementById("hourlyRateContainer");
-
-			// Function to toggle Role and Hourly Rate fields based on Admin checkbox
-			function toggleFields() {
-				if (isAdminCheckbox.checked) {
-					roleContainer.style.display = "block";
-					hourlyRateContainer.style.display = "none";
-				} else {
-					roleContainer.style.display = "none";
-					hourlyRateContainer.style.display = "block";
-				}
-			}
-
-			// Initial check on page load
-			toggleFields();
-
-			// Add event listener for changes
-			isAdminCheckbox.addEventListener("change", toggleFields);
-		});
-
 		$(document).ready(function () {
 			// Form submit
 			$('#SignUpForm').on('submit', function(e) {

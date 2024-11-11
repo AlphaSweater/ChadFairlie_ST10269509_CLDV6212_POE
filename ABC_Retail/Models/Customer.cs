@@ -16,7 +16,7 @@ namespace ABC_Retail.Models
 		// Properties of the Customer entity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		public int CustomerID { get; set; } // Unique identifier for the customer
+		public int CustomerId { get; set; } // Unique identifier for the customer
 		public string Name { get; set; } // Name of the customer
 		public string Surname { get; set; } // Surname of the customer
 		public string Phone { get; set; } // Phone number of the customer
@@ -67,7 +67,7 @@ namespace ABC_Retail.Models
 		/// </summary>
 		/// <param name="m"></param>
 		/// <returns></returns>
-		public async Task<int?> InsertUserAsync(Customer m)
+		public async Task<int> InsertUserAsync(Customer m)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -89,9 +89,45 @@ namespace ABC_Retail.Models
 							cmd.Parameters.AddWithValue("@CustomerEmail", m.Email);
 							cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
 
-							var result = await cmd.ExecuteScalarAsync();  // Execute the query asynchronously
+							var result = await cmd.ExecuteScalarAsync() ?? 0;  // Execute the query asynchronously
 							await transaction.CommitAsync();  // Commit the transaction asynchronously
-							return result != null ? (int?)result : null;
+							return (int)result;
+						}
+					}
+					catch (Exception)
+					{
+						await transaction.RollbackAsync();  // Rollback transaction asynchronously
+						throw;
+					}
+					finally
+					{
+						if (con.State == ConnectionState.Open)
+							await con.CloseAsync();  // Close connection asynchronously
+					}
+				}
+			}
+		}
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		public async Task UpdateUserAsync(Customer m)
+		{
+			using (var con = new SqlConnection(_SQLConnectionString))
+			{
+				await con.OpenAsync();  // Open connection asynchronously
+				using (var transaction = (SqlTransaction)await con.BeginTransactionAsync())  // Begin transaction asynchronously
+				{
+					try
+					{
+						string sql = "UPDATE tbl_customers SET name = @CustomerName, surname = @CustomerSurname, phone = @CustomerPhone, email = @CustomerEmail WHERE customer_id = @CustomerId";
+						using (SqlCommand cmd = new SqlCommand(sql, con, transaction))
+						{
+							cmd.Parameters.AddWithValue("@CustomerName", m.Name);
+							cmd.Parameters.AddWithValue("@CustomerSurname", m.Surname);
+							cmd.Parameters.AddWithValue("@CustomerPhone", m.Phone);
+							cmd.Parameters.AddWithValue("@CustomerEmail", m.Email);
+							cmd.Parameters.AddWithValue("@CustomerId", m.CustomerId);
+							await cmd.ExecuteNonQueryAsync();  // Execute the query asynchronously
+							await transaction.CommitAsync();  // Commit the transaction asynchronously
 						}
 					}
 					catch (Exception)
@@ -114,7 +150,7 @@ namespace ABC_Retail.Models
 		/// </summary>
 		/// <param name="m"></param>
 		/// <returns></returns>
-		public async Task<int?> ValidateUserAsync(Customer m)
+		public async Task<int> ValidateUserAsync(Customer m)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -131,15 +167,15 @@ namespace ABC_Retail.Models
 							var hashedPassword = reader["password_hash"] as string;
 							if (hashedPassword == null)
 							{
-								return null;
+								return 0;
 							}
 							var result = passwordHasher.VerifyHashedPassword(user: null, hashedPassword: hashedPassword, providedPassword: m.Password);
 							if (result == PasswordVerificationResult.Success)
 							{
-								return reader["customer_id"] != DBNull.Value ? int.Parse(reader["customer_id"].ToString()) : null;
+								return reader["customer_id"] != DBNull.Value ? int.Parse(reader["customer_id"].ToString()) : 0;
 							}
 						}
-						return null;
+						return 0;
 					}
 				}
 			}
@@ -169,7 +205,7 @@ namespace ABC_Retail.Models
 						{
 							return new Customer
 							{
-								CustomerID = reader.GetInt32(reader.GetOrdinal("customer_id")),
+								CustomerId = reader.GetInt32(reader.GetOrdinal("customer_id")),
 								Name = reader.GetString(reader.GetOrdinal("name")),
 								Surname = reader.GetString(reader.GetOrdinal("surname")),
 								Phone = reader.GetString(reader.GetOrdinal("phone")),

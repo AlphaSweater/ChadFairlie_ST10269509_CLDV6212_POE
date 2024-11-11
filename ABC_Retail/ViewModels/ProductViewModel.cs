@@ -35,6 +35,7 @@ namespace ABC_Retail.ViewModels
 		// Product Image attributes
 		public string? ProductImageName { get; set; } // Name of the product image file
 
+		public string? ImageFileName { get; set; } // Name of the product image file
 		public string? ImageUrl { get; set; } // URL of the product image file
 
 		public IFormFile? File { get; set; } // Image file to be uploaded

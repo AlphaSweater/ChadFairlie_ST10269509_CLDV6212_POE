@@ -62,13 +62,12 @@ namespace ABC_Retail.Models
 		/// </summary>
 		/// <param name="m"></param> represents the model of the product
 		/// <param name="userID"></param> represents the ID of the user who is inserting the product
-		/// <param name="connectionString"></param>
 		/// <returns></returns>
-		public int InsertProduct(Product m, int customerID, string connectionString)
+		public async Task<int> InsertProductAsync(Product m, int customerID)
 		{
-			using (var con = new SqlConnection(connectionString))
+			using (var con = new SqlConnection(_SQLConnectionString))
 			{
-				con.Open();
+				await con.OpenAsync();
 				using (var transaction = con.BeginTransaction())
 				{
 					try
@@ -84,7 +83,7 @@ namespace ABC_Retail.Models
 						cmd.Parameters.AddWithValue("@ProductAvailability", m.Availability);
 
 						// Execute the command and retrieve the new ProductID
-						m.ProductID = (int)cmd.ExecuteScalar();
+						m.ProductID = (int)await cmd.ExecuteScalarAsync();
 
 						transaction.Commit(); // Commit the transaction if all commands were successful
 						return m.ProductID;
@@ -92,49 +91,58 @@ namespace ABC_Retail.Models
 					catch (Exception)
 					{
 						transaction.Rollback();
-						throw;
+						return 0;
 					}
 					finally
 					{
 						if (con.State == ConnectionState.Open)
-							con.Close();
+							await con.CloseAsync();
 					}
 				}
 			}
 		}
 
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Fetches all available products from the database
-		/// </summary>
-		/// <param name="connectionString"></param>
-		/// <returns></returns>
-		public List<ProductViewModel> ListAvailableProducts(string connectionString)
+		public async Task InsertProductImageAsync(string imageName)
+		{
+			using (var con = new SqlConnection(_SQLConnectionString))
+			{
+				await con.OpenAsync();
+				string sql = "INSERT INTO tbl_product_images (product_id, image_name) VALUES (@ProductId, @ImageName)";
+				using (var cmd = new SqlCommand(sql, con))
+				{
+					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					cmd.Parameters.AddWithValue("@ImageName", imageName);
+					await cmd.ExecuteNonQueryAsync();
+				}
+			}
+		}
+
+		public async Task<List<ProductViewModel>> ListAvailableProductsAsync()
 		{
 			List<ProductViewModel> productsList = new List<ProductViewModel>();
 
-			using (var con = new SqlConnection(connectionString))
+			using (var con = new SqlConnection(_SQLConnectionString))
 			{
-				con.Open();
-				string productSql =@"  
-				SELECT
-					tp.product_id,
-					tp.name,
-					tp.description,
-					tp.price,
-					tp.availability,
-					tpi.image_name
-				FROM
-					tbl_products tp
-				INNER JOIN
-					tbl_product_images tpi ON tp.product_id = tpi.product_id
-				WHERE tp.is_archived = 0";
+				await con.OpenAsync();
+				string productSql = @"
+                SELECT
+                    tp.product_id,
+                    tp.name,
+                    tp.description,
+                    tp.price,
+                    tp.availability,
+                    tpi.image_name
+                FROM
+                    tbl_products tp
+                INNER JOIN
+                    tbl_product_images tpi ON tp.product_id = tpi.product_id
+                WHERE tp.is_archived = 0";
 
 				using (var productCmd = new SqlCommand(productSql, con))
 				{
-					using (var reader = productCmd.ExecuteReader())
+					using (var reader = await productCmd.ExecuteReaderAsync())
 					{
-						while (reader.Read())
+						while (await reader.ReadAsync())
 						{
 							productsList.Add(new ProductViewModel
 							{
@@ -157,11 +165,10 @@ namespace ABC_Retail.Models
 		/// Updates a product in the database
 		/// </summary>
 		/// <param name="product"></param>
-		/// <param name="connectionString"></param>
 		/// <returns></returns>
-		public async Task UpdateProductAsync(Product product, string connectionString)
+		public async Task UpdateProductAsync(Product product)
 		{
-			using (var con = new SqlConnection(connectionString))
+			using (var con = new SqlConnection(_SQLConnectionString))
 			{
 				await con.OpenAsync();
 
@@ -191,16 +198,35 @@ namespace ABC_Retail.Models
 			}
 		}
 
+		/// <summary>
+		/// Updates the image name of a product in the database
+		/// </summary>
+		/// <param name="imageName"></param>
+		/// <returns></returns>
+		public async Task UpdateProductImageAsync(string imageName)
+		{
+			using (var con = new SqlConnection(_SQLConnectionString))
+			{
+				await con.OpenAsync();
+				string sql = "UPDATE tbl_product_images SET image_name = @ImageName WHERE product_id = @ProductId";
+				using (var cmd = new SqlCommand(sql, con))
+				{
+					cmd.Parameters.AddWithValue("@ImageName", imageName);
+					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					await cmd.ExecuteNonQueryAsync();
+				}
+			}
+		}
+
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
 		/// Fetches a product by its ID from the database
 		/// </summary>
 		/// <param name="productId"></param>
-		/// <param name="connectionString"></param>
 		/// <returns></returns>
-		public async Task<Product> GetProductByIdAsync(int productId, string connectionString)
+		public async Task<Product> GetProductByIdAsync(int productId)
 		{
-			using (var con = new SqlConnection(connectionString))
+			using (var con = new SqlConnection(_SQLConnectionString))
 			{
 				await con.OpenAsync();
 
@@ -241,16 +267,39 @@ namespace ABC_Retail.Models
 			}
 		}
 
+		public async Task<string> GetProductImageNameAsync()
+		{
+			using (var con = new SqlConnection(_SQLConnectionString))
+			{
+				await con.OpenAsync();
+				string sql = "SELECT image_name FROM tbl_product_images WHERE product_id = @ProductId";
+				using (var cmd = new SqlCommand(sql, con))
+				{
+					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					using (var reader = await cmd.ExecuteReaderAsync())
+					{
+						if (await reader.ReadAsync())
+						{
+							return reader.GetString(reader.GetOrdinal("image_name"));
+						}
+						else
+						{
+							return null;
+						}
+					}
+				}
+			}
+		}
+
 		//--------------------------------------------------------------------------------------------------------------------------//
 		/// <summary>
 		/// Archives a product by setting its is_archived column to 1
 		/// </summary>
 		/// <param name="productId"></param>
-		/// <param name="connectionString"></param>
 		/// <returns></returns>
-		public async Task ArchiveProductAsync(int productId, string connectionString)
+		public async Task ArchiveProductAsync(int productId)
 		{
-			using (var con = new SqlConnection(connectionString))
+			using (var con = new SqlConnection(_SQLConnectionString))
 			{
 				await con.OpenAsync();
 
@@ -265,6 +314,23 @@ namespace ABC_Retail.Models
 			}
 		}
 
-
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Deletes a product from the database
+		/// </summary>
+		/// <returns></returns>
+		public async Task DeleteProductImageAsync()
+		{
+			using (var con = new SqlConnection(_SQLConnectionString))
+			{
+				await con.OpenAsync();
+				string sql = "DELETE FROM tbl_product_images WHERE product_id = @ProductId";
+				using (var cmd = new SqlCommand(sql, con))
+				{
+					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					await cmd.ExecuteNonQueryAsync();
+				}
+			}
+		}
 	}
 }

@@ -14,7 +14,7 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		private readonly IHttpContextAccessor _httpContextAccessor;
-		private readonly Customer _customerService;
+		private readonly Customer _customerTableService;
 		private readonly ILogger<HomeController> _logger;
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -33,7 +33,7 @@ namespace ABC_Retail.Controllers
 		public HomeController(IHttpContextAccessor httpContextAccessor, Customer customerService, ILogger<HomeController> logger)
 		{
 			_httpContextAccessor = httpContextAccessor;
-			_customerService = customerService;
+			_customerTableService = customerService;
 			_logger = logger;
 		}
 
@@ -79,15 +79,15 @@ namespace ABC_Retail.Controllers
 			{
 				Customer userToLogin = new Customer(model);
 
-				var customerId = await _customerService.ValidateUserAsync(userToLogin);
+				int customerId = await _customerTableService.ValidateUserAsync(userToLogin);
 
-				if (customerId == null)
+				if (customerId == 0)
 				{
 					ModelState.AddModelError(string.Empty, "Incorrect email or password.");
 					return View(model);
 				}
 
-				_httpContextAccessor.HttpContext?.Session.SetInt32("CustomerId", customerId.Value);
+				_httpContextAccessor.HttpContext?.Session.SetInt32("CustomerId", customerId);
 
 				string redirectUrl = Url.Action("Index", "Product");
 				return Redirect(redirectUrl);
@@ -112,12 +112,12 @@ namespace ABC_Retail.Controllers
 			{
 				Customer newCustomer = new Customer(model);
 
-				var customerId = await _customerService.InsertUserAsync(newCustomer);
+				int customerId = await _customerTableService.InsertUserAsync(newCustomer);
 
-				if (customerId.HasValue)
+				if (customerId != 0)
 				{
 					// Set the user's ID in the session
-					_httpContextAccessor.HttpContext.Session.SetInt32("CustomerId", customerId.Value);
+					_httpContextAccessor.HttpContext?.Session.SetInt32("CustomerId", customerId);
 					return Json(new { success = true });
 				}
 				else

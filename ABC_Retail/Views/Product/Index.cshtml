@@ -1,7 +1,8 @@
-﻿@model IEnumerable<ABC_Retail.ViewModels.ProductViewModel>
+﻿@model List<ABC_Retail.ViewModels.ProductViewModel>
 
 @{
 	ViewData["Title"] = "Products";
+	int customerId = Context.Session.GetInt32("CustomerId") ?? 0;
 }
 
 <head>
@@ -57,11 +58,11 @@
 
 	@if (!Model.Any())
 	{
-		<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
+		<p>No products available. <a href="@Url.Action("Create", "Product")" class="add-product-link">Add a new product</a></p>
 	}
 	else
 	{
-		<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
+		<a class="btn btn-primary mb-3 add-product-link" href="@Url.Action("Create", "Product")">Add Product</a>
 
 		<br />
 
@@ -74,11 +75,11 @@
 						<div class="card-body">
 							<h5 class="card-title">@product.ProductName</h5>
 							<p class="card-text text-muted">@product.ProductPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-							<p class="card-text">@pProductDescriptionription</p>
+							<p class="card-text">@product.ProductDescription</p>
 							<p class="card-text">Quantity: <span class="product-quantity">@product.ProductQuantity</span></p>
 						</div>
 						<div class="card-footer d-flex justify-content-between">
-							<a class="btn btn-success purchase-button" data-id="@product.ProductID" data-name="@pProductNamect.Name">Purchase</a>
+							<a class="btn btn-success purchase-button" data-id="@product.ProductID" data-name="@product.ProductName">Purchase</a>
 							<a href="@Url.Action("Manage", "Product", new { id = product.ProductID })" class="btn btn-primary">Manage</a>
 						</div>
 					</div>
@@ -91,60 +92,110 @@
 @section Scripts {
 	<script>
 		$(document).ready(function() {
-			$('.purchase-button').click(function() {
-				var button = $(this);
-				var productId = button.data('id');
-				var productName = button.data('name');
+			var customerId = @Html.Raw(Json.Serialize(customerId));
 
-				// Show confirmation popup
-				Swal.fire({
-					title: 'Confirm Purchase',
-					text: 'Are you sure you want to purchase ' + productName + '?',
-					icon: 'question',
-					showCancelButton: true,
-					confirmButtonText: 'Yes, purchase it!',
-					cancelButtonText: 'Cancel'
-				}).then((result) => {
-					if (result.isConfirmed) {
-						// Show loading popup
-						Swal.fire({
-							title: 'Processing Purchase',
-							text: 'Please wait...',
-							icon: 'info',
-							allowOutsideClick: false,
-							didOpen: () => {
-								Swal.showLoading();
-							}
-						});
+			$('.add-product-link').click(function(event) {
+				if (!isAuthenticated) {
+					event.preventDefault();
+					Swal.fire({
+						title: 'Not Logged In',
+						text: 'You must be logged in to add a new product.',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Login',
+						cancelButtonText: 'Close'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							window.location.href = '@Url.Action("Login", "Account")';
+						}
+					});
+				}
+			});
 
-						// Append /Purchasing... to the URL
-						const originalUrl = window.location.href;
-						window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+			$('.purchase-button').click(function(event) {
+				if (!isAuthenticated) {
+					event.preventDefault();
+					Swal.fire({
+						title: 'Not Logged In',
+						text: 'You must be logged in to make a purchase.',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Login',
+						cancelButtonText: 'Close'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							window.location.href = '@Url.Action("Login", "Account")';
+						}
+					});
+				} else {
+					var button = $(this);
+					var productId = button.data('id');
+					var productName = button.data('name');
 
-						// Send AJAX request to APIController
-						$.ajax({
-							url: '/Product/Purchase', // Ensure this URL is correct
-							type: 'POST',
-							data: { id: productId },
-							success: function(data) {
-								if (data.success) {
-									// Show success popup
-									Swal.fire({
-										title: 'Order Successful',
-										text: data.message,
-										icon: 'success'
-									}).then((result) => {
-										if (result.isConfirmed) {
-											// Revert URL back to original before reloading
-											window.history.replaceState({}, '', originalUrl);
-											location.reload();
-										}
-									});
-								} else {
-									// Show error popup
+					// Show confirmation popup
+					Swal.fire({
+						title: 'Confirm Purchase',
+						text: 'Are you sure you want to purchase ' + productName + '?',
+						icon: 'question',
+						showCancelButton: true,
+						confirmButtonText: 'Yes, purchase it!',
+						cancelButtonText: 'Cancel'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							// Show loading popup
+							Swal.fire({
+								title: 'Processing Purchase',
+								text: 'Please wait...',
+								icon: 'info',
+								allowOutsideClick: false,
+								didOpen: () => {
+									Swal.showLoading();
+								}
+							});
+
+							// Append /Purchasing... to the URL
+							const originalUrl = window.location.href;
+							window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+
+							// Send AJAX request to APIController
+							$.ajax({
+								url: '/Product/Purchase', // Ensure this URL is correct
+								type: 'POST',
+								data: { id: productId },
+								success: function(data) {
+									if (data.success) {
+										// Show success popup
+										Swal.fire({
+											title: 'Order Successful',
+											text: data.message,
+											icon: 'success'
+										}).then((result) => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									} else {
+										// Show error popup
+										Swal.fire({
+											title: 'Error',
+											text: data.message,
+											icon: 'error'
+										}).then(result => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									}
+								},
+								error: function() {
+									// Handle errors
 									Swal.fire({
 										title: 'Error',
-										text: data.message,
+										text: 'An error occurred while processing the purchase.',
 										icon: 'error'
 									}).then(result => {
 										if (result.isConfirmed) {
@@ -154,24 +205,10 @@
 										}
 									});
 								}
-							},
-							error: function() {
-								// Handle errors
-								Swal.fire({
-									title: 'Error',
-									text: 'An error occurred while processing the purchase.',
-									icon: 'error'
-								}).then(result => {
-									if (result.isConfirmed) {
-										// Revert URL back to original before reloading
-										window.history.replaceState({}, '', originalUrl);
-										location.reload();
-									}
-								});
-							}
-						});
-					}
-				});
+							});
+						}
+					});
+				}
 			});
 		});
 	</script>

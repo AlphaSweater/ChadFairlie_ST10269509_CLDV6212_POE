@@ -46,7 +46,7 @@ else
 					<td>@customer.Email</td>
 					<td>@customer.Phone</td>
 					<td>
-						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })" class="btn btn-primary">Manage</a>
+						<a href="@Url.Action("Manage", "Customer", new { id = customer.CustomerId })" class="btn btn-primary">Manage</a>
 					</td>
 				</tr>
 			}

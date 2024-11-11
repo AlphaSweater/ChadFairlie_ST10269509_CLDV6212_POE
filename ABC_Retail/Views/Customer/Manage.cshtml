@@ -105,7 +105,7 @@
 	<div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
 		<h3>Edit</h3>
 		<form method="post" action="/Customer/Edit">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="Id" value="@Model.CustomerId" />
 			<div class="form-group mb-3">
 				<label for="Name">Name</label>
 				<input type="text" name="Name" class="form-control" value="@Model.Name" />
@@ -135,7 +135,7 @@
 		<h3>Delete</h3>
 		<p>Are you sure you want to delete this customer?</p>
 		<form method="post" action="/Customer/Delete">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="Id" value="@Model.CustomerId" />
 			<button type="submit" class="btn btn-danger">Delete</button>
 		</form>
 	</div>

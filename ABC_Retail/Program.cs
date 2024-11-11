@@ -28,6 +28,9 @@ namespace ABC_Retail
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
 
+			// Use session middle ware.
+			app.UseSession();
+
 			app.UseRouting();
 
 			app.UseAuthorization();
@@ -50,6 +53,15 @@ namespace ABC_Retail
 				config.AddConsole();
 				config.AddDebug();
 			});
+
+			services.AddSession(options =>
+			{
+				options.IdleTimeout = TimeSpan.FromMinutes(30);
+				options.Cookie.HttpOnly = true;
+				options.Cookie.IsEssential = true;
+			});
+
+			services.AddHttpContextAccessor();
 
 			// Get the connection string for Azure Storage
 			string storageConnectionString = configuration.GetConnectionString("StorageConnectionString")
