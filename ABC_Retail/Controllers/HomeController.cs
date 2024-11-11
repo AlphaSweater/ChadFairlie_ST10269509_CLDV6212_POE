@@ -104,7 +104,23 @@ namespace ABC_Retail.Controllers
 		// Sign-Up Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Displays the sign-up page.
+		/// </summary>
+		/// <returns>A view for the sign-up page.</returns>
+		[HttpGet]
+		public IActionResult SignUp()
+		{
+			return View();
+		}
 
+		//--------------------------------------------------------------------------------------------------------------------------//
+		/// <summary>
+		/// Handles the sign-up process for a new user.
+		/// </summary>
+		/// <param name="model">The sign-up user view model containing user details.</param>
+		/// <returns>A JSON result indicating success or failure, or the sign-up view with errors.</returns>
 		[HttpPost]
 		public async Task<IActionResult> SignUp(SignUpViewModel model)
 		{

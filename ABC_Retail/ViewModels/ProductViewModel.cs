@@ -12,6 +12,8 @@ namespace ABC_Retail.ViewModels
 
 		public int? ProductID { get; set; } // Unique identifier for the product
 
+		public int? CustomerID { get; set; } // Unique identifier for the customer
+
 		[Required(ErrorMessage = "A product name is required!")]
 		[StringLength(100, ErrorMessage = "The product name cannot exceed 100 characters.")]
 		public string? ProductName { get; set; } // Name of the product

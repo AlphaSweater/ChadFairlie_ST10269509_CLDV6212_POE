@@ -80,7 +80,10 @@
 						</div>
 						<div class="card-footer d-flex justify-content-between">
 							<a class="btn btn-success purchase-button" data-id="@product.ProductID" data-name="@product.ProductName">Purchase</a>
-							<a href="@Url.Action("Manage", "Product", new { id = product.ProductID })" class="btn btn-primary">Manage</a>
+							@if (customerId == product.CustomerID)
+							{
+								<a href="@Url.Action("Manage", "Product", new { id = product.ProductID })" class="btn btn-primary">Manage</a>
+							}
 						</div>
 					</div>
 				</div>
@@ -95,7 +98,7 @@
 			var customerId = @Html.Raw(Json.Serialize(customerId));
 
 			$('.add-product-link').click(function(event) {
-				if (!isAuthenticated) {
+				if (customerId === 0) {
 					event.preventDefault();
 					Swal.fire({
 						title: 'Not Logged In',
@@ -106,14 +109,14 @@
 						cancelButtonText: 'Close'
 					}).then((result) => {
 						if (result.isConfirmed) {
-							window.location.href = '@Url.Action("Login", "Account")';
+							window.location.href = '@Url.Action("Login", "Home")';
 						}
 					});
 				}
 			});
 
 			$('.purchase-button').click(function(event) {
-				if (!isAuthenticated) {
+				if (customerId === 0) {
 					event.preventDefault();
 					Swal.fire({
 						title: 'Not Logged In',
@@ -124,7 +127,7 @@
 						cancelButtonText: 'Close'
 					}).then((result) => {
 						if (result.isConfirmed) {
-							window.location.href = '@Url.Action("Login", "Account")';
+							window.location.href = '@Url.Action("Login", "Home")';
 						}
 					});
 				} else {

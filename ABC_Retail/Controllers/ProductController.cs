@@ -87,6 +87,12 @@ namespace ABC_Retail.Controllers
 					product.ImageFileName = blobClient.Name;
 					product.ImageUrl = blobClient.Uri.ToString();
 				}
+				else
+				{
+					var blobClient = _blobStorageService.GetFile(_defaultProductImage);
+					product.ImageFileName = blobClient.Name;
+					product.ImageUrl = blobClient.Uri.ToString();
+				}
 			}
 
 			// Return the view with the list of products.
@@ -323,13 +329,14 @@ namespace ABC_Retail.Controllers
 
 			// Create a new product entity from the view model
 			var product = new Product(model);
+			product.CustomerID = customerId;
 
 			product.ProductID = await _productTableService.InsertProductAsync(product, customerId);
 
-			await product.InsertProductImageAsync(imageName);
+			await _productTableService.InsertProductImageAsync(product.ProductID, imageName);
 
 			// Check if the function invocation was successful
-			if (product.ProductID != 0)
+			if (product.ProductID == 0)
 			{
 				return Json(new { success = false, message = "Failed to trigger the add entity function." });
 			}

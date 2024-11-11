@@ -45,6 +45,7 @@ namespace ABC_Retail.Models
 			Price = model.ProductPrice;
 			Quantity = model.ProductQuantity;
 			Availability = model.ProductAvailability;
+
 		}
 
 		// Default constructor
@@ -102,7 +103,7 @@ namespace ABC_Retail.Models
 			}
 		}
 
-		public async Task InsertProductImageAsync(string imageName)
+		public async Task InsertProductImageAsync(int productId, string imageName)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -110,7 +111,7 @@ namespace ABC_Retail.Models
 				string sql = "INSERT INTO tbl_product_images (product_id, image_name) VALUES (@ProductId, @ImageName)";
 				using (var cmd = new SqlCommand(sql, con))
 				{
-					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					cmd.Parameters.AddWithValue("@ProductId", productId);
 					cmd.Parameters.AddWithValue("@ImageName", imageName);
 					await cmd.ExecuteNonQueryAsync();
 				}
@@ -127,6 +128,7 @@ namespace ABC_Retail.Models
 				string productSql = @"
                 SELECT
                     tp.product_id,
+					tp.customer_id,
                     tp.name,
                     tp.description,
                     tp.price,
@@ -134,7 +136,7 @@ namespace ABC_Retail.Models
                     tpi.image_name
                 FROM
                     tbl_products tp
-                INNER JOIN
+                LEFT JOIN
                     tbl_product_images tpi ON tp.product_id = tpi.product_id
                 WHERE tp.is_archived = 0";
 
@@ -147,6 +149,7 @@ namespace ABC_Retail.Models
 							productsList.Add(new ProductViewModel
 							{
 								ProductID = (int)reader["product_id"],
+								CustomerID = (int)reader["customer_id"],
 								ProductName = reader["name"].ToString(),
 								ProductDescription = reader["description"].ToString(),
 								ProductPrice = (decimal)reader["price"],
