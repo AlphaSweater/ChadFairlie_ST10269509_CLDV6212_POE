@@ -44,8 +44,10 @@ namespace ABC_Retail_Functions.Functions
 			try
 			{
 				// Read and deserialize the request body
+				log.LogInformation("Reading request body.");
 				using var reader = new StreamReader(req.Body);
 				requestBody = await reader.ReadToEndAsync();
+				log.LogInformation($"Request body: {requestBody}");
 				log.LogInformation("Request body read successfully.");
 				requestData = JsonConvert.DeserializeObject<RequestData>(requestBody);
 			}

@@ -9,9 +9,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 
-[assembly: FunctionsStartup(typeof(MyFunctionApp.Startup))]
+[assembly: FunctionsStartup(typeof(ABC_Retail_Functions.Startup))]
 
-namespace MyFunctionApp
+namespace ABC_Retail_Functions
 {
 	public class Startup : FunctionsStartup
 	{
