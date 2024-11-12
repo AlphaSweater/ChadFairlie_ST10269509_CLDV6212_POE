@@ -88,7 +88,26 @@
 		}
 
 		.search-bar {
-			margin-bottom: 20px;
+
+		}
+
+		.sort-select {
+			min-width: 200px;
+			font-size: 1rem;
+			padding: 8px;
+			border-radius: 8px;
+			border: 1px solid #ced4da;
+		}
+
+		.sorting-section {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 30px;
+			padding: 15px;
+			background-color: #fff;
+			border-radius: 12px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 		}
 	</style>
 </head>
@@ -145,7 +164,7 @@
 			<div class="row mt-4">
 				<div class="col-md-12">
 					<h3>My Order History</h3>
-					<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable()">
+					<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
 					@if (Model.OrderHistory != null && Model.OrderHistory.Any())
 					{
 						<div class="table-responsive table-container">
@@ -188,6 +207,31 @@
 		@if (isAdmin)
 		{
 			<div class="tab-pane fade" id="admin-orders" role="tabpanel" aria-labelledby="admin-orders-tab">
+				<div class="sorting-section">
+					<!-- Search by Customer -->
+					<div class="row mb-3">
+						<label for="customerDropdown" class="form-label me-2">Search by Customer:</label>
+						<div class="d-flex justify-content-start">
+							<div class="input-group">
+								<select id="customerDropdown" class="form-select sort-select" placeholder="Select or type a Customer">
+									<option value="">All Customers</option>
+									@foreach (var order in Model.AllOrders.Select(o => new { o.CustomerId, o.CustomerFullName }).Distinct())
+									{
+										<option value="@order.CustomerId">@order.CustomerFullName</option>
+									}
+								</select>
+								<button id="clearCustomerSearch" class="btn btn-outline-secondary" type="button">Clear</button>
+							</div>
+						</div>
+					</div>
+					<!-- Search bar -->
+					<div class="row mb-3">
+						<label for="adminSearchInput" class="form-label me-2">Search Orders:</label>
+						<div class="d-flex justify-content-start">
+							<input type="text" id="adminSearchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('adminOrderTableBody')">
+						</div>
+					</div>
+				</div>
 				<div class="row mt-4">
 					<div class="col-md-12">
 						<h3>All Customer Orders</h3>
@@ -209,7 +253,7 @@
 									<tbody id="adminOrderTableBody">
 										@foreach (var order in Model.AllOrders)
 										{
-											<tr>
+											<tr data-customer-id="@order.CustomerId">
 												<td>@order.OrderId</td>
 												<td>@order.CustomerFullName</td>
 												<td><img src="@order.ProductImageURL" alt="Product Image" class="thumbnail" /></td>
@@ -290,11 +334,11 @@
 		}
 	}
 
-	function searchTable() {
+	function searchTable(tableBodyId) {
 		var input, filter, table, tr, td, i, j, txtValue;
-		input = document.getElementById("searchInput");
+		input = document.getElementById(tableBodyId === 'adminOrderTableBody' ? 'adminSearchInput' : 'searchInput');
 		filter = input.value.toLowerCase();
-		table = document.querySelector(".table");
+		table = document.getElementById(tableBodyId);
 		tr = table.getElementsByTagName("tr");
 		for (i = 1; i < tr.length; i++) {
 			tr[i].style.display = "none";
@@ -310,4 +354,24 @@
 			}
 		}
 	}
+
+	document.getElementById('customerDropdown').addEventListener('change', function() {
+		var selectedCustomerId = this.value;
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			if (selectedCustomerId === "" || row.getAttribute('data-customer-id') === selectedCustomerId) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('clearCustomerSearch').addEventListener('click', function() {
+		document.getElementById('customerDropdown').value = "";
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
 </script>
