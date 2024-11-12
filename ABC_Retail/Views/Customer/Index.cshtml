@@ -33,10 +33,10 @@
 			transition: color 0.3s ease, background-color 0.3s ease;
 		}
 
-		.nav-tabs .nav-link.active {
-			background-color: #343a40;
-			color: #fff;
-		}
+			.nav-tabs .nav-link.active {
+				background-color: #343a40;
+				color: #fff;
+			}
 
 		.table {
 			width: 100%;
@@ -44,26 +44,27 @@
 			border-spacing: 0 10px;
 		}
 
-		.table thead th {
-			background-color: #343a40;
-			color: #fff;
-			border: none;
-			padding: 12px;
-			font-size: 1rem;
-		}
+			.table thead th {
+				background-color: #343a40;
+				color: #fff;
+				border: none;
+				padding: 12px;
+				font-size: 1rem;
+				cursor: pointer;
+			}
 
-		.table tbody td {
-			background-color: #f9f9f9;
-			padding: 15px;
-			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-			border-radius: 8px;
-			text-align: center;
-		}
+			.table tbody td {
+				background-color: #f9f9f9;
+				padding: 15px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+				border-radius: 8px;
+				text-align: center;
+			}
 
-		.table tbody tr:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-		}
+			.table tbody tr:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+			}
 
 		.btn {
 			border-radius: 20px;
@@ -75,8 +76,19 @@
 			color: #fff;
 		}
 
-		.btn-primary:hover {
-			background-color: #218838;
+			.btn-primary:hover {
+				background-color: #218838;
+			}
+
+		.thumbnail {
+			width: 50px;
+			height: 50px;
+			object-fit: cover;
+			border-radius: 8px;
+		}
+
+		.search-bar {
+			margin-bottom: 20px;
 		}
 	</style>
 </head>
@@ -89,7 +101,7 @@
 			<a class="nav-link active" id="profile-info-tab" data-bs-toggle="tab" href="#profile-info" role="tab" aria-controls="profile-info" aria-selected="true">Profile Information</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" id="order-history-tab" data-bs-toggle="tab" href="#order-history" role="tab" aria-controls="order-history" aria-selected="false">Order History</a>
+			<a class="nav-link" id="order-history-tab" data-bs-toggle="tab" href="#order-history" role="tab" aria-controls="order-history" aria-selected="false">My Order History</a>
 		</li>
 		@if (isAdmin)
 		{
@@ -132,31 +144,32 @@
 		<div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
 			<div class="row mt-4">
 				<div class="col-md-12">
-					<h3>Order History</h3>
+					<h3>My Order History</h3>
+					<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable()">
 					@if (Model.OrderHistory != null && Model.OrderHistory.Any())
 					{
 						<div class="table-responsive table-container">
 							<table class="table table-hover table-striped align-middle">
 								<thead>
 									<tr>
-										<th>Order ID</th>
-										<th>Total Quantity</th>
-										<th>Total Amount</th>
+										<th onclick="sortTable(0, 'orderTableBody')">Order ID</th>
+										<th>Thumbnail</th>
+										<th onclick="sortTable(2, 'orderTableBody')">Product Name</th>
+										<th onclick="sortTable(3, 'orderTableBody')">Quantity</th>
+										<th onclick="sortTable(4, 'orderTableBody')">Total Price</th>
 										<th>Date</th>
-										<th>Details</th>
 									</tr>
 								</thead>
-								<tbody>
+								<tbody id="orderTableBody">
 									@foreach (var order in Model.OrderHistory)
 									{
 										<tr>
 											<td>@order.OrderId</td>
+											<td><img src="@order.ProductImageURL" alt="Product Image" class="thumbnail" /></td>
+											<td>@order.ProductName</td>
 											<td>@order.TotalQuantity</td>
-											<td>@order.TotalAmount.ToString("C")</td>
+											<td>@order.TotalAmount.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
 											<td>@order.OrderDate.ToString("d MMM yyyy")</td>
-											<td>
-												<a asp-action="OrderDetails" asp-route-id="@order.OrderId" class="btn btn-info btn-sm rounded-pill">View Details</a>
-											</td>
 										</tr>
 									}
 								</tbody>
@@ -177,38 +190,38 @@
 			<div class="tab-pane fade" id="admin-orders" role="tabpanel" aria-labelledby="admin-orders-tab">
 				<div class="row mt-4">
 					<div class="col-md-12">
-						<h3>All Orders</h3>
+						<h3>All Customer Orders</h3>
 						@if (Model.OrderHistory != null && Model.OrderHistory.Any())
 						{
-						<div class="table-responsive table-container">
-							<table class="table table-hover table-striped align-middle">
-								<thead>
-									<tr>
-										<th>Order ID</th>
-										<th>Customer ID</th>
-										<th>Total Quantity</th>
-										<th>Total Amount</th>
-										<th>Date</th>
-										<th>Details</th>
-									</tr>
-								</thead>
-								<tbody>
-									@foreach (var order in Model.AllOrders)
-									{
+							<div class="table-responsive table-container">
+								<table class="table table-hover table-striped align-middle">
+									<thead>
 										<tr>
-											<td>@order.OrderId</td>
-											<td>@order.CustomerId</td>
-											<td>@order.TotalQuantity</td>
-											<td>@order.TotalAmount.ToString("C")</td>
-											<td>@order.OrderDate.ToString("d MMM yyyy")</td>
-											<td>
-												<a asp-action="OrderDetails" asp-route-id="@order.OrderId" class="btn btn-info btn-sm rounded-pill">View Details</a>
-											</td>
+											<th onclick="sortTable(0, 'adminOrderTableBody')">Order ID</th>
+											<th onclick="sortTable(1, 'adminOrderTableBody')">Customer Fullname</th>
+											<th>Thumbnail</th>
+											<th onclick="sortTable(3, 'adminOrderTableBody')">Product Name</th>
+											<th onclick="sortTable(4, 'adminOrderTableBody')">Quantity</th>
+											<th onclick="sortTable(5, 'adminOrderTableBody')">Total Price</th>
+											<th>Date</th>
 										</tr>
-									}
-								</tbody>
-							</table>
-						</div>
+									</thead>
+									<tbody id="adminOrderTableBody">
+										@foreach (var order in Model.AllOrders)
+										{
+											<tr>
+												<td>@order.OrderId</td>
+												<td>@order.CustomerFullName</td>
+												<td><img src="@order.ProductImageURL" alt="Product Image" class="thumbnail" /></td>
+												<td>@order.ProductName</td>
+												<td>@order.TotalQuantity</td>
+												<td>@order.TotalAmount.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
+												<td>@order.OrderDate.ToString("d MMM yyyy")</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
 						}
 						else
 						{
@@ -220,3 +233,81 @@
 		}
 	</div>
 </div>
+
+<script>
+	function sortTable(n, tableBodyId) {
+		var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+		table = document.getElementById(tableBodyId).parentNode;
+		switching = true;
+		// Set the sorting direction to ascending:
+		dir = "asc";
+		/* Make a loop that will continue until
+		no switching has been done: */
+		while (switching) {
+			// Start by saying: no switching is done:
+			switching = false;
+			rows = table.rows;
+			/* Loop through all table rows (except the
+			first, which contains table headers): */
+			for (i = 1; i < (rows.length - 1); i++) {
+				// Start by saying there should be no switching:
+				shouldSwitch = false;
+				/* Get the two elements you want to compare,
+				one from current row and one from the next: */
+				x = rows[i].getElementsByTagName("TD")[n];
+				y = rows[i + 1].getElementsByTagName("TD")[n];
+				/* Check if the two rows should switch place,
+				based on the direction, asc or desc: */
+				if (dir == "asc") {
+					if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+						// If so, mark as a switch and break the loop:
+						shouldSwitch = true;
+						break;
+					}
+				} else if (dir == "desc") {
+					if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+						// If so, mark as a switch and break the loop:
+						shouldSwitch = true;
+						break;
+					}
+				}
+			}
+			if (shouldSwitch) {
+				/* If a switch has been marked, make the switch
+				and mark that a switch has been done: */
+				rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+				switching = true;
+				// Each time a switch is done, increase this count by 1:
+				switchcount ++;
+			} else {
+				/* If no switching has been done AND the direction is "asc",
+				set the direction to "desc" and run the while loop again. */
+				if (switchcount == 0 && dir == "asc") {
+					dir = "desc";
+					switching = true;
+				}
+			}
+		}
+	}
+
+	function searchTable() {
+		var input, filter, table, tr, td, i, j, txtValue;
+		input = document.getElementById("searchInput");
+		filter = input.value.toLowerCase();
+		table = document.querySelector(".table");
+		tr = table.getElementsByTagName("tr");
+		for (i = 1; i < tr.length; i++) {
+			tr[i].style.display = "none";
+			td = tr[i].getElementsByTagName("td");
+			for (j = 0; j < td.length; j++) {
+				if (td[j]) {
+					txtValue = td[j].textContent || td[j].innerText;
+					if (txtValue.toLowerCase().indexOf(filter) > -1) {
+						tr[i].style.display = "";
+						break;
+					}
+				}
+			}
+		}
+	}
+</script>

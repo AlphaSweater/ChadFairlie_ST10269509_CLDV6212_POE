@@ -22,13 +22,15 @@ namespace ABC_Retail.Controllers
 
 		private readonly Order _orderTableService;
 
+		// Service for interacting with Azure Blob Storage.
+		private readonly AzureBlobStorageService _blobStorageService;
+
 		// HTTP client for making requests to Azure Functions.
 		private readonly HttpClient _httpClient;
 
 		private readonly IHttpContextAccessor _httpContextAccessor;
 
-		// The function URL for adding an entity.
-		private readonly string _addEntityFunctionUrl;
+		private readonly string _defaultProductImage = "default-product-image.jpg";
 
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -39,13 +41,13 @@ namespace ABC_Retail.Controllers
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
 		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
-		public CustomerController(Customer customerTableService, Order orderTableService, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+		public CustomerController(Customer customerTableService, Order orderTableService,  AzureBlobStorageService blobStorageService, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
 		{
 			_customerTableService = customerTableService;
 			_orderTableService = orderTableService;
+			_blobStorageService = blobStorageService;
 			_httpClient = httpClient;
 			_httpContextAccessor = httpContextAccessor;
-			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -72,10 +74,39 @@ namespace ABC_Retail.Controllers
 			// Retrieve order history for the customer from SQL Table Storage.
 			var orderHistory = await _orderTableService.GetOrdersByCustomerIdAsync(customerId);
 
+			foreach (var order in orderHistory)
+			{
+				if (!string.IsNullOrEmpty(order.ProductImageName))
+				{
+					var blobClient = _blobStorageService.GetFile(order.ProductImageName);
+					order.ProductImageURL = blobClient.Uri.ToString();
+				}
+				else
+				{
+					var blobClient = _blobStorageService.GetFile(_defaultProductImage);
+					order.ProductImageURL = blobClient.Uri.ToString();
+				}
+			}
+
 			if (isAdmin)
 			{
 				// If the logged in customer is an admin, retrieve all customer orders from SQL Table Storage.
 				var allOrders = await _orderTableService.GetAllOrdersAsync();
+
+				foreach (var order in allOrders)
+				{
+					if (!string.IsNullOrEmpty(order.ProductImageName))
+					{
+						var blobClient = _blobStorageService.GetFile(order.ProductImageName);
+						order.ProductImageURL = blobClient.Uri.ToString();
+					}
+					else
+					{
+						var blobClient = _blobStorageService.GetFile(_defaultProductImage);
+						order.ProductImageURL = blobClient.Uri.ToString();
+					}
+				}
+
 				customerProfile = new CustomerProfileViewModel(customer, orderHistory, allOrders);
 			}
 			else

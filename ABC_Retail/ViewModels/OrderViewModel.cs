@@ -17,6 +17,8 @@
 
 		public string ProductImageName { get; set; }
 
+		public string ProductImageURL { get; set; }
+
 		// Total quantity of the product in the order
 		public int TotalQuantity { get; set; }
 
