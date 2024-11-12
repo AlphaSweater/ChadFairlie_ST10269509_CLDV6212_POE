@@ -13,13 +13,10 @@ namespace ABC_Retail.ViewModels
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		[Required(ErrorMessage = "An email address is required!")]
 		[EmailAddress(ErrorMessage = "Invalid email address format.")]
 		public string? Email { get; set; } // Email of the customer
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		[Required(ErrorMessage = "A password is required!")]
-		[StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 6 characters long.")]
 		public string? Password { get; set; } // Password of the customer
 	}
 }
