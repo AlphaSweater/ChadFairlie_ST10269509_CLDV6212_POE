@@ -135,7 +135,7 @@ namespace ABC_Retail.Models
                     tbl_products tp
                 LEFT JOIN
                     tbl_product_images tpi ON tp.product_id = tpi.product_id
-                WHERE tp.is_archived = 0 AND tp.availability != 0";
+                WHERE tp.is_archived = 0 AND tp.availability = 1";
 
 				using (var productCmd = new SqlCommand(productSql, con))
 				{
@@ -190,7 +190,7 @@ namespace ABC_Retail.Models
 					cmd.Parameters.AddWithValue("@Description", product.Description);
 					cmd.Parameters.AddWithValue("@Price", product.Price);
 					cmd.Parameters.AddWithValue("@Quantity", product.Quantity);
-					cmd.Parameters.AddWithValue("@Availability", product.Availability);
+					cmd.Parameters.AddWithValue("@Availability", product.Quantity > 0);
 
 					// Execute the update operation
 					await cmd.ExecuteNonQueryAsync();
