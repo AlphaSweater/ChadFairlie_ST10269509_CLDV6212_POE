@@ -6,21 +6,6 @@
     },
     "secrets1": {
       "type": "secrets.user"
-    },
-    "storage2": {
-      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ServiceLinker/locations/southafricanorth/connectors/AzureWebJobsStorage1_CD769D347C, /subscriptions/6cf64382-e8ec-41fd-b6bb-e3897a107c61/resourceGroups/CLDV-POE-Sem2/providers/Microsoft.ServiceLinker/locations/southafricanorth/connectors/AzureWebJobsStorage1_683D80E9C6",
-      "secretStore": "LocalSecretsFile",
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/st10269509storage",
-      "type": "storage.azure",
-      "connectionId": "AzureWebJobsStorage1",
-      "dynamicId": null
-    },
-    "appInsights": {
-      "secretStore": "LocalSecretsFile",
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/microsoft.insights/components/cldv-functions",
-      "type": "appInsights.azure",
-      "connectionId": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-      "dynamicId": null
     }
   }
 }

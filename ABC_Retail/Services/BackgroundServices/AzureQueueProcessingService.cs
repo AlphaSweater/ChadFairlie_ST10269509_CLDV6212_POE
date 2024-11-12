@@ -23,8 +23,11 @@ namespace ABC_Retail.Services.BackgroundServices
 		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
 
-		// Service for interacting with product Azure Table Storage.
-		private readonly ProductTableService _productTableService;
+		// Service for interacting with product SQL Table Storage.
+		private readonly Product _productTableService;
+
+		// Service for interacting with order SQL Table Storage.
+		private readonly Order _orderTableService;
 
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
@@ -39,11 +42,12 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureQueueProcessingService"/> class.
 		/// </summary>
-		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureQueueService queueService, ProductTableService productTableService)
+		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureQueueService queueService, Product productTableService, Order orderTableService)
 		{
 			_queueClientFactory = queueClientFactory;
 			_queueService = queueService;
 			_productTableService = productTableService;
+			_orderTableService = orderTableService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -124,32 +128,25 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <returns>A boolean indicating whether the order was successfully processed and inventory updated.</returns>
 		private async Task<bool> ProcessOrderAndUpdateInventoryAsync(OrderMessage orderMessage)
 		{
-			// Check if each product in the order is available in the required quantity.
-			foreach (var product in orderMessage.Products)
+			// Check if product in the order is available in the required quantity.
+			var dbProduct = await _productTableService.GetProductByIdAsync(orderMessage.ProductId);
+			if (dbProduct == null || dbProduct.Quantity < orderMessage.Quantity)
 			{
-				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
-				if (dbProduct == null || dbProduct.Quantity < product.Quantity)
-				{
-					// Not enough stock or product not found, order cannot be processed.
-					return false;
-				}
+				// Not enough stock or product not found, order cannot be processed.
+				return false;
 			}
+		
+			dbProduct.Quantity -= orderMessage.Quantity;
 
-			// Update inventory for each product in the order.
-			foreach (var product in orderMessage.Products)
+			try
 			{
-				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
-				dbProduct.Quantity -= product.Quantity;
-
-				try
-				{
-					await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
-				}
-				catch (RequestFailedException ex) when (ex.Status == 412)
-				{
-					// Concurrency conflict, retry the operation
-					return await ProcessOrderAndUpdateInventoryAsync(orderMessage);
-				}
+				await _productTableService.UpdateProductAsync(dbProduct);
+				await _orderTableService.RecordOrderAsync(orderMessage);
+			}
+			catch (RequestFailedException ex) when (ex.Status == 412)
+			{
+				// Concurrency conflict, retry the operation
+				return await ProcessOrderAndUpdateInventoryAsync(orderMessage);
 			}
 
 			return true; // Order processed successfully.
@@ -162,18 +159,15 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="orderMessage">The order message containing the products that were processed.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage)
 		{
-			foreach (var product in orderMessage.Products)
-			{
-				var inventoryUpdateMessage = new InventoryUpdateMessage
-				(
-					product.ProductName,
-					-product.Quantity, // Negative quantity for stock deduction
-					"Order processed"
-				);
+			var inventoryUpdateMessage = new InventoryUpdateMessage
+			(
+				orderMessage.ProductId,
+				-orderMessage.Quantity, // Negative quantity for stock deduction
+				"Order processed"
+			);
 
-				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
-				await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
-			}
+			var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
+			await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
 		}
 	}
 }

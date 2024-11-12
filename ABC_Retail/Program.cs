@@ -1,3 +1,4 @@
+using ABC_Retail.Models;
 using ABC_Retail.Services;
 using ABC_Retail.Services.BackgroundServices;
 using Azure.Storage.Blobs;
@@ -27,6 +28,9 @@ namespace ABC_Retail
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
 
+			// Use session middle ware.
+			app.UseSession();
+
 			app.UseRouting();
 
 			app.UseAuthorization();
@@ -50,15 +54,30 @@ namespace ABC_Retail
 				config.AddDebug();
 			});
 
+			services.AddSession(options =>
+			{
+				options.IdleTimeout = TimeSpan.FromMinutes(30);
+				options.Cookie.HttpOnly = true;
+				options.Cookie.IsEssential = true;
+			});
+
+			services.AddHttpContextAccessor();
+
 			// Get the connection string for Azure Storage
 			string storageConnectionString = configuration.GetConnectionString("StorageConnectionString")
 								 ?? throw new InvalidOperationException("AzureStorage connection string is not configured.");
 
-			// Add product Azure Table Storage service
-			services.AddSingleton(new ProductTableService(storageConnectionString));
+			// Get SQL connection string
+			string sqlConnectionString = configuration.GetConnectionString("SQLConnectionString")
+								 ?? throw new InvalidOperationException("SQL connection string is not configured.");
 
-			// Add customer Azure Table Storage service
-			services.AddSingleton(new CustomerTableService(storageConnectionString));
+			// Add product SQL Table Storage service
+			services.AddSingleton(new Product(sqlConnectionString));
+
+			// Add customer SQL Table Storage service
+			services.AddSingleton(new Customer(sqlConnectionString));
+
+			services.AddSingleton(new Order(sqlConnectionString));
 
 			// Add Azure File Storage service
 			services.AddSingleton(new AzureFileStorageService(storageConnectionString));

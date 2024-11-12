@@ -44,8 +44,10 @@ namespace ABC_Retail_Functions.Functions
 			try
 			{
 				// Read and deserialize the request body
+				log.LogInformation("Reading request body.");
 				using var reader = new StreamReader(req.Body);
 				requestBody = await reader.ReadToEndAsync();
+				log.LogInformation($"Request body: {requestBody}");
 				log.LogInformation("Request body read successfully.");
 				requestData = JsonConvert.DeserializeObject<RequestData>(requestBody);
 			}
@@ -64,6 +66,9 @@ namespace ABC_Retail_Functions.Functions
 
 			try
 			{
+				log.LogInformation("Trying to Add message to queue.");
+				log.LogInformation($"Message: {requestData.Message}");
+				log.LogInformation($"Queue Name: {requestData.QueueName}");
 				// Enqueue the message to the specified queue
 				await _queueService.EnqueueMessageAsync(requestData.QueueName, requestData.Message);
 
@@ -73,8 +78,8 @@ namespace ABC_Retail_Functions.Functions
 			}
 			catch (Exception ex)
 			{
-				log.LogError(ex, "Error adding message to queue.");
-				return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+				log.LogError($"Error adding message to queue. {ex.Message}");
+				return new BadRequestObjectResult($"Error adding message to queue. Error: {StatusCodes.Status500InternalServerError}");
 			}
 		}
 

@@ -17,14 +17,20 @@ namespace ABC_Retail.Controllers
 		// Dependencies
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
-		// Service for interacting with customer Azure Table Storage.
-		private readonly CustomerTableService _customerTableService;
+		// Service for interacting with customer SQL Table Storage.
+		private readonly Customer _customerTableService;
+
+		private readonly Order _orderTableService;
+
+		// Service for interacting with Azure Blob Storage.
+		private readonly AzureBlobStorageService _blobStorageService;
 
 		// HTTP client for making requests to Azure Functions.
 		private readonly HttpClient _httpClient;
 
-		// The function URL for adding an entity.
-		private readonly string _addEntityFunctionUrl;
+		private readonly IHttpContextAccessor _httpContextAccessor;
+
+		private readonly string _defaultProductImage = "default-product-image.jpg";
 
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -35,11 +41,13 @@ namespace ABC_Retail.Controllers
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
 		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
-		public CustomerController(CustomerTableService customerTableService, HttpClient httpClient, IConfiguration configuration)
+		public CustomerController(Customer customerTableService, Order orderTableService,  AzureBlobStorageService blobStorageService, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
 		{
 			_customerTableService = customerTableService;
+			_orderTableService = orderTableService;
+			_blobStorageService = blobStorageService;
 			_httpClient = httpClient;
-			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
+			_httpContextAccessor = httpContextAccessor;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -47,61 +55,68 @@ namespace ABC_Retail.Controllers
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Displays a list of all customers on the index page.
-		/// </summary>
-		/// <returns>A view displaying a list of customer view models.</returns>
+		[HttpGet]
 		public async Task<IActionResult> Index()
 		{
-			// Retrieve all customers from Azure Table Storage.
-			var customers = await _customerTableService.GetAllEntitiesAsync();
+			int customerId = _httpContextAccessor?.HttpContext?.Session.GetInt32("CustomerId") ?? 0;
+			bool isAdmin = _httpContextAccessor?.HttpContext?.Session.GetString("IsAdmin") == "true";
 
-			// Map the customer entities to customer view models.
-			var customerViewModels = customers.Select(c => new CustomerViewModel
-			{
-				Id = c.RowKey,
-				Name = c.Name,
-				Surname = c.Surname,
-				Email = c.Email,
-				Phone = c.Phone
-			}).ToList();
+			CustomerProfileViewModel customerProfile;
 
-			// Return the view with the list of customer view models.
-			return View(customerViewModels);
-		}
-
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Manage Actions
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Displays the details of a specific customer for management.
-		/// </summary>
-		/// <param name="id">The unique identifier (RowKey) of the customer.</param>
-		/// <returns>A view displaying the customer's details for management.</returns>
-		public async Task<IActionResult> Manage(string id)
-		{
-			// Retrieve the customer from Azure Table Storage by PartitionKey and RowKey.
-			var customer = await _customerTableService.GetEntityAsync("Customer", id);
+			// Retrieve logged in customer from SQL Table Storage.
+			var customer = await _customerTableService.GetUserByIdAsync(customerId);
 			if (customer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
 				return NotFound();
 			}
 
-			// Map the customer entity to a customer view model.
-			var customerViewModel = new CustomerViewModel
-			{
-				Id = customer.RowKey,
-				Name = customer.Name,
-				Surname = customer.Surname,
-				Email = customer.Email,
-				Phone = customer.Phone
-			};
+			// Retrieve order history for the customer from SQL Table Storage.
+			var orderHistory = await _orderTableService.GetOrdersByCustomerIdAsync(customerId);
 
-			// Return the view with the customer view model.
-			return View(customerViewModel);
+			foreach (var order in orderHistory)
+			{
+				if (!string.IsNullOrEmpty(order.ProductImageName))
+				{
+					var blobClient = _blobStorageService.GetFile(order.ProductImageName);
+					order.ProductImageURL = blobClient.Uri.ToString();
+				}
+				else
+				{
+					var blobClient = _blobStorageService.GetFile(_defaultProductImage);
+					order.ProductImageURL = blobClient.Uri.ToString();
+				}
+			}
+
+			if (isAdmin)
+			{
+				// If the logged in customer is an admin, retrieve all customer orders from SQL Table Storage.
+				var allOrders = await _orderTableService.GetAllOrdersAsync();
+
+				foreach (var order in allOrders)
+				{
+					if (!string.IsNullOrEmpty(order.ProductImageName))
+					{
+						var blobClient = _blobStorageService.GetFile(order.ProductImageName);
+						order.ProductImageURL = blobClient.Uri.ToString();
+					}
+					else
+					{
+						var blobClient = _blobStorageService.GetFile(_defaultProductImage);
+						order.ProductImageURL = blobClient.Uri.ToString();
+					}
+				}
+
+				customerProfile = new CustomerProfileViewModel(customer, orderHistory, allOrders);
+			}
+			else
+			{
+				// If the logged in customer is not an admin, only show their own order history.
+				customerProfile = new CustomerProfileViewModel(customer, orderHistory);
+			}
+
+			// Return the view with the customer profile view model.
+			return View(customerProfile);
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -118,7 +133,7 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Edit(CustomerViewModel model)
 		{
 			// Retrieve the customer entity from Azure Table Storage.
-			var dbCustomer = await _customerTableService.GetEntityAsync("Customer", model.Id);
+			var dbCustomer = await _customerTableService.GetUserByIdAsync(model.CustomerId);
 			if (dbCustomer == null)
 			{
 				// Return a 404 Not Found response if the customer does not exist.
@@ -132,93 +147,10 @@ namespace ABC_Retail.Controllers
 			dbCustomer.Phone = model.Phone;
 
 			// Save the updated customer entity back to Azure Table Storage.
-			await _customerTableService.UpdateEntityAsync(dbCustomer, dbCustomer.ETag);
+			await _customerTableService.UpdateUserAsync(dbCustomer);
 
 			// Redirect to the index action after successful update.
 			return RedirectToAction("Index");
-		}
-
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Delete Actions
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Deletes a specific customer.
-		/// </summary>
-		/// <param name="id">The unique identifier (RowKey) of the customer to be deleted.</param>
-		/// <returns>A redirect to the index action after successful deletion.</returns>
-		[HttpPost]
-		public async Task<IActionResult> Delete(string id)
-		{
-			// Retrieve the customer entity from Azure Table Storage.
-			var customer = await _customerTableService.GetEntityAsync("Customer", id);
-			if (customer == null)
-			{
-				// Return a 404 Not Found response if the customer does not exist.
-				return NotFound();
-			}
-
-			// Delete the customer entity from Azure Table Storage.
-			await _customerTableService.DeleteEntityAsync(customer.PartitionKey, customer.RowKey);
-
-			// Redirect to the index action after successful deletion.
-			return RedirectToAction("Index");
-		}
-
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Create Actions
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Displays a form to create a new customer.
-		/// </summary>
-		/// <returns>A view displaying the customer creation form.</returns>
-		public IActionResult Create()
-		{
-			// Return the view for creating a new customer.
-			return View(new CustomerViewModel());
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Handles the creation of a new customer.
-		/// </summary>
-		/// <param name="model">The customer view model containing the new customer details.</param>
-		/// <returns>A redirect to the index action if successful, or a view displaying the validation errors.</returns>
-		[HttpPost]
-		public async Task<IActionResult> Create(CustomerViewModel model)
-		{
-			// Check if the model state is valid
-			if (!ModelState.IsValid)
-			{
-				// Return the view with the model to display validation errors
-				return PartialView("_CreateCustomerForm", model);
-			}
-
-			// Create a new customer entity from the view model
-			var customer = new Customer(model.Name, model.Surname, model.Email, model.Phone);
-
-			// Get the URL of the Azure Function to add the entity
-			var functionUrl = _addEntityFunctionUrl;
-
-			// Serialize the customer entity to JSON
-			var jsonContent = JsonSerializer.Serialize(customer);
-			var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-			// Send the customer data to the Azure Function
-			var response = await _httpClient.PostAsync(functionUrl, content);
-
-			// Check if the function invocation was successful
-			if (!response.IsSuccessStatusCode)
-			{
-				TempData["ErrorMessage"] = "Failed to trigger the add entity function.";
-				return PartialView("_CreateCustomerForm", model);
-			}
-
-			TempData["SuccessMessage"] = "Customer added successfully.";
-			return Json(new { success = true, message = "Customer added successfully." });
 		}
 	}
 }

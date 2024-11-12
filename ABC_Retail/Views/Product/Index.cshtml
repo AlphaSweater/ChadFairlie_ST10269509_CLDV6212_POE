@@ -1,55 +1,57 @@
-﻿@model IEnumerable<ABC_Retail.ViewModels.ProductViewModel>
+﻿@model List<ABC_Retail.ViewModels.ProductViewModel>
 
 @{
 	ViewData["Title"] = "Products";
+	int customerId = Context.Session.GetInt32("CustomerId") ?? 0;
+	bool isAdmin = Context.Session.GetString("IsAdmin") == "true";
 }
 
 <head>
 	<style>
 		.product-card-wrapper {
-			width: 300px;
-			margin: 15px;
+		width: 300px;
+		margin: 15px;
 		}
 
 		.product-card {
-			transition: transform 0.3s ease, box-shadow 0.3s ease;
-			border-radius: 15px;
-			overflow: hidden;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+		border-radius: 15px;
+		overflow: hidden;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 		}
 
-			.product-card:hover {
-				transform: scale(1.05);
-				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-			}
+		.product-card:hover {
+		transform: scale(1.05);
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+		}
 
-			.product-card img {
-				height: 200px;
-				object-fit: cover;
-				border-top-left-radius: 15px;
-				border-top-right-radius: 15px;
-			}
+		.product-card img {
+		height: 200px;
+		object-fit: cover;
+		border-top-left-radius: 15px;
+		border-top-right-radius: 15px;
+		}
 
-			.product-card .card-body {
-				padding: 15px;
-			}
+		.product-card .card-body {
+		padding: 15px;
+		}
 
-			.product-card .card-footer {
-				background-color: #f8f9fa;
-				border-top: 1px solid #e9ecef;
-				padding: 10px;
-				text-align: center;
-			}
+		.product-card .card-footer {
+		background-color: #f8f9fa;
+		border-top: 1px solid #e9ecef;
+		padding: 10px;
+		text-align: center;
+		}
 
 		.btn-primary, .btn-success {
-			border-radius: 10px;
-			transition: background-color 0.3s ease, transform 0.3s ease;
+		border-radius: 10px;
+		transition: background-color 0.3s ease, transform 0.3s ease;
 		}
 
-			.btn-primary:hover, .btn-success:hover {
-				transform: translateY(-2px);
-				background-color: #0056b3;
-			}
+		.btn-primary:hover, .btn-success:hover {
+		transform: translateY(-2px);
+		background-color: #0056b3;
+		}
 	</style>
 </head>
 <div class="d-flex align-items-center justify-content-center" style="background-color: #f8f9fa; border-radius: 100px; flex-direction: column;">
@@ -57,12 +59,19 @@
 
 	@if (!Model.Any())
 	{
-		<p>No products available. <a href="@Url.Action("Create", "Product")">Add a new product</a></p>
+		<p>No products available.
+			@if (isAdmin)
+			{
+				<a href="@Url.Action("Create", "Product")" class="add-product-link">Add a new product</a>
+			}
+		</p>
 	}
 	else
 	{
-		<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Product")">Add Product</a>
-
+		@if (isAdmin)
+		{
+			<a class="btn btn-primary mb-3 add-product-link" href="@Url.Action("Create", "Product")">Add Product</a>
+		}
 		<br />
 
 		<div class="d-flex flex-wrap justify-content-center">
@@ -70,16 +79,19 @@
 			{
 				<div class="product-card-wrapper">
 					<div class="card h-100 product-card">
-						<img src="@product.FileUrl" class="card-img-top" alt="@product.Name">
+						<img src="@product.ImageUrl" class="card-img-top" alt="@product.ProductName">
 						<div class="card-body">
-							<h5 class="card-title">@product.Name</h5>
-							<p class="card-text text-muted">@product.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-							<p class="card-text">@product.Description</p>
-							<p class="card-text">Quantity: <span class="product-quantity">@product.Quantity</span></p>
+							<h5 class="card-title">@product.ProductName</h5>
+							<p class="card-text text-muted">@product.ProductPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
+							<p class="card-text">@product.ProductDescription</p>
+							<p class="card-text">Quantity: <span class="product-quantity">@product.ProductQuantity</span></p>
 						</div>
 						<div class="card-footer d-flex justify-content-between">
-							<a class="btn btn-success purchase-button" data-id="@product.Id" data-name="@product.Name">Purchase</a>
-							<a href="@Url.Action("Manage", "Product", new { id = product.Id })" class="btn btn-primary">Manage</a>
+							<a class="btn btn-success purchase-button" data-id="@product.ProductId" data-name="@product.ProductName">Purchase</a>
+							@if (isAdmin)
+							{
+								<a href="@Url.Action("Manage", "Product", new { productId = product.ProductId })" class="btn btn-primary">Manage</a>
+							}
 						</div>
 					</div>
 				</div>
@@ -91,60 +103,110 @@
 @section Scripts {
 	<script>
 		$(document).ready(function() {
-			$('.purchase-button').click(function() {
-				var button = $(this);
-				var productId = button.data('id');
-				var productName = button.data('name');
+			var customerId = @Html.Raw(Json.Serialize(customerId));
 
-				// Show confirmation popup
-				Swal.fire({
-					title: 'Confirm Purchase',
-					text: 'Are you sure you want to purchase ' + productName + '?',
-					icon: 'question',
-					showCancelButton: true,
-					confirmButtonText: 'Yes, purchase it!',
-					cancelButtonText: 'Cancel'
-				}).then((result) => {
-					if (result.isConfirmed) {
-						// Show loading popup
-						Swal.fire({
-							title: 'Processing Purchase',
-							text: 'Please wait...',
-							icon: 'info',
-							allowOutsideClick: false,
-							didOpen: () => {
-								Swal.showLoading();
-							}
-						});
+			$('.add-product-link').click(function(event) {
+				if (customerId === 0) {
+					event.preventDefault();
+					Swal.fire({
+						title: 'Not Logged In',
+						text: 'You must be logged in to add a new product.',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Login',
+						cancelButtonText: 'Close'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							window.location.href = '@Url.Action("Login", "Home")';
+						}
+					});
+				}
+			});
 
-						// Append /Purchasing... to the URL
-						const originalUrl = window.location.href;
-						window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+			$('.purchase-button').click(function(event) {
+				if (customerId === 0) {
+					event.preventDefault();
+					Swal.fire({
+						title: 'Not Logged In',
+						text: 'You must be logged in to make a purchase.',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Login',
+						cancelButtonText: 'Close'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							window.location.href = '@Url.Action("Login", "Home")';
+						}
+					});
+				} else {
+					var button = $(this);
+					var productId = button.data('id');
+					var productName = button.data('name');
 
-						// Send AJAX request to APIController
-						$.ajax({
-							url: '/Product/Purchase', // Ensure this URL is correct
-							type: 'POST',
-							data: { id: productId },
-							success: function(data) {
-								if (data.success) {
-									// Show success popup
-									Swal.fire({
-										title: 'Order Successful',
-										text: data.message,
-										icon: 'success'
-									}).then((result) => {
-										if (result.isConfirmed) {
-											// Revert URL back to original before reloading
-											window.history.replaceState({}, '', originalUrl);
-											location.reload();
-										}
-									});
-								} else {
-									// Show error popup
+					// Show confirmation popup
+					Swal.fire({
+						title: 'Confirm Purchase',
+						text: 'Are you sure you want to purchase ' + productName + '?',
+						icon: 'question',
+						showCancelButton: true,
+						confirmButtonText: 'Yes, purchase it!',
+						cancelButtonText: 'Cancel'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							// Show loading popup
+							Swal.fire({
+								title: 'Processing Purchase',
+								text: 'Please wait...',
+								icon: 'info',
+								allowOutsideClick: false,
+								didOpen: () => {
+									Swal.showLoading();
+								}
+							});
+
+							// Append /Purchasing... to the URL
+							const originalUrl = window.location.href;
+							window.history.replaceState({}, '', window.location.pathname + '/ProcessingOrder');
+
+							// Send AJAX request to APIController
+							$.ajax({
+								url: '/Product/Purchase', // Ensure this URL is correct
+								type: 'POST',
+								data: { productId: productId },
+								success: function(data) {
+									if (data.success) {
+										// Show success popup
+										Swal.fire({
+											title: 'Order Successful',
+											text: data.message,
+											icon: 'success'
+										}).then((result) => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									} else {
+										// Show error popup
+										Swal.fire({
+											title: 'Error',
+											text: data.message,
+											icon: 'error'
+										}).then(result => {
+											if (result.isConfirmed) {
+												// Revert URL back to original before reloading
+												window.history.replaceState({}, '', originalUrl);
+												location.reload();
+											}
+										});
+									}
+								},
+								error: function() {
+									// Handle errors
 									Swal.fire({
 										title: 'Error',
-										text: data.message,
+										text: 'An error occurred while processing the purchase.',
 										icon: 'error'
 									}).then(result => {
 										if (result.isConfirmed) {
@@ -154,24 +216,10 @@
 										}
 									});
 								}
-							},
-							error: function() {
-								// Handle errors
-								Swal.fire({
-									title: 'Error',
-									text: 'An error occurred while processing the purchase.',
-									icon: 'error'
-								}).then(result => {
-									if (result.isConfirmed) {
-										// Revert URL back to original before reloading
-										window.history.replaceState({}, '', originalUrl);
-										location.reload();
-									}
-								});
-							}
-						});
-					}
-				});
+							});
+						}
+					});
+				}
 			});
 		});
 	</script>

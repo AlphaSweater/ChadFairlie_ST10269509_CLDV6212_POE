@@ -1,55 +1,491 @@
-﻿@model IEnumerable<ABC_Retail.ViewModels.CustomerViewModel>
-
+﻿@model ABC_Retail.ViewModels.CustomerProfileViewModel
 @{
-	ViewData["Title"] = "Customers";
+	ViewData["Title"] = "My Profile";
+	int customerId = Context.Session.GetInt32("CustomerId") ?? 0;
+	bool isAdmin = Context.Session.GetString("IsAdmin") == "true";
 }
+
 <head>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 	<style>
-		.btn-primary, .btn-success {
-			border-radius: 10px;
-			transition: background-color 0.3s ease, transform 0.3s ease;
+		body {
+			background-color: #f5f5f5;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 		}
 
-			.btn-primary:hover, .btn-success:hover {
+		.container2 {
+			background-color: #fff;
+			border-radius: 12px;
+			padding: 25px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		}
+
+		h2 {
+			font-weight: 600;
+			color: #333;
+		}
+
+		.nav-tabs .nav-link {
+			font-weight: 500;
+			border-radius: 20px;
+			color: #333;
+			transition: color 0.3s ease, background-color 0.3s ease;
+		}
+
+			.nav-tabs .nav-link.active {
+				background-color: #343a40;
+				color: #fff;
+			}
+
+		.table {
+			width: 100%;
+			border-collapse: separate;
+			border-spacing: 0 10px;
+		}
+
+			.table thead th {
+				background-color: #343a40;
+				color: #fff;
+				border: none;
+				padding: 12px;
+				font-size: 1rem;
+				cursor: pointer;
+			}
+
+			.table tbody td {
+				background-color: #f9f9f9;
+				padding: 15px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+				border-radius: 8px;
+				text-align: center;
+			}
+
+			.table tbody tr:hover {
 				transform: translateY(-2px);
-				background-color: #0069d9; 
+				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+			}
+
+		.btn {
+			border-radius: 20px;
+			transition: background-color 0.3s ease, color 0.3s ease;
+		}
+
+		.btn-primary {
+			background-color: #28a745;
+			color: #fff;
+		}
+
+			.btn-primary:hover {
+				background-color: #218838;
+			}
+
+		.thumbnail {
+			width: 50px;
+			height: 50px;
+			object-fit: cover;
+			border-radius: 8px;
+		}
+
+		.search-bar {
+			padding: 5px;
+			font-size: 0.9rem;
+		}
+
+		.sort-select {
+			min-width: 150px;
+			font-size: 0.9rem;
+			padding: 5px;
+			border-radius: 8px;
+			border: 1px solid #ced4da;
+		}
+
+		.sorting-section {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding: 15px;
+			background-color: #fff;
+			border-radius: 12px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		}
+
+			.sorting-section .form-label {
+				margin-bottom: 0;
+				font-size: 0.9rem;
+			}
+
+			.sorting-section .form-control {
+				font-size: 0.9rem;
+				padding: 5px;
+			}
+
+			.sorting-section .btn {
+				font-size: 0.9rem;
+				padding: 5px 10px;
 			}
 	</style>
 </head>
 
-<h1>Customers</h1>
+<h2 class="mt-4 mb-3">My Profile</h2>
 
-@if (!Model.Any())
-{
-	<p>No customers available. <a href="@Url.Action("Create", "Customer")">Add a new customer</a></p>
-}
-else
-{
-	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Customer")">Add Account</a>
+<div class="container2 mt-5">
+	<ul class="nav nav-tabs" id="profileTab" role="tablist">
+		<li class="nav-item">
+			<a class="nav-link active" id="profile-info-tab" data-bs-toggle="tab" href="#profile-info" role="tab" aria-controls="profile-info" aria-selected="true">Profile Information</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" id="order-history-tab" data-bs-toggle="tab" href="#order-history" role="tab" aria-controls="order-history" aria-selected="false">My Order History</a>
+		</li>
+		@if (isAdmin)
+		{
+			<li class="nav-item">
+				<a class="nav-link" id="admin-orders-tab" data-bs-toggle="tab" href="#admin-orders" role="tab" aria-controls="admin-orders" aria-selected="false">All Customer Orders</a>
+			</li>
+		}
+	</ul>
 
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Surname</th>
-				<th>Email</th>
-				<th>Phone Number</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var customer in Model)
-			{
-				<tr>
-					<td>@customer.Name</td>
-					<td>@customer.Surname</td>
-					<td>@customer.Email</td>
-					<td>@customer.Phone</td>
-					<td>
-						<a href="@Url.Action("Manage", "Customer", new { id = customer.Id })" class="btn btn-primary">Manage</a>
-					</td>
-				</tr>
+	<div class="tab-content" id="profileTabContent">
+		<!-- Profile Information Tab -->
+		<div class="tab-pane fade show active" id="profile-info" role="tabpanel" aria-labelledby="profile-info-tab">
+			<div class="row mt-4">
+				<div class="col-md-6">
+					<h3>Profile Information</h3>
+					<form asp-action="Edit" method="post">
+						<input type="hidden" name="CustomerId" value="@Model.CustomerId" />
+						<div class="form-group">
+							<label asp-for="@Model.Name" class="form-label">Name</label>
+							<input asp-for="@Model.Name" class="form-control rounded-pill" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Surname" class="form-label">Surname</label>
+							<input asp-for="@Model.Surname" class="form-control rounded-pill" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Phone" class="form-label">Phone</label>
+							<input asp-for="@Model.Phone" class="form-control rounded-pill" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Email" class="form-label">Email</label>
+							<input asp-for="@Model.Email" class="form-control rounded-pill" />
+						</div>
+						<button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Order History Tab -->
+		<div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
+			<div class="sorting-section">
+				<!-- Search bar -->
+				<div class="row mb-3">
+					<label for="searchInput" class="form-label me-2">Search Orders:</label>
+					<div class="d-flex align-items-center">
+						<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
+					</div>
+				</div>
+
+				<!-- Date Range Filter -->
+				<div class="d-flex align-items-end">
+					<div class="d-flex flex-column me-2">
+						<label for="startDate" class="form-label">Start Date:</label>
+						<input type="date" id="startDate" class="form-control" />
+					</div>
+					<div class="d-flex flex-column me-2">
+						<label for="endDate" class="form-label">End Date:</label>
+						<input type="date" id="endDate" class="form-control" />
+					</div>
+					<div class="d-flex align-items-end">
+						<button id="filterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
+						<button id="clearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
+					</div>
+				</div>
+			</div>
+			<div class="row mt-4">
+				<div class="col-md-12">
+					<h3>My Order History</h3>
+					@if (Model.OrderHistory != null && Model.OrderHistory.Any())
+					{
+						<div class="table-responsive table-container">
+							<table class="table table-hover table-striped align-middle">
+								<thead>
+									<tr>
+										<th onclick="sortTable(0, 'orderTableBody')">Order ID</th>
+										<th>Thumbnail</th>
+										<th onclick="sortTable(2, 'orderTableBody')">Product Name</th>
+										<th onclick="sortTable(3, 'orderTableBody')">Quantity</th>
+										<th onclick="sortTable(4, 'orderTableBody')">Total Price</th>
+										<th>Date</th>
+									</tr>
+								</thead>
+								<tbody id="orderTableBody">
+									@foreach (var order in Model.OrderHistory)
+									{
+										<tr>
+											<td>@order.OrderId</td>
+											<td><img src="@order.ProductImageURL" alt="Product Image" class="thumbnail" /></td>
+											<td>@order.ProductName</td>
+											<td>@order.TotalQuantity</td>
+											<td>@order.TotalAmount.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
+											<td>@order.OrderDate.ToString("d MMM yyyy")</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					}
+					else
+					{
+						<p>No past orders available.</p>
+					}
+				</div>
+			</div>
+		</div>
+
+		<!-- Admin Orders Tab -->
+		@if (isAdmin)
+		{
+			<div class="tab-pane fade" id="admin-orders" role="tabpanel" aria-labelledby="admin-orders-tab">
+				<div class="sorting-section">
+
+					<!-- Search bar -->
+					<div class="row mb-3">
+						<label for="adminSearchInput" class="form-label me-2">Search Orders:</label>
+						<div class="d-flex justify-content-start">
+							<input type="text" id="adminSearchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('adminOrderTableBody')">
+						</div>
+					</div>
+
+					<!-- Search by Customer -->
+					<div class="row mb-3">
+						<label for="customerDropdown" class="form-label me-2">Search by Customer:</label>
+						<div class="d-flex justify-content-start">
+							<div class="input-group">
+								<select id="customerDropdown" class="form-select sort-select" placeholder="Select or type a Customer">
+									<option value="">All Customers</option>
+									@foreach (var order in Model.AllOrders.Select(o => new { o.CustomerId, o.CustomerFullName }).Distinct())
+									{
+										<option value="@order.CustomerId">@order.CustomerFullName</option>
+									}
+								</select>
+								<button id="clearCustomerSearch" class="btn btn-outline-secondary" type="button">Clear</button>
+							</div>
+						</div>
+					</div>
+
+					<!-- Date Range Filter for Admin Orders -->
+					<div class="d-flex align-items-end">
+						<div class="d-flex flex-column me-2">
+							<label for="adminStartDate" class="form-label">Start Date:</label>
+							<input type="date" id="adminStartDate" class="form-control" />
+						</div>
+						<div class="d-flex flex-column me-2">
+							<label for="adminEndDate" class="form-label">End Date:</label>
+							<input type="date" id="adminEndDate" class="form-control" />
+						</div>
+						<div class="d-flex align-items-end">
+							<button id="adminFilterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
+							<button id="adminClearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
+						</div>
+					</div>
+				</div>
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<h3>All Customer Orders</h3>
+						@if (Model.OrderHistory != null && Model.OrderHistory.Any())
+						{
+							<div class="table-responsive table-container">
+								<table class="table table-hover table-striped align-middle">
+									<thead>
+										<tr>
+											<th onclick="sortTable(0, 'adminOrderTableBody')">Order ID</th>
+											<th onclick="sortTable(1, 'adminOrderTableBody')">Customer Fullname</th>
+											<th>Thumbnail</th>
+											<th onclick="sortTable(3, 'adminOrderTableBody')">Product Name</th>
+											<th onclick="sortTable(4, 'adminOrderTableBody')">Quantity</th>
+											<th onclick="sortTable(5, 'adminOrderTableBody')">Total Price</th>
+											<th>Date</th>
+										</tr>
+									</thead>
+									<tbody id="adminOrderTableBody">
+										@foreach (var order in Model.AllOrders)
+										{
+											<tr data-customer-id="@order.CustomerId">
+												<td>@order.OrderId</td>
+												<td>@order.CustomerFullName</td>
+												<td><img src="@order.ProductImageURL" alt="Product Image" class="thumbnail" /></td>
+												<td>@order.ProductName</td>
+												<td>@order.TotalQuantity</td>
+												<td>@order.TotalAmount.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
+												<td>@order.OrderDate.ToString("d MMM yyyy")</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+						else
+						{
+							<p>No orders currently available.</p>
+						}
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+<script>
+	function sortTable(n, tableBodyId) {
+		var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+		table = document.getElementById(tableBodyId).parentNode;
+		switching = true;
+		// Set the sorting direction to ascending:
+		dir = "asc";
+		/* Make a loop that will continue until
+		no switching has been done: */
+		while (switching) {
+			// Start by saying: no switching is done:
+			switching = false;
+			rows = table.rows;
+			/* Loop through all table rows (except the
+			first, which contains table headers): */
+			for (i = 1; i < (rows.length - 1); i++) {
+				// Start by saying there should be no switching:
+				shouldSwitch = false;
+				/* Get the two elements you want to compare,
+				one from current row and one from the next: */
+				x = rows[i].getElementsByTagName("TD")[n];
+				y = rows[i + 1].getElementsByTagName("TD")[n];
+				/* Check if the two rows should switch place,
+				based on the direction, asc or desc: */
+				if (dir == "asc") {
+					if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+						// If so, mark as a switch and break the loop:
+						shouldSwitch = true;
+						break;
+					}
+				} else if (dir == "desc") {
+					if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+						// If so, mark as a switch and break the loop:
+						shouldSwitch = true;
+						break;
+					}
+				}
 			}
-		</tbody>
-	</table>
-}
+			if (shouldSwitch) {
+				/* If a switch has been marked, make the switch
+				and mark that a switch has been done: */
+				rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+				switching = true;
+				// Each time a switch is done, increase this count by 1:
+				switchcount ++;
+			} else {
+				/* If no switching has been done AND the direction is "asc",
+				set the direction to "desc" and run the while loop again. */
+				if (switchcount == 0 && dir == "asc") {
+					dir = "desc";
+					switching = true;
+				}
+			}
+		}
+	}
+
+	function searchTable(tableBodyId) {
+		var input, filter, table, tr, td, i, j, txtValue;
+		input = document.getElementById(tableBodyId === 'adminOrderTableBody' ? 'adminSearchInput' : 'searchInput');
+		filter = input.value.toLowerCase();
+		table = document.getElementById(tableBodyId);
+		tr = table.getElementsByTagName("tr");
+		for (i = 1; i < tr.length; i++) {
+			tr[i].style.display = "none";
+			td = tr[i].getElementsByTagName("td");
+			for (j = 0; j < td.length; j++) {
+				if (td[j]) {
+					txtValue = td[j].textContent || td[j].innerText;
+					if (txtValue.toLowerCase().indexOf(filter) > -1) {
+						tr[i].style.display = "";
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	document.getElementById('customerDropdown').addEventListener('change', function() {
+		var selectedCustomerId = this.value;
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			if (selectedCustomerId === "" || row.getAttribute('data-customer-id') === selectedCustomerId) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('clearCustomerSearch').addEventListener('click', function() {
+		document.getElementById('customerDropdown').value = "";
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
+
+	document.getElementById('filterDateRange').addEventListener('click', function() {
+		var startDate = new Date(document.getElementById('startDate').value);
+		var endDate = new Date(document.getElementById('endDate').value);
+		var rows = document.querySelectorAll('#orderTableBody tr');
+		rows.forEach(function(row) {
+			var orderDate = new Date(row.cells[5].innerText);
+			// Strip the time component from the dates
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
+			orderDate.setHours(0, 0, 0, 0);
+			if ((isNaN(startDate) || orderDate >= startDate) && (isNaN(endDate) || orderDate <= endDate)) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('clearDateRange').addEventListener('click', function() {
+		document.getElementById('startDate').value = "";
+		document.getElementById('endDate').value = "";
+		var rows = document.querySelectorAll('#orderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
+
+	document.getElementById('adminFilterDateRange').addEventListener('click', function() {
+		var startDate = new Date(document.getElementById('adminStartDate').value);
+		var endDate = new Date(document.getElementById('adminEndDate').value);
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			var orderDate = new Date(row.cells[6].innerText);
+			// Strip the time component from the dates
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
+			orderDate.setHours(0, 0, 0, 0);
+			if ((isNaN(startDate) || orderDate >= startDate) && (isNaN(endDate) || orderDate <= endDate)) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('adminClearDateRange').addEventListener('click', function() {
+		document.getElementById('adminStartDate').value = "";
+		document.getElementById('adminEndDate').value = "";
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
+
+</script>

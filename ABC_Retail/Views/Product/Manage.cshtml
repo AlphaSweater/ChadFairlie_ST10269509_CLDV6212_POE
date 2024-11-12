@@ -1,4 +1,4 @@
-﻿@model ABC_Retail.ViewModels.ProductViewModel
+@model ABC_Retail.ViewModels.ProductViewModel
 
 @{
 	ViewData["Title"] = "Manage Product";
@@ -90,84 +90,84 @@
 	</style>
 </head>
 
-<h1>Manage Product - @Model.Name</h1>
+<h1>Manage Product - @Model.ProductName</h1>
 
 <ul class="nav nav-tabs" id="productTab" role="tablist">
 	<li class="nav-item">
-		<a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">Details</a>
+		<a class="nav-link @(Model.ActiveTab == "details" ? "active" : "")" id="details-tab" data-bs-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="@(Model.ActiveTab == "details")">Details</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" id="edit-tab" data-bs-toggle="tab" href="#edit" role="tab" aria-controls="edit" aria-selected="false">Edit</a>
+		<a class="nav-link @(Model.ActiveTab == "edit" ? "active" : "")" id="edit-tab" data-bs-toggle="tab" href="#edit" role="tab" aria-controls="edit" aria-selected="@(Model.ActiveTab == "edit")">Edit</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" id="delete-tab" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
+		<a class="nav-link @(Model.ActiveTab == "delete" ? "active" : "")" id="delete-tab" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="@(Model.ActiveTab == "delete")">Delete</a>
 	</li>
 </ul>
 
 <div class="tab-content" id="productTabContent">
 
 	<!-- Details Tab -->
-	<div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+	<div class="tab-pane fade show @(Model.ActiveTab == "details" ? "active" : "")" id="details" role="tabpanel" aria-labelledby="details-tab">
 		<h3>Details</h3>
 		<div class="row">
 			<div class="col-md-4">
-				<img src="@Model.FileUrl" class="img-fluid details-image" alt="@Model.Name" />
+				<img src="@Model.ImageUrl" class="img-fluid details-image" alt="@Model.ImageFileName" />
 			</div>
 			<div class="col-md-8">
-				<p><strong>Name:</strong> @Model.Name</p>
-				<p><strong>Price:</strong> @Model.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
-				<p><strong>Description:</strong> @Model.Description</p>
-				<p><strong>Quantity:</strong> @Model.Quantity</p>
+				<p><strong>Name:</strong> @Model.ProductName</p>
+				<p><strong>Price:</strong> @Model.ProductPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
+				<p><strong>Description:</strong> @Model.ProductDescription</p>
+				<p><strong>Quantity:</strong> @Model.ProductQuantity</p>
 			</div>
 		</div>
 	</div>
 
 	<!-- Edit Tab -->
-	<div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
+	<div class="tab-pane fade show @(Model.ActiveTab == "edit" ? "active" : "")" id="edit" role="tabpanel" aria-labelledby="edit-tab">
 		<h3>Edit</h3>
 		<form asp-action="Edit" asp-controller="Product" form method="post" enctype="multipart/form-data">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="ProductId" value="@Model.ProductId" />
 			<div class="form-group mb-3">
 				<label for="Name">Name</label>
-				<input type="text" name="Name" class="form-control" value="@Model.Name" />
-				<span asp-validation-for="Name" class="text-danger"></span>
+				<input type="text" name="ProductName" class="form-control" value="@Model.ProductName" />
+				<span asp-validation-for="ProductName" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Price">Price</label>
-				<input type="number" name="Price" class="form-control" value="@Model.Price" />
-				<span asp-validation-for="Price" class="text-danger"></span>
+				<input type="number" name="ProductPrice" class="form-control" value="@Model.ProductPrice" />
+				<span asp-validation-for="ProductPrice" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Description">Description</label>
-				<textarea name="Description" class="form-control">@Model.Description</textarea>
-				<span asp-validation-for="Description" class="text-danger"></span>
+				<textarea name="ProductDescription" class="form-control">@Model.ProductDescription</textarea>
+				<span asp-validation-for="ProductDescription" class="text-danger"></span>
 			</div>
 			<div class="form-group mb-3">
 				<label for="Quantity">Quantity</label>
-				<input type="number" name="Quantity" class="form-control" value="@Model.Quantity" />
-				<span asp-validation-for="Quantity" class="text-danger"></span>
+				<input type="number" name="ProductQuantity" class="form-control" value="@Model.ProductQuantity" />
+				<span asp-validation-for="ProductQuantity" class="text-danger"></span>
 			</div>
 			<label for="File">Product Image</label>
 			<div class="form-group mb-3" style="display: flex; align-items: center; gap: 20px;">
-				@if (!string.IsNullOrEmpty(Model.FileUrl))
+				@if (!string.IsNullOrEmpty(Model.ImageUrl))
 				{
-					<img src="@Model.FileUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
+					<img id="imagePreview" src="@Model.ImageUrl" class="img-thumbnail mt-2" style="max-width: 200px;" alt="Current Image" />
 				}
 				<div style="display: flex; flex-direction: column">
-					<input type="file" name="File" class="form-control-file" />
+					<input id="fileInput" type="file" name="File" class="form-control-file" />
 				</div>
 			</div>
-			<input type="hidden" name="FileName" value="@Model.FileName" />
+			<input type="hidden" name="FileName" value="@Model.ImageFileName" />
 			<button type="submit" class="btn btn-primary">Save</button>
 		</form>
 	</div>
 
 	<!-- Delete Tab -->
-	<div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+	<div class="tab-pane fade show @(Model.ActiveTab == "delete" ? "active" : "")" id="delete" role="tabpanel" aria-labelledby="delete-tab">
 		<h3>Delete</h3>
 		<p>Are you sure you want to delete this product?</p>
 		<form method="post" action="/Product/Delete">
-			<input type="hidden" name="Id" value="@Model.Id" />
+			<input type="hidden" name="productId" value="@Model.ProductId" />
 			<button type="submit" class="btn btn-danger">Delete</button>
 		</form>
 	</div>
@@ -177,4 +177,16 @@
 	@{
 		await Html.RenderPartialAsync("_ValidationScriptsPartial");
 	}
+	<script>
+		document.getElementById('fileInput').addEventListener('change', function (event) {
+			const file = event.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					document.getElementById('imagePreview').src = e.target.result;
+				};
+				reader.readAsDataURL(file);
+			}
+		});
+	</script>
 }

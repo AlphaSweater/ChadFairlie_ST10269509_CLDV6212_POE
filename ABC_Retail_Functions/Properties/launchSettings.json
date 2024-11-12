@@ -2,7 +2,7 @@
   "profiles": {
     "ABC_Retail_Functions": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7237",
+      "commandLineArgs": "--port 7025",
       "launchBrowser": false
     }
   }

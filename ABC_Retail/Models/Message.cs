@@ -64,36 +64,22 @@ namespace ABC_Retail.Models
 	public class OrderMessage : Message
 	{
 		public string OrderId { get; set; } // Unique identifier for the order
-		public string CustomerId { get; set; } // Identifier for the customer placing the order
-		public List<ProductOrder>? Products { get; set; } // List of products in the order
+		public int CustomerId { get; set; } // Identifier for the customer placing the order
+		public int ProductId { get; set; } // Identifier for the product being ordered
+		public int Quantity { get; set; } // Quantity of the product being ordered
+		public decimal Price { get; set; } // Price of the product being ordered
+		public decimal TotalAmount { get; set; } // Total amount for the order
 		public DateTime OrderDate { get; set; } // Date the order was placed
-		public double TotalAmount { get; set; } // Total amount for the order
 
-		public OrderMessage(string customerId, List<ProductOrder> products, double totalAmount)
+		public OrderMessage(int customerId, int productId, int quantity, decimal price)
 		{
 			OrderId = Guid.NewGuid().ToString();
 			CustomerId = customerId;
-			Products = products;
+			ProductId = productId;
+			Quantity = quantity;
+			Price = price;
+			TotalAmount = quantity * price;
 			OrderDate = DateTime.UtcNow;
-			TotalAmount = totalAmount;
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Represents a product within an order, including details such as product ID, name, and quantity.
-		/// </summary>
-		public class ProductOrder
-		{
-			public string ProductId { get; set; } // Unique identifier of the product ordered
-			public string ProductName { get; set; } // Name of the product ordered
-			public int Quantity { get; set; } // Quantity of the product ordered
-
-			public ProductOrder(string productId, string productName, int quantity)
-			{
-				ProductId = productId;
-				ProductName = productName;
-				Quantity = quantity;
-			}
 		}
 	}
 
@@ -103,13 +89,13 @@ namespace ABC_Retail.Models
 	/// </summary>
 	public class InventoryUpdateMessage : Message
 	{
-		public string Name { get; set; } // // Name of the product being updated.
+		public int ProductId { get; set; } // // Name of the product being updated.
 		public int Quantity { get; set; } // Quantity change (positive for addition, negative for removal)
 		public string Reason { get; set; } // Reason for the inventory update
 
-		public InventoryUpdateMessage(string name, int quantity, string reason)
+		public InventoryUpdateMessage(int productId, int quantity, string reason)
 		{
-			Name = name;
+			ProductId = productId;
 			Quantity = quantity;
 			Reason = reason;
 		}

@@ -1,0 +1,152 @@
+﻿@model ABC_Retail.ViewModels.LoginViewModel
+@{
+	ViewData["Title"] = "Welcome";
+}
+
+<head>
+	<link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+	<style>
+		.auth-page-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.form {
+			--font-color: #333333;
+			--font-color-sub: #666666;
+			--bg-color: #fff;
+			--main-color: #323232;
+			--highlight-color: #eebefa;
+			background-color: #fff;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 20px;
+			border-radius: 10px;
+			padding-left: 50px;
+			padding-right: 50px;
+			padding-top: 30px;
+			padding-bottom: 20px;
+			box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+			max-width: 400px;
+			width: 100%;
+		}
+
+		.title {
+			color: var(--font-color);
+			font-weight: 900;
+			font-size: 26px;
+			text-align: center;
+		}
+
+			.title span {
+				color: var(--font-color-sub);
+				font-weight: 600;
+				font-size: 20px;
+			}
+
+		.inputbox {
+			width: 100%;
+			height: 45px;
+			border-radius: 10px;
+			border: 2px solid var(--main-color);
+			background-color: var(--bg-color);
+			box-shadow: 4px 4px var(--main-color);
+			font-size: 17px;
+			font-weight: 600;
+			color: var(--font-color);
+			padding: 10px;
+			outline: none;
+			transition: box-shadow 0.2s, transform 0.2s;
+		}
+
+			.inputbox::placeholder {
+				color: var(--font-color-sub);
+				opacity: 0.8;
+			}
+
+			.inputbox:focus {
+				transform: translateY(4px);
+				box-shadow: 1px 2px 0px 0px var(--highlight-color);
+			}
+
+		.button-confirm {
+			margin-top: 20px;
+			width: 100%;
+			height: 45px;
+			border-radius: 10px;
+			border: 2px solid var(--main-color);
+			background-color: var(--bg-color);
+			box-shadow: 4px 4px var(--main-color);
+			font-size: 18px;
+			font-weight: 600;
+			color: var(--font-color);
+			cursor: pointer;
+			transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+		}
+
+			.button-confirm:hover {
+				background-color: #f0f0f0;
+			}
+
+			.button-confirm:active {
+				box-shadow: 0px 0px var(--highlight-color);
+				transform: translateY(2px);
+			}
+
+		.error-bar {
+			width: 100%;
+			background-color: #ffcccc;
+			color: #cc0000;
+			padding: 10px;
+			text-align: center;
+			border-radius: 5px;
+			border: 1px solid #ffaaaa;
+			margin-top: -10px;
+		}
+
+		.switch-link {
+			color: #007bff;
+			text-decoration: none;
+			cursor: pointer;
+		}
+
+			.switch-link:hover {
+				color: #007bff;
+				text-decoration: underline;
+			}
+	</style>
+</head>
+
+<div class="auth-page-container">
+	<!-- Login Form -->
+	<form asp-action="Login" asp-controller="Home" method="post" class="form">
+		<div class="title">Welcome,<br><span>login to continue</span></div>
+		<img src="~/images/logo/logo.jpg" alt="Logo" style="width: 250px; height: auto; margin-bottom: 20px; border-radius: 15px;">
+
+		@if (TempData["SuccessMessage"] != null)
+		{
+			<div class="alert alert-success">@TempData["SuccessMessage"]</div>
+		}
+
+		<!-- Email Input -->
+		<input asp-for="Email" placeholder="Email" class="inputbox" required>
+
+		<!-- Password Input -->
+		<input asp-for="Password" type="password" placeholder="Password" class="inputbox" required>
+
+		<div id="errorBar" class="error-bar @(ViewData.ModelState.IsValid ? "d-none" : "")">
+			@foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+			{
+				<p>@error.ErrorMessage</p>
+			}
+		</div>
+		<button type="submit" class="button-confirm">Let's go →</button>
+
+		<p><a class="switch-link" asp-controller="Home" asp-action="SignUp">Don't have an account? Sign Up!</a></p>
+	</form>
+</div>
