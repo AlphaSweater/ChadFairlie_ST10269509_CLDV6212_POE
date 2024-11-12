@@ -19,12 +19,12 @@ namespace ABC_Retail.ViewModels
 
 		public bool IsAdmin { get; set; } = false; // Admin status of the customer
 
-		public List<Order> OrderHistory { get; set; } // Order history of the customer
+		public List<OrderViewModel> OrderHistory { get; set; } // Order history of the customer
 
-		public List<Order>? AllOrders { get; set; } // All orders of the system
+		public List<OrderViewModel>? AllOrders { get; set; } // All orders of the system
 
 		// Constructor to turn model into view model
-		public CustomerProfileViewModel(Customer customer, List<Order> orderHistory, List<Order>? allOrders = null)
+		public CustomerProfileViewModel(Customer customer, List<OrderViewModel> orderHistory, List<OrderViewModel>? allOrders = null)
 		{
 			CustomerId = customer.CustomerId;
 			Name = customer.Name;
@@ -34,7 +34,7 @@ namespace ABC_Retail.ViewModels
 			Password = customer.Password;
 			IsAdmin = customer.IsAdmin;
 			OrderHistory = orderHistory;
-			AllOrders = allOrders ?? new List<Order>();
+			AllOrders = allOrders ?? new List<OrderViewModel>();
 		}
 
 		// Default constructor

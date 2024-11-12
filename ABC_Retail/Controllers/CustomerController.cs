@@ -57,6 +57,10 @@ namespace ABC_Retail.Controllers
 		public async Task<IActionResult> Index()
 		{
 			int customerId = _httpContextAccessor?.HttpContext?.Session.GetInt32("CustomerId") ?? 0;
+			bool isAdmin = _httpContextAccessor?.HttpContext?.Session.GetString("IsAdmin") == "true";
+
+			CustomerProfileViewModel customerProfile;
+
 			// Retrieve logged in customer from SQL Table Storage.
 			var customer = await _customerTableService.GetUserByIdAsync(customerId);
 			if (customer == null)
@@ -64,10 +68,23 @@ namespace ABC_Retail.Controllers
 				// Return a 404 Not Found response if the customer does not exist.
 				return NotFound();
 			}
+
+			// Retrieve order history for the customer from SQL Table Storage.
 			var orderHistory = await _orderTableService.GetOrdersByCustomerIdAsync(customerId);
 
-			var customerProfile = new CustomerProfileViewModel(customer, orderHistory);
+			if (isAdmin)
+			{
+				// If the logged in customer is an admin, retrieve all customer orders from SQL Table Storage.
+				var allOrders = await _orderTableService.GetAllOrdersAsync();
+				customerProfile = new CustomerProfileViewModel(customer, orderHistory, allOrders);
+			}
+			else
+			{
+				// If the logged in customer is not an admin, only show their own order history.
+				customerProfile = new CustomerProfileViewModel(customer, orderHistory);
+			}
 
+			// Return the view with the customer profile view model.
 			return View(customerProfile);
 		}
 
