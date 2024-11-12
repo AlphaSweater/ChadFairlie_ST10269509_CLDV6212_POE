@@ -16,7 +16,7 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Properties of the Product entity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		public int ProductID { get; set; } // Unique identifier for the product
+		public int ProductId { get; set; } // Unique identifier for the product
 		public string Name { get; set; } // Name of the product
 		public decimal Price { get; set; } // Price of the product
 		public string Description { get; set; } // Description of the product
@@ -81,10 +81,10 @@ namespace ABC_Retail.Models
 						cmd.Parameters.AddWithValue("@ProductAvailability", m.Availability);
 
 						// Execute the command and retrieve the new ProductID
-						m.ProductID = (int)await cmd.ExecuteScalarAsync();
+						m.ProductId = (int)await cmd.ExecuteScalarAsync();
 
 						transaction.Commit(); // Commit the transaction if all commands were successful
-						return m.ProductID;
+						return m.ProductId;
 					}
 					catch (Exception)
 					{
@@ -145,7 +145,7 @@ namespace ABC_Retail.Models
 						{
 							productsList.Add(new ProductViewModel
 							{
-								ProductID = (int)reader["product_id"],
+								ProductId = (int)reader["product_id"],
 								ProductName = reader["name"].ToString(),
 								ProductDescription = reader["description"].ToString(),
 								ProductPrice = (decimal)reader["price"],
@@ -185,7 +185,7 @@ namespace ABC_Retail.Models
 				using (var cmd = new SqlCommand(sql, con))
 				{
 					// Add parameters with values from the Product object
-					cmd.Parameters.AddWithValue("@ProductId", product.ProductID);
+					cmd.Parameters.AddWithValue("@ProductId", product.ProductId);
 					cmd.Parameters.AddWithValue("@Name", product.Name);
 					cmd.Parameters.AddWithValue("@Description", product.Description);
 					cmd.Parameters.AddWithValue("@Price", product.Price);
@@ -203,7 +203,7 @@ namespace ABC_Retail.Models
 		/// </summary>
 		/// <param name="imageName"></param>
 		/// <returns></returns>
-		public async Task UpdateProductImageAsync(string imageName)
+		public async Task UpdateProductImageAsync(Product product, string imageName)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -212,7 +212,7 @@ namespace ABC_Retail.Models
 				using (var cmd = new SqlCommand(sql, con))
 				{
 					cmd.Parameters.AddWithValue("@ImageName", imageName);
-					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					cmd.Parameters.AddWithValue("@ProductId", product.ProductId);
 					await cmd.ExecuteNonQueryAsync();
 				}
 			}
@@ -248,7 +248,7 @@ namespace ABC_Retail.Models
 							// Map the data from the reader to a Product object
 							return new Product
 							{
-								ProductID = reader.GetInt32(reader.GetOrdinal("product_id")),
+								ProductId = reader.GetInt32(reader.GetOrdinal("product_id")),
 								Name = reader.GetString(reader.GetOrdinal("name")),
 								Description = reader.GetString(reader.GetOrdinal("description")),
 								Price = reader.GetDecimal(reader.GetOrdinal("price")),
@@ -266,7 +266,7 @@ namespace ABC_Retail.Models
 			}
 		}
 
-		public async Task<string> GetProductImageNameAsync()
+		public async Task<string> GetProductImageNameAsync(Product product)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -274,7 +274,7 @@ namespace ABC_Retail.Models
 				string sql = "SELECT image_name FROM tbl_product_images WHERE product_id = @ProductId";
 				using (var cmd = new SqlCommand(sql, con))
 				{
-					cmd.Parameters.AddWithValue("@ProductId", ProductID);
+					cmd.Parameters.AddWithValue("@ProductId", product.ProductId);
 					using (var reader = await cmd.ExecuteReaderAsync())
 					{
 						if (await reader.ReadAsync())
@@ -308,25 +308,6 @@ namespace ABC_Retail.Models
 				{
 					cmd.Parameters.AddWithValue("@ProductId", productId);
 
-					await cmd.ExecuteNonQueryAsync();
-				}
-			}
-		}
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Deletes a product from the database
-		/// </summary>
-		/// <returns></returns>
-		public async Task DeleteProductImageAsync()
-		{
-			using (var con = new SqlConnection(_SQLConnectionString))
-			{
-				await con.OpenAsync();
-				string sql = "DELETE FROM tbl_product_images WHERE product_id = @ProductId";
-				using (var cmd = new SqlCommand(sql, con))
-				{
-					cmd.Parameters.AddWithValue("@ProductId", ProductID);
 					await cmd.ExecuteNonQueryAsync();
 				}
 			}

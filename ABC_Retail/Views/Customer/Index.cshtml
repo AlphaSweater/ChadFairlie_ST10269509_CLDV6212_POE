@@ -88,13 +88,14 @@
 		}
 
 		.search-bar {
-
+			padding: 5px;
+			font-size: 0.9rem;
 		}
 
 		.sort-select {
-			min-width: 200px;
-			font-size: 1rem;
-			padding: 8px;
+			min-width: 150px;
+			font-size: 0.9rem;
+			padding: 5px;
 			border-radius: 8px;
 			border: 1px solid #ced4da;
 		}
@@ -103,12 +104,27 @@
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-bottom: 30px;
+			margin-bottom: 20px;
 			padding: 15px;
 			background-color: #fff;
 			border-radius: 12px;
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 		}
+
+			.sorting-section .form-label {
+				margin-bottom: 0;
+				font-size: 0.9rem;
+			}
+
+			.sorting-section .form-control {
+				font-size: 0.9rem;
+				padding: 5px;
+			}
+
+			.sorting-section .btn {
+				font-size: 0.9rem;
+				padding: 5px 10px;
+			}
 	</style>
 </head>
 
@@ -136,7 +152,8 @@
 			<div class="row mt-4">
 				<div class="col-md-6">
 					<h3>Profile Information</h3>
-					<form asp-action="EditProfile" method="post">
+					<form asp-action="Edit" method="post">
+						<input type="hidden" name="CustomerId" value="@Model.CustomerId" />
 						<div class="form-group">
 							<label asp-for="@Model.Name" class="form-label">Name</label>
 							<input asp-for="@Model.Name" class="form-control rounded-pill" />
@@ -161,10 +178,34 @@
 
 		<!-- Order History Tab -->
 		<div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
+			<div class="sorting-section">
+				<!-- Date Range Filter -->
+				<div class="d-flex align-items-end">
+					<div class="d-flex flex-column me-2">
+						<label for="startDate" class="form-label">Start Date:</label>
+						<input type="date" id="startDate" class="form-control" />
+					</div>
+					<div class="d-flex flex-column me-2">
+						<label for="endDate" class="form-label">End Date:</label>
+						<input type="date" id="endDate" class="form-control" />
+					</div>
+					<div class="d-flex align-items-end">
+						<button id="filterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
+						<button id="clearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
+					</div>
+				</div>
+
+				<!-- Search bar -->
+				<div class="row mb-3">
+					<label for="searchInput" class="form-label me-2">Search Orders:</label>
+					<div class="d-flex align-items-center">
+						<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
+					</div>
+				</div>
+			</div>
 			<div class="row mt-4">
 				<div class="col-md-12">
 					<h3>My Order History</h3>
-					<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
 					@if (Model.OrderHistory != null && Model.OrderHistory.Any())
 					{
 						<div class="table-responsive table-container">
@@ -224,6 +265,23 @@
 							</div>
 						</div>
 					</div>
+
+					<!-- Date Range Filter for Admin Orders -->
+					<div class="d-flex align-items-end">
+						<div class="d-flex flex-column me-2">
+							<label for="adminStartDate" class="form-label">Start Date:</label>
+							<input type="date" id="adminStartDate" class="form-control" />
+						</div>
+						<div class="d-flex flex-column me-2">
+							<label for="adminEndDate" class="form-label">End Date:</label>
+							<input type="date" id="adminEndDate" class="form-control" />
+						</div>
+						<div class="d-flex align-items-end">
+							<button id="adminFilterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
+							<button id="adminClearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
+						</div>
+					</div>
+
 					<!-- Search bar -->
 					<div class="row mb-3">
 						<label for="adminSearchInput" class="form-label me-2">Search Orders:</label>
@@ -374,4 +432,59 @@
 			row.style.display = "";
 		});
 	});
+
+	document.getElementById('filterDateRange').addEventListener('click', function() {
+		var startDate = new Date(document.getElementById('startDate').value);
+		var endDate = new Date(document.getElementById('endDate').value);
+		var rows = document.querySelectorAll('#orderTableBody tr');
+		rows.forEach(function(row) {
+			var orderDate = new Date(row.cells[5].innerText);
+			// Strip the time component from the dates
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
+			orderDate.setHours(0, 0, 0, 0);
+			if ((isNaN(startDate) || orderDate >= startDate) && (isNaN(endDate) || orderDate <= endDate)) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('clearDateRange').addEventListener('click', function() {
+		document.getElementById('startDate').value = "";
+		document.getElementById('endDate').value = "";
+		var rows = document.querySelectorAll('#orderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
+
+	document.getElementById('adminFilterDateRange').addEventListener('click', function() {
+		var startDate = new Date(document.getElementById('adminStartDate').value);
+		var endDate = new Date(document.getElementById('adminEndDate').value);
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			var orderDate = new Date(row.cells[6].innerText);
+			// Strip the time component from the dates
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
+			orderDate.setHours(0, 0, 0, 0);
+			if ((isNaN(startDate) || orderDate >= startDate) && (isNaN(endDate) || orderDate <= endDate)) {
+				row.style.display = "";
+			} else {
+				row.style.display = "none";
+			}
+		});
+	});
+
+	document.getElementById('adminClearDateRange').addEventListener('click', function() {
+		document.getElementById('adminStartDate').value = "";
+		document.getElementById('adminEndDate').value = "";
+		var rows = document.querySelectorAll('#adminOrderTableBody tr');
+		rows.forEach(function(row) {
+			row.style.display = "";
+		});
+	});
+
 </script>

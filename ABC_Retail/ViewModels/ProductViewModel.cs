@@ -10,9 +10,9 @@ namespace ABC_Retail.ViewModels
 	{
 		// Product attributes
 
-		public int? ProductID { get; set; } // Unique identifier for the product
+		public int? ProductId { get; set; } // Unique identifier for the product
 
-		public int? CustomerID { get; set; } // Unique identifier for the customer
+		public int? CustomerId { get; set; } // Unique identifier for the customer
 
 		[Required(ErrorMessage = "A product name is required!")]
 		[StringLength(100, ErrorMessage = "The product name cannot exceed 100 characters.")]
@@ -41,5 +41,8 @@ namespace ABC_Retail.ViewModels
 		public string? ImageUrl { get; set; } // URL of the product image file
 
 		public IFormFile? File { get; set; } // Image file to be uploaded
+
+		public string ActiveTab { get; set; } = "details"; // Default to "details" tab
+
 	}
 }

@@ -119,35 +119,6 @@ namespace ABC_Retail.Controllers
 			return View(customerProfile);
 		}
 
-
-
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-		// Manage Actions
-		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
-
-		//--------------------------------------------------------------------------------------------------------------------------//
-		/// <summary>
-		/// Displays the details of a specific customer for management.
-		/// </summary>
-		/// <param name="customerId">The unique identifier (RowKey) of the customer.</param>
-		/// <returns>A view displaying the customer's details for management.</returns>
-		public async Task<IActionResult> Manage(int customerId)
-		{
-			// Retrieve the customer from Azure Table Storage by PartitionKey and RowKey.
-			var dbCustomer = await _customerTableService.GetUserByIdAsync(customerId);
-			if (dbCustomer == null)
-			{
-				// Return a 404 Not Found response if the customer does not exist.
-				return NotFound();
-			}
-
-			// Map the customer entity to a customer view model.
-			var customerViewModel = new CustomerViewModel(dbCustomer);
-
-			// Return the view with the customer view model.
-			return View(customerViewModel);
-		}
-
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Edit Actions
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
