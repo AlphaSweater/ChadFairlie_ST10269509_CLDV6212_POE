@@ -32,9 +32,6 @@ namespace ABC_Retail.Controllers
 		// The function URL for sending a queue message.
 		private readonly string _sendToQueueFunctionUrl;
 
-		// The function URL for adding an entity.
-		private readonly string _addEntityFunctionUrl;
-
 		// The function URL for uploading an image.
 		private readonly string _uploadImageFunctionUrl;
 
@@ -61,7 +58,6 @@ namespace ABC_Retail.Controllers
 			_httpClient = httpClient;
 			_httpContextAccessor = httpContextAccessor;
 			_sendToQueueFunctionUrl = configuration["AzureFunctions:SendToQueueFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
-			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 			_uploadImageFunctionUrl = configuration["AzureFunctions:UploadImageFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "UploadImageFunctionUrl configuration is missing.");
 		}
 

@@ -1,4 +1,5 @@
-﻿using ABC_Retail.Services;
+﻿using ABC_Retail.Models;
+using ABC_Retail.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
@@ -22,10 +23,12 @@ namespace MyFunctionApp
 			var configuration = builder.GetContext().Configuration;
 			string storageConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")
 				?? throw new InvalidOperationException("AzureStorage connection string is not configured.");
+			string sqlConnectionString = Environment.GetEnvironmentVariable("AzureSQLStorage")
+				?? throw new InvalidOperationException("Azure SQL connection string is not configured.");
 
 			// Register common services
-			builder.Services.AddSingleton(new ProductTableService(storageConnectionString));
-			builder.Services.AddSingleton(new CustomerTableService(storageConnectionString));
+			builder.Services.AddSingleton(new Product(sqlConnectionString));
+			builder.Services.AddSingleton(new Customer(sqlConnectionString));
 			builder.Services.AddSingleton(new AzureFileStorageService(storageConnectionString));
 			builder.Services.AddSingleton(new BlobServiceClient(storageConnectionString));
 

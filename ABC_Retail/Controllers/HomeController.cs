@@ -1,4 +1,5 @@
 using ABC_Retail.Models;
+using ABC_Retail.Services;
 using ABC_Retail.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ namespace ABC_Retail.Controllers
 		private readonly IHttpContextAccessor _httpContextAccessor;
 		private readonly Customer _customerTableService;
 		private readonly ILogger<HomeController> _logger;
+		private readonly AzureQueueService _azureQueueService;
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Constructor
@@ -30,11 +32,12 @@ namespace ABC_Retail.Controllers
 		/// <param name="configuration">Application configuration settings.</param>
 		/// <param name="logger">Logger for logging information and errors.</param>
 
-		public HomeController(IHttpContextAccessor httpContextAccessor, Customer customerService, ILogger<HomeController> logger)
+		public HomeController(IHttpContextAccessor httpContextAccessor, Customer customerService, ILogger<HomeController> logger, AzureQueueService azureQueueService)
 		{
 			_httpContextAccessor = httpContextAccessor;
 			_customerTableService = customerService;
 			_logger = logger;
+			_azureQueueService = azureQueueService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -43,6 +46,7 @@ namespace ABC_Retail.Controllers
 
 		public IActionResult Index()
 		{
+			_azureQueueService.EnqueueMessageAsync("myqueue", "Hello, World!").Wait();
 			return View();
 		}
 
