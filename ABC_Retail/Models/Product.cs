@@ -123,7 +123,7 @@ namespace ABC_Retail.Models
 			{
 				await con.OpenAsync();
 				string productSql = @"
-                SELECT
+                                SELECT
                     tp.product_id,
                     tp.name,
                     tp.description,
@@ -135,7 +135,7 @@ namespace ABC_Retail.Models
                     tbl_products tp
                 LEFT JOIN
                     tbl_product_images tpi ON tp.product_id = tpi.product_id
-                WHERE tp.is_archived = 0";
+                WHERE tp.is_archived = 0 AND tp.availability != 0";
 
 				using (var productCmd = new SqlCommand(productSql, con))
 				{

@@ -179,6 +179,14 @@
 		<!-- Order History Tab -->
 		<div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
 			<div class="sorting-section">
+				<!-- Search bar -->
+				<div class="row mb-3">
+					<label for="searchInput" class="form-label me-2">Search Orders:</label>
+					<div class="d-flex align-items-center">
+						<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
+					</div>
+				</div>
+
 				<!-- Date Range Filter -->
 				<div class="d-flex align-items-end">
 					<div class="d-flex flex-column me-2">
@@ -192,14 +200,6 @@
 					<div class="d-flex align-items-end">
 						<button id="filterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
 						<button id="clearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
-					</div>
-				</div>
-
-				<!-- Search bar -->
-				<div class="row mb-3">
-					<label for="searchInput" class="form-label me-2">Search Orders:</label>
-					<div class="d-flex align-items-center">
-						<input type="text" id="searchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('orderTableBody')">
 					</div>
 				</div>
 			</div>
@@ -249,6 +249,15 @@
 		{
 			<div class="tab-pane fade" id="admin-orders" role="tabpanel" aria-labelledby="admin-orders-tab">
 				<div class="sorting-section">
+
+					<!-- Search bar -->
+					<div class="row mb-3">
+						<label for="adminSearchInput" class="form-label me-2">Search Orders:</label>
+						<div class="d-flex justify-content-start">
+							<input type="text" id="adminSearchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('adminOrderTableBody')">
+						</div>
+					</div>
+
 					<!-- Search by Customer -->
 					<div class="row mb-3">
 						<label for="customerDropdown" class="form-label me-2">Search by Customer:</label>
@@ -279,14 +288,6 @@
 						<div class="d-flex align-items-end">
 							<button id="adminFilterDateRange" class="btn btn-outline-secondary me-2" type="button">Filter</button>
 							<button id="adminClearDateRange" class="btn btn-outline-secondary" type="button">Clear</button>
-						</div>
-					</div>
-
-					<!-- Search bar -->
-					<div class="row mb-3">
-						<label for="adminSearchInput" class="form-label me-2">Search Orders:</label>
-						<div class="d-flex justify-content-start">
-							<input type="text" id="adminSearchInput" class="form-control search-bar" placeholder="Search orders..." onkeyup="searchTable('adminOrderTableBody')">
 						</div>
 					</div>
 				</div>
