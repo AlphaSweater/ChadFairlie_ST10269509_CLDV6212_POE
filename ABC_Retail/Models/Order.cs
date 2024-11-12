@@ -15,7 +15,7 @@ namespace ABC_Retail.Models
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 
 		// Unique identifier for the order
-		public int OrderID { get; set; } 
+		public int OrderId { get; set; } 
 
 		// The ID of the related Customer
 		public int CustomerId { get; set; }
@@ -128,7 +128,7 @@ namespace ABC_Retail.Models
 						{
 							var order = new Order
 							{
-								OrderID = reader.GetInt32(reader.GetOrdinal("order_id")),
+								OrderId = reader.GetInt32(reader.GetOrdinal("order_id")),
 								CustomerId = reader.GetInt32(reader.GetOrdinal("customer_id")),
 								ProductId = reader.GetInt32(reader.GetOrdinal("product_id")),
 								TotalQuantity = reader.GetInt32(reader.GetOrdinal("total_quantity")),

@@ -223,6 +223,16 @@
 				<input asp-for="ConfirmPassword" type="password" placeholder="Confirm Password" class="inputbox" required>
 				<span asp-validation-for="ConfirmPassword" class="text-danger"></span>
 			</div>
+
+			<!-- Admin Checkbox (full width) -->
+			<div class="full-width">
+				<label class="custom-checkbox">
+					<input asp-for="IsAdmin" type="checkbox" id="isAdmin" value="true">
+					<span class="checkmark"></span>
+					Are you an admin?
+				</label>
+				<span asp-validation-for="IsAdmin" class="text-danger"></span>
+			</div>
 		</div>
 
 		<br />

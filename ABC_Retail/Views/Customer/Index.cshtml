@@ -1,55 +1,134 @@
-﻿@model IEnumerable<ABC_Retail.ViewModels.CustomerViewModel>
-
+﻿@model ABC_Retail.ViewModels.CustomerProfileViewModel
 @{
-	ViewData["Title"] = "Customers";
+	ViewData["Title"] = "My Profile";
+	int customerId = Context.Session.GetInt32("CustomerId") ?? 0;
+	bool isAdmin = Context.Session.GetString("IsAdmin") == "true";
 }
-<head>
-	<style>
-		.btn-primary, .btn-success {
-			border-radius: 10px;
-			transition: background-color 0.3s ease, transform 0.3s ease;
+
+<h2>My Profile</h2>
+
+<div class="container mt-5">
+	<ul class="nav nav-tabs" id="profileTab" role="tablist">
+		<li class="nav-item">
+			<a class="nav-link active" id="profile-info-tab" data-bs-toggle="tab" href="#profile-info" role="tab" aria-controls="profile-info" aria-selected="true">Profile Information</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" id="order-history-tab" data-bs-toggle="tab" href="#order-history" role="tab" aria-controls="order-history" aria-selected="false">Order History</a>
+		</li>
+		@if (isAdmin)
+		{
+			<li class="nav-item">
+				<a class="nav-link" id="admin-orders-tab" data-bs-toggle="tab" href="#admin-orders" role="tab" aria-controls="admin-orders" aria-selected="false">Admin Orders</a>
+			</li>
 		}
+	</ul>
+	<div class="tab-content" id="profileTabContent">
+		<!-- Profile Information Tab -->
+		<div class="tab-pane fade show active" id="profile-info" role="tabpanel" aria-labelledby="profile-info-tab">
+			<div class="row mt-4">
+				<div class="col-md-6">
+					<h3>Profile Information</h3>
+					<form asp-action="EditProfile" method="post">
+						<div class="form-group">
+							<label asp-for="@Model.Name">Name</label>
+							<input asp-for="@Model.Name" class="form-control" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Surname">Surname</label>
+							<input asp-for="@Model.Surname" class="form-control" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Phone">Phone</label>
+							<input asp-for="@Model.Phone" class="form-control" />
+						</div>
+						<div class="form-group">
+							<label asp-for="@Model.Email">Email</label>
+							<input asp-for="@Model.Email" class="form-control" />
+						</div>
+						<button type="submit" class="btn btn-primary">Update Profile</button>
+					</form>
+				</div>
+			</div>
+		</div>
 
-			.btn-primary:hover, .btn-success:hover {
-				transform: translateY(-2px);
-				background-color: #0069d9; 
-			}
-	</style>
-</head>
+		<!-- Order History Tab -->
+		<div class="tab-pane fade" id="order-history" role="tabpanel" aria-labelledby="order-history-tab">
+			<div class="row mt-4">
+				<div class="col-md-12">
+					<h3>Order History</h3>
+					@if (Model.OrderHistory != null && Model.OrderHistory.Any())
+					{
+						<table class="table table-bordered table-striped">
+							<thead>
+								<tr>
+									<th>Order ID</th>
+									<th>Total Quantity</th>
+									<th>Total Amount</th>
+									<th>Date</th>
+									<th>Details</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var order in Model.OrderHistory)
+								{
+									<tr>
+										<td>@order.OrderId</td>
+										<td>@order.TotalQuantity</td>
+										<td>@order.TotalAmount.ToString("C")</td>
+										<td>@order.OrderDate.ToString("d MMM yyyy")</td>
+										<td>
+											<a asp-action="OrderDetails" asp-route-id="@order.OrderId" class="btn btn-info btn-sm">View Details</a>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					}
+					else
+					{
+						<p>No past orders available.</p>
+					}
+				</div>
+			</div>
+		</div>
 
-<h1>Customers</h1>
-
-@if (!Model.Any())
-{
-	<p>No customers available. <a href="@Url.Action("Create", "Customer")">Add a new customer</a></p>
-}
-else
-{
-	<a class="btn btn-primary mb-3" href="@Url.Action("Create", "Customer")">Add Account</a>
-
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Surname</th>
-				<th>Email</th>
-				<th>Phone Number</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var customer in Model)
-			{
-				<tr>
-					<td>@customer.Name</td>
-					<td>@customer.Surname</td>
-					<td>@customer.Email</td>
-					<td>@customer.Phone</td>
-					<td>
-						<a href="@Url.Action("Manage", "Customer", new { id = customer.CustomerId })" class="btn btn-primary">Manage</a>
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
-}
+		<!-- Admin Orders Tab -->
+		@if (User.IsInRole("Admin"))
+		{
+			<div class="tab-pane fade" id="admin-orders" role="tabpanel" aria-labelledby="admin-orders-tab">
+				<div class="row mt-4">
+					<div class="col-md-12">
+						<h3>All Orders</h3>
+						<table class="table table-bordered table-striped">
+							<thead>
+								<tr>
+									<th>Order ID</th>
+									<th>Customer ID</th>
+									<th>Total Quantity</th>
+									<th>Total Amount</th>
+									<th>Date</th>
+									<th>Details</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var order in Model.AllOrders)
+								{
+									<tr>
+										<td>@order.OrderId</td>
+										<td>@order.CustomerId</td>
+										<td>@order.TotalQuantity</td>
+										<td>@order.TotalAmount.ToString("C")</td>
+										<td>@order.OrderDate.ToString("d MMM yyyy")</td>
+										<td>
+											<a asp-action="OrderDetails" asp-route-id="@order.OrderId" class="btn btn-info btn-sm">View Details</a>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>

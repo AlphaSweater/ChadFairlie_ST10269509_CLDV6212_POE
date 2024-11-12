@@ -3,54 +3,55 @@
 @{
 	ViewData["Title"] = "Products";
 	int customerId = Context.Session.GetInt32("CustomerId") ?? 0;
+	bool isAdmin = Context.Session.GetString("IsAdmin") == "true";
 }
 
 <head>
 	<style>
 		.product-card-wrapper {
-			width: 300px;
-			margin: 15px;
+		width: 300px;
+		margin: 15px;
 		}
 
 		.product-card {
-			transition: transform 0.3s ease, box-shadow 0.3s ease;
-			border-radius: 15px;
-			overflow: hidden;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+		border-radius: 15px;
+		overflow: hidden;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 		}
 
-			.product-card:hover {
-				transform: scale(1.05);
-				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-			}
+		.product-card:hover {
+		transform: scale(1.05);
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+		}
 
-			.product-card img {
-				height: 200px;
-				object-fit: cover;
-				border-top-left-radius: 15px;
-				border-top-right-radius: 15px;
-			}
+		.product-card img {
+		height: 200px;
+		object-fit: cover;
+		border-top-left-radius: 15px;
+		border-top-right-radius: 15px;
+		}
 
-			.product-card .card-body {
-				padding: 15px;
-			}
+		.product-card .card-body {
+		padding: 15px;
+		}
 
-			.product-card .card-footer {
-				background-color: #f8f9fa;
-				border-top: 1px solid #e9ecef;
-				padding: 10px;
-				text-align: center;
-			}
+		.product-card .card-footer {
+		background-color: #f8f9fa;
+		border-top: 1px solid #e9ecef;
+		padding: 10px;
+		text-align: center;
+		}
 
 		.btn-primary, .btn-success {
-			border-radius: 10px;
-			transition: background-color 0.3s ease, transform 0.3s ease;
+		border-radius: 10px;
+		transition: background-color 0.3s ease, transform 0.3s ease;
 		}
 
-			.btn-primary:hover, .btn-success:hover {
-				transform: translateY(-2px);
-				background-color: #0056b3;
-			}
+		.btn-primary:hover, .btn-success:hover {
+		transform: translateY(-2px);
+		background-color: #0056b3;
+		}
 	</style>
 </head>
 <div class="d-flex align-items-center justify-content-center" style="background-color: #f8f9fa; border-radius: 100px; flex-direction: column;">
@@ -58,12 +59,19 @@
 
 	@if (!Model.Any())
 	{
-		<p>No products available. <a href="@Url.Action("Create", "Product")" class="add-product-link">Add a new product</a></p>
+		<p>No products available.
+			@if (isAdmin)
+			{
+				<a href="@Url.Action("Create", "Product")" class="add-product-link">Add a new product</a>
+			}
+		</p>
 	}
 	else
 	{
-		<a class="btn btn-primary mb-3 add-product-link" href="@Url.Action("Create", "Product")">Add Product</a>
-
+		@if (isAdmin)
+		{
+			<a class="btn btn-primary mb-3 add-product-link" href="@Url.Action("Create", "Product")">Add Product</a>
+		}
 		<br />
 
 		<div class="d-flex flex-wrap justify-content-center">
@@ -80,7 +88,7 @@
 						</div>
 						<div class="card-footer d-flex justify-content-between">
 							<a class="btn btn-success purchase-button" data-id="@product.ProductID" data-name="@product.ProductName">Purchase</a>
-							@if (customerId == product.CustomerID)
+							@if (isAdmin)
 							{
 								<a href="@Url.Action("Manage", "Product", new { id = product.ProductID })" class="btn btn-primary">Manage</a>
 							}

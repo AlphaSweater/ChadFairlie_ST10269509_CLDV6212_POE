@@ -87,7 +87,19 @@ namespace ABC_Retail.Controllers
 					return View(model);
 				}
 
+				var loggedInUser = await _customerTableService.GetUserByIdAsync(customerId);
+
 				_httpContextAccessor.HttpContext?.Session.SetInt32("CustomerId", customerId);
+
+				if (loggedInUser.IsAdmin)
+				{
+					_httpContextAccessor.HttpContext?.Session.SetString("IsAdmin", "true");
+				}
+				else
+				{
+					_httpContextAccessor.HttpContext?.Session.SetString("IsAdmin", "false");
+				}
+
 
 				string redirectUrl = Url.Action("Index", "Product");
 				return Redirect(redirectUrl);

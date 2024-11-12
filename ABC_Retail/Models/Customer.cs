@@ -22,6 +22,7 @@ namespace ABC_Retail.Models
 		public string Phone { get; set; } // Phone number of the customer
 		public string Email { get; set; } // Email of the customer
 		public string Password { get; set; } // Password of the customer
+		public bool IsAdmin { get; set; } = false; // Admin status of the customer
 
 		public readonly string _SQLConnectionString;
 
@@ -50,6 +51,7 @@ namespace ABC_Retail.Models
 			Phone = model.Phone;
 			Email = model.Email;
 			Password = model.Password;
+			IsAdmin = model.IsAdmin;
 		}
 
 		// Default constructor
@@ -80,7 +82,7 @@ namespace ABC_Retail.Models
 						var passwordHasher = new PasswordHasher<IdentityUser>();
 						var passwordHash = passwordHasher.HashPassword(user: null, password: m.Password);
 
-						string sql = "INSERT INTO tbl_customers (name, surname, phone, email, password_hash) OUTPUT INSERTED.customer_id VALUES (@CustomerName, @CustomerSurname, @CustomerPhone, @CustomerEmail, @PasswordHash)";
+						string sql = "INSERT INTO tbl_customers (name, surname, phone, email, password_hash, is_admin) OUTPUT INSERTED.customer_id VALUES (@CustomerName, @CustomerSurname, @CustomerPhone, @CustomerEmail, @PasswordHash, @IsAdmin)";
 						using (SqlCommand cmd = new SqlCommand(sql, con, transaction))
 						{
 							cmd.Parameters.AddWithValue("@CustomerName", m.Name);
@@ -88,6 +90,7 @@ namespace ABC_Retail.Models
 							cmd.Parameters.AddWithValue("@CustomerPhone", m.Phone);
 							cmd.Parameters.AddWithValue("@CustomerEmail", m.Email);
 							cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
+							cmd.Parameters.AddWithValue("@IsAdmin", m.IsAdmin);
 
 							var result = await cmd.ExecuteScalarAsync() ?? 0;  // Execute the query asynchronously
 							await transaction.CommitAsync();  // Commit the transaction asynchronously
@@ -193,7 +196,7 @@ namespace ABC_Retail.Models
 			{
 				await con.OpenAsync();  // Open connection asynchronously
 
-				string sql = "SELECT customer_id, name, surname, phone, email FROM tbl_customers WHERE customer_id = @CustomerId";
+				string sql = "SELECT customer_id, name, surname, phone, email, is_admin FROM tbl_customers WHERE customer_id = @CustomerId";
 
 				using (SqlCommand cmd = new SqlCommand(sql, con))
 				{
@@ -209,7 +212,8 @@ namespace ABC_Retail.Models
 								Name = reader.GetString(reader.GetOrdinal("name")),
 								Surname = reader.GetString(reader.GetOrdinal("surname")),
 								Phone = reader.GetString(reader.GetOrdinal("phone")),
-								Email = reader.GetString(reader.GetOrdinal("email"))
+								Email = reader.GetString(reader.GetOrdinal("email")),
+								IsAdmin = reader.GetBoolean(reader.GetOrdinal("is_admin"))
 							};
 						}
 						return null;  // Return null if no user was found

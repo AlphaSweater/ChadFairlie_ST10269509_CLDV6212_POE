@@ -20,8 +20,12 @@ namespace ABC_Retail.Controllers
 		// Service for interacting with customer SQL Table Storage.
 		private readonly Customer _customerTableService;
 
+		private readonly Order _orderTableService;
+
 		// HTTP client for making requests to Azure Functions.
 		private readonly HttpClient _httpClient;
+
+		private readonly IHttpContextAccessor _httpContextAccessor;
 
 		// The function URL for adding an entity.
 		private readonly string _addEntityFunctionUrl;
@@ -35,12 +39,39 @@ namespace ABC_Retail.Controllers
 		/// Initializes a new instance of the <see cref="CustomerController"/> class.
 		/// </summary>
 		/// <param name="customerTableService">The service for customer Azure Table Storage operations.</param>
-		public CustomerController(Customer customerTableService, HttpClient httpClient, IConfiguration configuration)
+		public CustomerController(Customer customerTableService, Order orderTableService, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
 		{
 			_customerTableService = customerTableService;
+			_orderTableService = orderTableService;
 			_httpClient = httpClient;
+			_httpContextAccessor = httpContextAccessor;
 			_addEntityFunctionUrl = configuration["AzureFunctions:AddEntityFunctionUrl"] ?? throw new ArgumentNullException(nameof(configuration), "SendQueueMessageUrl configuration is missing.");
 		}
+
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+		// Index Actions
+		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		[HttpGet]
+		public async Task<IActionResult> Index()
+		{
+			int customerId = _httpContextAccessor?.HttpContext?.Session.GetInt32("CustomerId") ?? 0;
+			// Retrieve logged in customer from SQL Table Storage.
+			var customer = await _customerTableService.GetUserByIdAsync(customerId);
+			if (customer == null)
+			{
+				// Return a 404 Not Found response if the customer does not exist.
+				return NotFound();
+			}
+			var orderHistory = await _orderTableService.GetOrdersByCustomerIdAsync(customerId);
+
+			var customerProfile = new CustomerProfileViewModel(customer, orderHistory);
+
+			return View(customerProfile);
+		}
+
+
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		// Manage Actions

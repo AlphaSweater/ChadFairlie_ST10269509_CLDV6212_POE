@@ -329,9 +329,8 @@ namespace ABC_Retail.Controllers
 
 			// Create a new product entity from the view model
 			var product = new Product(model);
-			product.CustomerID = customerId;
 
-			product.ProductID = await _productTableService.InsertProductAsync(product, customerId);
+			product.ProductID = await _productTableService.InsertProductAsync(product);
 
 			await _productTableService.InsertProductImageAsync(product.ProductID, imageName);
 

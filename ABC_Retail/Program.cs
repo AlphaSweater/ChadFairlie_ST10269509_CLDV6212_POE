@@ -77,6 +77,8 @@ namespace ABC_Retail
 			// Add customer SQL Table Storage service
 			services.AddSingleton(new Customer(sqlConnectionString));
 
+			services.AddSingleton(new Order(sqlConnectionString));
+
 			// Add Azure File Storage service
 			services.AddSingleton(new AzureFileStorageService(storageConnectionString));
 

@@ -11,58 +11,58 @@
 
 	<style>
 		body {
-			background-color: #f5f5f5;
-			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			margin: 0;
+		background-color: #f5f5f5;
+		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		margin: 0;
 		}
 
 		.navbar {
-			background-color: #111;
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-			padding: 1rem 2rem;
-			position: fixed;
-			width: 100vw;
-			top: 0;
-			z-index: 1020;
+		background-color: #111;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		padding: 1rem 2rem;
+		position: fixed;
+		width: 100vw;
+		top: 0;
+		z-index: 1020;
 		}
 
 		.navbar-brand {
-			font-size: 1.6rem;
-			font-weight: bold;
-			color: #fff;
+		font-size: 1.6rem;
+		font-weight: bold;
+		color: #fff;
 		}
 
 		.navbar-dark .nav-link {
-			color: #f8f9fa;
-			font-size: 1.1rem;
-			margin-right: 1rem;
-			transition: color 0.3s ease, transform 0.3s ease;
+		color: #f8f9fa;
+		font-size: 1.1rem;
+		margin-right: 1rem;
+		transition: color 0.3s ease, transform 0.3s ease;
 		}
 
-			.navbar-dark .nav-link:hover {
-				color: #17a2b8;
-				transform: translateY(-3px);
-			}
+		.navbar-dark .nav-link:hover {
+		color: #17a2b8;
+		transform: translateY(-3px);
+		}
 
 		.navbar-dark .btn-link {
-			color: #f8f9fa;
-			transition: color 0.3s ease;
+		color: #f8f9fa;
+		transition: color 0.3s ease;
 		}
 
-			.navbar-dark .btn-link:hover {
-				color: #dc3545;
-			}
+		.navbar-dark .btn-link:hover {
+		color: #dc3545;
+		}
 
 		.navbar-toggler {
-			border-color: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.1);
 		}
 
 		.navbar-toggler-icon {
-			filter: invert(1);
+		filter: invert(1);
 		}
 
 		main {
-			padding-top: 100px;
+		padding-top: 100px;
 		}
 
 	</style>
@@ -84,14 +84,20 @@
 						<li class="nav-item">
 							<a class="nav-link" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
 						</li>
-						<li class="nav-item">
-							<a class="nav-link" asp-area="" asp-controller="Contract" asp-action="Index">Contracts</a>
-						</li>
+						@if (Context.Session.GetString("CustomerId") != null)
+						{
+							<li class="nav-item">
+								<a class="nav-link" asp-area="" asp-controller="Contract" asp-action="Index">Contracts</a>
+							</li>
+						}
 					</ul>
 
 					<ul class="navbar-nav">
 						@if (Context.Session.GetString("CustomerId") != null)
 						{
+							<li class="nav-item">
+								<a class="nav-link" asp-area="" asp-controller="Customer" asp-action="Index">Profile</a>
+							</li>
 							<li class="nav-item">
 								<form method="post" action="@Url.Action("SignOut", "Home")">
 									<button type="submit" class="btn btn-link">Sign Out</button>

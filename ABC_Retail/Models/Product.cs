@@ -17,7 +17,6 @@ namespace ABC_Retail.Models
 		// Properties of the Product entity
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
 		public int ProductID { get; set; } // Unique identifier for the product
-		public int CustomerID { get; set; } // Unique identifier for the owner of the product
 		public string Name { get; set; } // Name of the product
 		public decimal Price { get; set; } // Price of the product
 		public string Description { get; set; } // Description of the product
@@ -45,7 +44,6 @@ namespace ABC_Retail.Models
 			Price = model.ProductPrice;
 			Quantity = model.ProductQuantity;
 			Availability = model.ProductAvailability;
-
 		}
 
 		// Default constructor
@@ -64,7 +62,7 @@ namespace ABC_Retail.Models
 		/// <param name="m"></param> represents the model of the product
 		/// <param name="userID"></param> represents the ID of the user who is inserting the product
 		/// <returns></returns>
-		public async Task<int> InsertProductAsync(Product m, int customerID)
+		public async Task<int> InsertProductAsync(Product m)
 		{
 			using (var con = new SqlConnection(_SQLConnectionString))
 			{
@@ -73,9 +71,8 @@ namespace ABC_Retail.Models
 				{
 					try
 					{
-						string sql = "INSERT INTO tbl_products (customer_id, name, description, price, quantity, availability) OUTPUT INSERTED.product_id VALUES (@customerID, @ProductName, @ProductDescription, @ProductPrice, @ProductQuantity, @ProductAvailability)";
+						string sql = "INSERT INTO tbl_products (name, description, price, quantity, availability) OUTPUT INSERTED.product_id VALUES (@ProductName, @ProductDescription, @ProductPrice, @ProductQuantity, @ProductAvailability)";
 						SqlCommand cmd = new SqlCommand(sql, con, transaction); // Associate the command with the transaction
-						cmd.Parameters.AddWithValue("@customerID", customerID);
 						cmd.Parameters.AddWithValue("@ProductName", m.Name);
 						cmd.Parameters.AddWithValue("@ProductDescription", m.Description);
 						cmd.Parameters.AddWithValue("@ProductPrice", m.Price);
@@ -128,10 +125,10 @@ namespace ABC_Retail.Models
 				string productSql = @"
                 SELECT
                     tp.product_id,
-					tp.customer_id,
                     tp.name,
                     tp.description,
                     tp.price,
+					tp.quantity,
                     tp.availability,
                     tpi.image_name
                 FROM
@@ -149,10 +146,10 @@ namespace ABC_Retail.Models
 							productsList.Add(new ProductViewModel
 							{
 								ProductID = (int)reader["product_id"],
-								CustomerID = (int)reader["customer_id"],
 								ProductName = reader["name"].ToString(),
 								ProductDescription = reader["description"].ToString(),
 								ProductPrice = (decimal)reader["price"],
+								ProductQuantity = (int)reader["quantity"],
 								ProductAvailability = (bool)reader["availability"],
 								ProductImageName = reader["image_name"].ToString()
 							});
@@ -234,7 +231,7 @@ namespace ABC_Retail.Models
 				await con.OpenAsync();
 
 				string sql = @"
-				SELECT product_id, customer_id, name, description, price, quantity, availability
+				SELECT product_id, name, description, price, quantity, availability
 				FROM tbl_products
 				WHERE product_id = @ProductId";
 
@@ -252,7 +249,6 @@ namespace ABC_Retail.Models
 							return new Product
 							{
 								ProductID = reader.GetInt32(reader.GetOrdinal("product_id")),
-								CustomerID = reader.GetInt32(reader.GetOrdinal("customer_id")),
 								Name = reader.GetString(reader.GetOrdinal("name")),
 								Description = reader.GetString(reader.GetOrdinal("description")),
 								Price = reader.GetDecimal(reader.GetOrdinal("price")),

@@ -38,5 +38,8 @@ namespace ABC_Retail.ViewModels
 		[Required(ErrorMessage = "Confirmation of password is required.")]
 		[Compare("Password", ErrorMessage = "Passwords do not match.")]
 		public string ConfirmPassword { get; set; }
+
+		//--------------------------------------------------------------------------------------------------------------------------//
+		public bool IsAdmin { get; set; }
 	}
 }
