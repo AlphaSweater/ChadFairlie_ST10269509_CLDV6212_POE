@@ -14,7 +14,8 @@ namespace ABC_Retail_Functions.Functions
 	/// </summary>
 	public class ProcessOrderFunction
 	{
-		private readonly ProductTableService _productTableService;
+		private readonly Product _productTableService;
+		private readonly Order _orderTableService;
 		private readonly AzureQueueService _queueService;
 		private readonly string _inventoryQueueName = "inventory-queue";
 
@@ -23,9 +24,10 @@ namespace ABC_Retail_Functions.Functions
 		/// </summary>
 		/// <param name="productTableService">Service for handling Product entities.</param>
 		/// <param name="queueService">Service for handling Azure Queue operations.</param>
-		public ProcessOrderFunction(ProductTableService productTableService, AzureQueueService queueService)
+		public ProcessOrderFunction(Product productTableService, Order orderTableService, AzureQueueService queueService)
 		{
 			_productTableService = productTableService;
+			_orderTableService = orderTableService;
 			_queueService = queueService;
 		}
 
@@ -87,36 +89,34 @@ namespace ABC_Retail_Functions.Functions
 		/// <returns>True if the order is processed and inventory is updated successfully, otherwise false.</returns>
 		private async Task<bool> ProcessOrderAndUpdateInventoryAsync(OrderMessage orderMessage, ILogger log)
 		{
-			foreach (var product in orderMessage.Products)
-			{
-				log.LogInformation($"Retrieving product {product.ProductId} from table storage");
-				var dbProduct = await _productTableService.GetEntityAsync("Product", product.ProductId);
+				log.LogInformation($"Retrieving product {orderMessage.ProductId} from table storage");
+				var dbProduct = await _productTableService.GetProductByIdAsync(orderMessage.ProductId);
 				if (dbProduct == null)
 				{
-					log.LogWarning($"Product {product.ProductId} not found in table storage");
+					log.LogWarning($"Product {orderMessage.ProductId} not found in table storage");
 					return false;
 				}
 
-				if (dbProduct.Quantity < product.Quantity)
+				if (dbProduct.Quantity < orderMessage.Quantity)
 				{
-					log.LogWarning($"Insufficient stock for product {product.ProductId}. Available: {dbProduct.Quantity}, Required: {product.Quantity}");
+					log.LogWarning($"Insufficient stock for product {orderMessage.ProductId}. Available: {dbProduct.Quantity}, Required: {orderMessage.Quantity}");
 					return false;
 				}
 
 				// Update the product quantity
-				dbProduct.Quantity -= product.Quantity;
-				log.LogInformation($"Updating product {product.ProductId} quantity to {dbProduct.Quantity}");
+				dbProduct.Quantity -= orderMessage.Quantity;
+				log.LogInformation($"Updating product {orderMessage.ProductId} quantity to {dbProduct.Quantity}");
 
 				try
 				{
-					await _productTableService.UpdateEntityAsync(dbProduct, dbProduct.ETag);
+					await _productTableService.UpdateProductAsync(dbProduct);
+					await _orderTableService.RecordOrderAsync(orderMessage);
 				}
 				catch (RequestFailedException ex) when (ex.Status == 412)
 				{
-					log.LogWarning($"Concurrency conflict when updating product {product.ProductId}. Retrying...");
+					log.LogWarning($"Concurrency conflict when updating product {orderMessage.ProductId}. Retrying...");
 					return await ProcessOrderAndUpdateInventoryAsync(orderMessage, log);
 				}
-			}
 
 			return true;
 		}
@@ -127,18 +127,15 @@ namespace ABC_Retail_Functions.Functions
 		/// <param name="orderMessage">Order message containing the order details.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage, ILogger log)
 		{
-			foreach (var product in orderMessage.Products)
-			{
-				var inventoryUpdateMessage = new InventoryUpdateMessage
-				(
-					product.ProductName,
-					-product.Quantity,
-					"Order processed"
-				);
+			var inventoryUpdateMessage = new InventoryUpdateMessage
+			(
+				orderMessage.ProductId,
+				-orderMessage.Quantity,
+				"Order processed"
+			);
 
-				var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
-				await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
-			}
+			var messageText = JsonSerializer.Serialize(inventoryUpdateMessage);
+			await _queueService.EnqueueMessageAsync(_inventoryQueueName, messageText);
 
 			log.LogInformation($"Inventory update logged for order {orderMessage.OrderId}");
 		}

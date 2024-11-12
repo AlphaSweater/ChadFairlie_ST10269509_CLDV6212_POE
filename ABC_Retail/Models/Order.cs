@@ -74,7 +74,7 @@ namespace ABC_Retail.Models
 		/// <param name="productId"></param>
 		/// <param name="quantity"></param>
 		/// <returns></returns>
-		public async Task<bool> RecordOrderAsync(int customerId, int productId, int quantity, decimal price)
+		public async Task<bool> RecordOrderAsync(OrderMessage order)
 		{
 			using (SqlConnection con = new SqlConnection(_SQLConnectionString))
 			{
@@ -89,10 +89,10 @@ namespace ABC_Retail.Models
 
 						using (SqlCommand cmd = new SqlCommand(sql, con, transaction))
 						{
-							cmd.Parameters.AddWithValue("@CustomerId", customerId);
-							cmd.Parameters.AddWithValue("@ProductId", productId);
-							cmd.Parameters.AddWithValue("@Quantity", quantity);
-							cmd.Parameters.AddWithValue("@TotalAmount", quantity * price);
+							cmd.Parameters.AddWithValue("@CustomerId", order.CustomerId);
+							cmd.Parameters.AddWithValue("@ProductId", order.ProductId);
+							cmd.Parameters.AddWithValue("@Quantity", order.Quantity);
+							cmd.Parameters.AddWithValue("@TotalAmount", order.Quantity * order.Price);
 							cmd.Parameters.AddWithValue("@OrderDate", DateTime.Now);
 
 							int rowsAffected = await cmd.ExecuteNonQueryAsync();

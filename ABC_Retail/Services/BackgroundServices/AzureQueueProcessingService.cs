@@ -23,8 +23,11 @@ namespace ABC_Retail.Services.BackgroundServices
 		// Service for interacting with Azure Queue Storage.
 		private readonly AzureQueueService _queueService;
 
-		// Service for interacting with product Azure Table Storage.
+		// Service for interacting with product SQL Table Storage.
 		private readonly Product _productTableService;
+
+		// Service for interacting with order SQL Table Storage.
+		private readonly Order _orderTableService;
 
 		// Name of the queue used for processing purchase orders.
 		private readonly string _purchaseQueueName = "purchase-queue";
@@ -39,11 +42,12 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AzureQueueProcessingService"/> class.
 		/// </summary>
-		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureQueueService queueService, Product productTableService)
+		public AzureQueueProcessingService(Func<string, QueueClient> queueClientFactory, AzureQueueService queueService, Product productTableService, Order orderTableService)
 		{
 			_queueClientFactory = queueClientFactory;
 			_queueService = queueService;
 			_productTableService = productTableService;
+			_orderTableService = orderTableService;
 		}
 
 		//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>//
@@ -137,6 +141,7 @@ namespace ABC_Retail.Services.BackgroundServices
 			try
 			{
 				await _productTableService.UpdateProductAsync(dbProduct);
+				await _orderTableService.RecordOrderAsync(orderMessage);
 			}
 			catch (RequestFailedException ex) when (ex.Status == 412)
 			{
@@ -154,12 +159,10 @@ namespace ABC_Retail.Services.BackgroundServices
 		/// <param name="orderMessage">The order message containing the products that were processed.</param>
 		private async Task LogInventoryUpdateAsync(OrderMessage orderMessage)
 		{
-			var dbProduct = await _productTableService.GetProductByIdAsync(orderMessage.ProductId);
-
 			var inventoryUpdateMessage = new InventoryUpdateMessage
 			(
-				dbProduct.Name,
-				-dbProduct.Quantity, // Negative quantity for stock deduction
+				orderMessage.ProductId,
+				-orderMessage.Quantity, // Negative quantity for stock deduction
 				"Order processed"
 			);
 

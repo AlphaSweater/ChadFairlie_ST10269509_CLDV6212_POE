@@ -172,7 +172,7 @@
 							$.ajax({
 								url: '/Product/Purchase', // Ensure this URL is correct
 								type: 'POST',
-								data: { id: productId },
+								data: { productId: productId },
 								success: function(data) {
 									if (data.success) {
 										// Show success popup

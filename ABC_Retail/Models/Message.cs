@@ -89,13 +89,13 @@ namespace ABC_Retail.Models
 	/// </summary>
 	public class InventoryUpdateMessage : Message
 	{
-		public string Name { get; set; } // // Name of the product being updated.
+		public int ProductId { get; set; } // // Name of the product being updated.
 		public int Quantity { get; set; } // Quantity change (positive for addition, negative for removal)
 		public string Reason { get; set; } // Reason for the inventory update
 
-		public InventoryUpdateMessage(string name, int quantity, string reason)
+		public InventoryUpdateMessage(int productId, int quantity, string reason)
 		{
-			Name = name;
+			ProductId = productId;
 			Quantity = quantity;
 			Reason = reason;
 		}
